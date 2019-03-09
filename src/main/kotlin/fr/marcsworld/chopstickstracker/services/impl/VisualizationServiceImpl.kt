@@ -1,15 +1,16 @@
 package fr.marcsworld.chopstickstracker.services.impl
 
 import fr.marcsworld.chopstickstracker.model.Configuration
-import fr.marcsworld.chopstickstracker.model.DetectedObjectType
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
 import fr.marcsworld.chopstickstracker.services.FrameService
 import fr.marcsworld.chopstickstracker.services.VisualizationService
 import java.awt.Color
+import java.awt.image.BufferedImage
 import java.io.File
 import java.util.stream.Collectors
 import javax.imageio.ImageIO
+
 
 class VisualizationServiceImpl(
         private val configuration: Configuration,
@@ -46,16 +47,22 @@ class VisualizationServiceImpl(
     }
 
     override fun renderCurrentAndPastTipDetections(frames: List<Frame>, maxFramesInPast: Int, outputDirPath: String) {
-        // Prepare the output folder
+        // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
+        val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
 
         // Draw the current and past tip detections on each frame
         for (frame in frames) {
             println("    Rendering frame ${frame.index} / ${frames.size}...")
 
             val frameImage = frameService.findImageByIndex(frame.index)
+            val outputImage = BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB)
 
-            val g = frameImage.createGraphics()
+            val g = outputImage.createGraphics()
+            g.drawImage(frameImage,
+                    Math.round(firstFrameImageX - frame.imageX).toInt(),
+                    Math.round(firstFrameImageY - frame.imageY).toInt(),
+                    null)
 
             for (pastIndex in 0 until maxFramesInPast) {
                 val frameIndex = frame.index - pastIndex
@@ -64,19 +71,21 @@ class VisualizationServiceImpl(
                     g.color = Color(255, 255, 255, Math.round(alpha).toInt())
 
                     val detectedTips = frames[frameIndex].objects.stream()
-                            .filter { it.objectType == DetectedObjectType.BIG_TIP || it.objectType == DetectedObjectType.SMALL_TIP }
+                            .filter { it.objectType.isTip() }
                             .filter { it.confidence >= configuration.minTipDetectionConfidence }
                             .collect(Collectors.toList())
 
                     for (detectedTip in detectedTips) {
-                        g.drawRect(detectedTip.x, detectedTip.y, detectedTip.width, detectedTip.height)
+                        val x = Math.round(firstFrameImageX + detectedTip.x).toInt()
+                        val y = Math.round(firstFrameImageY + detectedTip.y).toInt()
+                        g.drawRect(x, y, detectedTip.width, detectedTip.height)
                     }
                 }
             }
 
             g.dispose()
 
-            ImageIO.write(frameImage, "jpg", File(outputFile, "${frame.index}.jpg"))
+            ImageIO.write(outputImage, "jpg", File(outputFile, "${frame.index}.jpg"))
         }
     }
 
@@ -90,4 +99,31 @@ class VisualizationServiceImpl(
         outputFile.mkdirs()
         return outputFile
     }
+
+    private fun computeNewFrameDimension(frames: List<Frame>): NewFrameDimension {
+        var minImageX = 0.0
+        var minImageY = 0.0
+        var maxImageX = 0.0
+        var maxImageY = 0.0
+
+        for (frame in frames) {
+            minImageX = Math.min(minImageX, frame.imageX)
+            minImageY = Math.min(minImageY, frame.imageY)
+            maxImageX = Math.max(maxImageX, frame.imageX)
+            maxImageY = Math.max(maxImageY, frame.imageY)
+        }
+
+        val width = configuration.frameWidth + Math.ceil(Math.abs(minImageX)) + Math.ceil(maxImageX)
+        val height = configuration.frameHeight + Math.ceil(Math.abs(minImageY)) + Math.ceil(maxImageY)
+
+        return NewFrameDimension(-minImageX, -minImageY, width.toInt(), height.toInt())
+    }
+
+    // New frame dimension to compensate for camera movement
+    data class NewFrameDimension(
+            val firstFrameImageX: Double,
+            val firstFrameImageY: Double,
+            val width: Int,
+            val height: Int
+    )
 }
