@@ -52,7 +52,6 @@ class VideoDetectionServiceImpl(
             // Match the tips together
             val matchedTips = HashSet<Tip>()
             val reliableTipMatchResults = ArrayList<TipMatchResult>()
-            val alternativeTipMatchResults = ArrayList<TipMatchResult>()
             for (tipMatchResult in tipMatchResults) {
                 if (tipMatchResult.score / frameDiagonal > configuration.maxTipMatchingScore) {
                     break
@@ -61,78 +60,8 @@ class VideoDetectionServiceImpl(
                     reliableTipMatchResults.add(tipMatchResult)
                     matchedTips.add(tipMatchResult.currentFrameTip)
                     matchedTips.add(tipMatchResult.prevFrameTip)
-                } else {
-                    // Acceptable alternatives where the score is still good enough
-                    alternativeTipMatchResults.add(tipMatchResult)
                 }
             }
-
-            // Replace initially chosen match results by preferring alternative with older tips
-            val sortedAlternativeTipMatchResults = alternativeTipMatchResults.stream()
-                    .sorted(Comparator
-                            .comparingInt<TipMatchResult> { it.prevFrameTip.getDateOfBirth() }
-                            .thenComparingDouble { it.score })
-                    .collect(Collectors.toList())
-            val chosenAlternativeTipMatchResults = ArrayList<TipMatchResult>()
-            for (alternativeTipMatchResult in sortedAlternativeTipMatchResults) {
-                // Find the selected match result
-                val reliableTipMatchResult = reliableTipMatchResults.stream()
-                        .filter { it.currentFrameTip == alternativeTipMatchResult.currentFrameTip }
-                        .findAny()
-                        .orElse(null)
-
-                // Check if the alternative is not better
-                // TODO Another solution would be to consider that a missing tip is still here, just
-                // TODO not detected for a while. See frame 165 where T0_5 become T0_8
-                if (reliableTipMatchResult != null &&
-                        alternativeTipMatchResult.prevFrameTip.getDateOfBirth() < reliableTipMatchResult.prevFrameTip.getDateOfBirth()) {
-                    // TODO Should we put a limit on the score difference with the alternative?
-                    // Check if the previous frame tip is not already inside the reliableTipMatchResults
-                    val problematicMatchResult = reliableTipMatchResults.stream()
-                            .filter { it.prevFrameTip == alternativeTipMatchResult.prevFrameTip }
-                            .findAny()
-                            .orElse(null)
-
-                    if (problematicMatchResult == null) {
-                        reliableTipMatchResults.remove(reliableTipMatchResult)
-                        chosenAlternativeTipMatchResults.add(alternativeTipMatchResult)
-                    } else {
-                        // Check if we have an alternative that would allow us to keep this alternative
-                        val prevFrameTipInUse = reliableTipMatchResults.stream()
-                                .map { it.prevFrameTip }
-                                .collect(Collectors.toSet())
-                        val solutionAlternativeMatchResult = sortedAlternativeTipMatchResults.stream()
-                                .filter { !chosenAlternativeTipMatchResults.contains(it) }
-                                .filter { it.currentFrameTip == problematicMatchResult.currentFrameTip }
-                                .filter { it.prevFrameTip.getDateOfBirth() <= alternativeTipMatchResult.prevFrameTip.getDateOfBirth() }
-                                .filter { !prevFrameTipInUse.contains(it.prevFrameTip) } // Avoid new problems
-                                .findFirst()
-                                .orElse(null)
-
-                        if (solutionAlternativeMatchResult != null) {
-                            // Check if this solution would not be worst
-                            val actualDateOfBirthSum = reliableTipMatchResult.prevFrameTip.getDateOfBirth() +
-                                    problematicMatchResult.prevFrameTip.getDateOfBirth()
-                            val solutionDateOfBirthSum = alternativeTipMatchResult.prevFrameTip.getDateOfBirth() +
-                                    solutionAlternativeMatchResult.prevFrameTip.getDateOfBirth()
-
-                            val actualScore = reliableTipMatchResult.score + problematicMatchResult.score
-                            val solutionScore = alternativeTipMatchResult.score + solutionAlternativeMatchResult.score
-
-                            if (solutionDateOfBirthSum < actualDateOfBirthSum ||
-                                    (solutionDateOfBirthSum == actualDateOfBirthSum && solutionScore < actualScore)) {
-                                // Choose this solution
-                                reliableTipMatchResults.remove(reliableTipMatchResult)
-                                chosenAlternativeTipMatchResults.add(alternativeTipMatchResult)
-
-                                reliableTipMatchResults.remove(problematicMatchResult)
-                                chosenAlternativeTipMatchResults.add(solutionAlternativeMatchResult)
-                            }
-                        }
-                    }
-                }
-            }
-            reliableTipMatchResults.addAll(chosenAlternativeTipMatchResults)
 
             // Update the tips
             for (tipMatchResult in reliableTipMatchResults) {
