@@ -34,8 +34,8 @@ fun main(args: Array<String>) {
     println("${tips.size} tips detected.")
 
     println("Render images...")
-    //visualizationService.renderTips(compensatedFrames, tips, "/Users/marcplouhinec/projects/chopsticks-tracker/output")
-    visualizationService.renderCurrentAndPastTipDetections(
-            compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output")
+    visualizationService.renderTips(compensatedFrames, tips, "/Users/marcplouhinec/projects/chopsticks-tracker/output")
+    //visualizationService.renderCurrentAndPastTipDetections(
+    //        compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output")
     println("Images rendered.")
 }

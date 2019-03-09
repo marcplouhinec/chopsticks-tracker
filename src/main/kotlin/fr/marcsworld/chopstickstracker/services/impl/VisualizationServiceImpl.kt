@@ -18,31 +18,39 @@ class VisualizationServiceImpl(
 ) : VisualizationService {
 
     override fun renderTips(frames: List<Frame>, tips: List<Tip>, outputDirPath: String) {
-        // Prepare the output folder
+        // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
+        val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
 
         // Draw the tips on each frame
         for (frame in frames) {
             println("    Rendering tips in frame ${frame.index} / ${frames.size}...")
 
             val frameImage = frameService.findImageByIndex(frame.index)
+            val outputImage = BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB)
+
+            val g = outputImage.createGraphics()
+            g.drawImage(frameImage,
+                    Math.round(firstFrameImageX - frame.imageX).toInt(),
+                    Math.round(firstFrameImageY - frame.imageY).toInt(),
+                    null)
 
             val tipsInFrame = tips.stream()
                     .filter { it.detectionByFrameIndex.containsKey(frame.index) }
                     .collect(Collectors.toList())
 
-            val g = frameImage.createGraphics()
-
             g.color = Color.WHITE
             for (tip in tipsInFrame) {
                 val detectedObject = tip.detectionByFrameIndex[frame.index]
                         ?: throw IllegalStateException("Unable to find tip in frame: ${frame.index}")
-                g.drawRect(detectedObject.x, detectedObject.y, detectedObject.width, detectedObject.height)
-                g.drawString(tip.id, detectedObject.x, detectedObject.y + 16)
+                val x = Math.round(firstFrameImageX + detectedObject.x).toInt()
+                val y = Math.round(firstFrameImageY + detectedObject.y).toInt()
+                g.drawRect(x, y, detectedObject.width, detectedObject.height)
+                g.drawString(tip.id, x, y + 16)
             }
             g.dispose()
 
-            ImageIO.write(frameImage, "jpg", File(outputFile, "${frame.index}.jpg"))
+            ImageIO.write(outputImage, "jpg", File(outputFile, "${frame.index}.jpg"))
         }
     }
 
