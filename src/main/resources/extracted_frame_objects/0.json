@@ -1,0 +1,272 @@
+[
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.4271093010902405,
+    "height": 460,
+    "object_type": "CHOPSTICK",
+    "width": 45,
+    "x": 1618,
+    "y": 573
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.5949388146400452,
+    "height": 16,
+    "object_type": "BIG_TIP",
+    "width": 68,
+    "x": 192,
+    "y": 7
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 32,
+    "object_type": "BIG_TIP",
+    "width": 71,
+    "x": 608,
+    "y": 82
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999666213989258,
+    "height": 28,
+    "object_type": "CHOPSTICK",
+    "width": 444,
+    "x": 610,
+    "y": 79
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999821186065674,
+    "height": 22,
+    "object_type": "SMALL_TIP",
+    "width": 57,
+    "x": 1003,
+    "y": 76
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 31,
+    "object_type": "BIG_TIP",
+    "width": 72,
+    "x": 622,
+    "y": 99
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999669790267944,
+    "height": 26,
+    "object_type": "CHOPSTICK",
+    "width": 452,
+    "x": 615,
+    "y": 102
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 21,
+    "object_type": "SMALL_TIP",
+    "width": 60,
+    "x": 1014,
+    "y": 103
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9994902610778809,
+    "height": 32,
+    "object_type": "CHOPSTICK",
+    "width": 441,
+    "x": 622,
+    "y": 122
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9662187695503235,
+    "height": 20,
+    "object_type": "SMALL_TIP",
+    "width": 62,
+    "x": 1010,
+    "y": 115
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999997615814209,
+    "height": 31,
+    "object_type": "BIG_TIP",
+    "width": 70,
+    "x": 618,
+    "y": 138
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 30,
+    "object_type": "BIG_TIP",
+    "width": 72,
+    "x": 622,
+    "y": 168
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.999995231628418,
+    "height": 28,
+    "object_type": "CHOPSTICK",
+    "width": 419,
+    "x": 642,
+    "y": 168
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 21,
+    "object_type": "SMALL_TIP",
+    "width": 62,
+    "x": 1009,
+    "y": 162
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.8445014953613281,
+    "height": 28,
+    "object_type": "CHOPSTICK",
+    "width": 408,
+    "x": 650,
+    "y": 188
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 21,
+    "object_type": "SMALL_TIP",
+    "width": 61,
+    "x": 1011,
+    "y": 185
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 28,
+    "object_type": "BIG_TIP",
+    "width": 71,
+    "x": 619,
+    "y": 201
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999754428863525,
+    "height": 30,
+    "object_type": "CHOPSTICK",
+    "width": 413,
+    "x": 657,
+    "y": 230
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999992847442627,
+    "height": 22,
+    "object_type": "SMALL_TIP",
+    "width": 65,
+    "x": 1013,
+    "y": 220
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999998807907104,
+    "height": 27,
+    "object_type": "BIG_TIP",
+    "width": 70,
+    "x": 628,
+    "y": 237
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.29124534130096436,
+    "height": 25,
+    "object_type": "SMALL_TIP",
+    "width": 66,
+    "x": 636,
+    "y": 241
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999963045120239,
+    "height": 31,
+    "object_type": "CHOPSTICK",
+    "width": 435,
+    "x": 655,
+    "y": 247
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 30,
+    "object_type": "BIG_TIP",
+    "width": 72,
+    "x": 1017,
+    "y": 237
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999997615814209,
+    "height": 25,
+    "object_type": "BIG_TIP",
+    "width": 68,
+    "x": 623,
+    "y": 271
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999885559082031,
+    "height": 21,
+    "object_type": "SMALL_TIP",
+    "width": 64,
+    "x": 634,
+    "y": 267
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9984115362167358,
+    "height": 24,
+    "object_type": "CHOPSTICK",
+    "width": 401,
+    "x": 665,
+    "y": 280
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 1.0,
+    "height": 24,
+    "object_type": "SMALL_TIP",
+    "width": 69,
+    "x": 1015,
+    "y": 283
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9949447512626648,
+    "height": 22,
+    "object_type": "SMALL_TIP",
+    "width": 50,
+    "x": 1573,
+    "y": 283
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9053798913955688,
+    "height": 31,
+    "object_type": "BIG_TIP",
+    "width": 31,
+    "x": 1848,
+    "y": 517
+  },
+  {
+    "py/object": "model.DetectedObject.DetectedObject",
+    "confidence": 0.9999634027481079,
+    "height": 26,
+    "object_type": "BIG_TIP",
+    "width": 62,
+    "x": 322,
+    "y": 1014
+  }
+]
