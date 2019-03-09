@@ -21,6 +21,8 @@ class VideoDetectionServiceImpl(
         }
         compensatedFrames.add(frames[0])
 
+        val maxScore = getMaxTipMatchingScoreInPixels()
+
         for (frameIndex in 1 until frames.size) {
             val prevFrameDetectedTips = findDetectedTips(frames[frameIndex - 1])
             val currFrameDetectedTips = findDetectedTips(frames[frameIndex])
@@ -37,6 +39,7 @@ class VideoDetectionServiceImpl(
                                 }
                     }
                     .sorted(Comparator.comparing(DetectedTipMatchResult::score))
+                    .filter { it.score <= maxScore }
                     .collect(Collectors.toList())
 
             // Choose match results by score classification and by avoiding multiple match results with the same tips
@@ -91,9 +94,7 @@ class VideoDetectionServiceImpl(
     }
 
     override fun findAllTips(frames: List<Frame>): List<Tip> {
-        val frameWidth = configuration.frameWidth.toDouble()
-        val frameHeight = configuration.frameHeight.toDouble()
-        val frameDiagonal = Math.sqrt(Math.pow(frameWidth, 2.0) + Math.pow(frameHeight, 2.0))
+        val maxScore = getMaxTipMatchingScoreInPixels()
 
         val tips = ArrayList(findTipsInFrame(frames[0]))
 
@@ -129,7 +130,7 @@ class VideoDetectionServiceImpl(
             val matchedTips = HashSet<Tip>()
             val reliableTipMatchResults = ArrayList<TipMatchResult>()
             for (tipMatchResult in tipMatchResults) {
-                if (tipMatchResult.score / frameDiagonal > configuration.maxTipMatchingScore) {
+                if (tipMatchResult.score > maxScore) {
                     break
                 }
                 if (!matchedTips.contains(tipMatchResult.currentFrameTip) && !matchedTips.contains(tipMatchResult.prevFrameTip)) {
@@ -185,6 +186,14 @@ class VideoDetectionServiceImpl(
         score += Math.abs(currFrameDetectedTip.width - prevFrameDetectedTip.width)
         score += Math.abs(currFrameDetectedTip.height - prevFrameDetectedTip.height)
         return score
+    }
+
+    private fun getMaxTipMatchingScoreInPixels(): Double {
+        val frameWidth = configuration.frameWidth.toDouble()
+        val frameHeight = configuration.frameHeight.toDouble()
+        val frameDiagonal = Math.sqrt(Math.pow(frameWidth, 2.0) + Math.pow(frameHeight, 2.0))
+
+        return configuration.maxTipMatchingScore * frameDiagonal
     }
 
     private data class DetectedTipMatchResult(
