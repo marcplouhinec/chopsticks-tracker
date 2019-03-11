@@ -14,7 +14,7 @@ class VideoDetectionServiceImpl(
         private val configuration: Configuration
 ) : VideoDetectionService {
 
-    override fun compensateCameraMovements(frames: List<Frame>): List<Frame> {
+    override fun compensateCameraMotion(frames: List<Frame>): List<Frame> {
         val compensatedFrames = ArrayList<Frame>()
         if (frames.isEmpty()) {
             return compensatedFrames
@@ -55,7 +55,7 @@ class VideoDetectionServiceImpl(
             }
 
             // Use the best match results to calculate the translation coordinates between this frame and the previous one
-            val nbBestMatchResults = Math.min(reliableDetectedTipMatchResults.size, configuration.nbTipsToUseToDetectCameraMovements)
+            val nbBestMatchResults = Math.min(reliableDetectedTipMatchResults.size, configuration.nbTipsToUseToDetectCameraMotion)
             val dx = reliableDetectedTipMatchResults.stream()
                     .limit(nbBestMatchResults.toLong())
                     .mapToInt { it.currFrameDetectedTip.x - it.prevFrameDetectedTip.x }

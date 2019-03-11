@@ -26,8 +26,8 @@ fun main(args: Array<String>) {
     val frames = frameService.findAll()
     println("${frames.size} frames loaded.")
 
-    println("Compensate for camera movements...")
-    val compensatedFrames = videoDetectionService.compensateCameraMovements(frames)
+    println("Compensate for camera motion...")
+    val compensatedFrames = videoDetectionService.compensateCameraMotion(frames)
 
     println("Detecting tips...")
     val tips = videoDetectionService.findAllTips(compensatedFrames)

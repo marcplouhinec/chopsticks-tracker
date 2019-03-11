@@ -127,7 +127,7 @@ class VisualizationServiceImpl(
         return NewFrameDimension(-minImageX, -minImageY, width.toInt(), height.toInt())
     }
 
-    // New frame dimension to compensate for camera movement
+    // New frame dimension to compensate for camera motion
     data class NewFrameDimension(
             val firstFrameImageX: Double,
             val firstFrameImageY: Double,

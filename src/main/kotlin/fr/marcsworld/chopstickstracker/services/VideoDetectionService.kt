@@ -12,7 +12,7 @@ interface VideoDetectionService {
      * In addition, the returned frames contains the coordinates of their corresponding images
      * relatively to the first frame of the video.
      */
-    fun compensateCameraMovements(frames: List<Frame>): List<Frame>
+    fun compensateCameraMotion(frames: List<Frame>): List<Frame>
 
     /**
      * Track the tips in the given frames.
