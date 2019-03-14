@@ -6,6 +6,11 @@ import fr.marcsworld.chopstickstracker.model.Tip
 interface VideoDetectionService {
 
     /**
+     * Filter all the objects of the frame that have too low confidence.
+     */
+    fun removeUnreliableDetectedObjects(frames: List<Frame>): List<Frame>
+
+    /**
      * Because the camera moves during the video, this function recompute
      * the coordinates of each detected object relatively to the first frame of the video.
      *
@@ -13,6 +18,11 @@ interface VideoDetectionService {
      * relatively to the first frame of the video.
      */
     fun compensateCameraMotion(frames: List<Frame>): List<Frame>
+
+    /**
+     * Because the arm hides objects, this method artificially adds them back at their expected locations.
+     */
+    fun addObjectsHiddenByArm(frames: List<Frame>): List<Frame>
 
     /**
      * Track the tips in the given frames.

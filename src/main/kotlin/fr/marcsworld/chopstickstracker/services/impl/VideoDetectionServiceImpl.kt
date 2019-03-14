@@ -1,9 +1,6 @@
 package fr.marcsworld.chopstickstracker.services.impl
 
-import fr.marcsworld.chopstickstracker.model.Configuration
-import fr.marcsworld.chopstickstracker.model.DetectedObject
-import fr.marcsworld.chopstickstracker.model.Frame
-import fr.marcsworld.chopstickstracker.model.Tip
+import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.services.VideoDetectionService
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -13,6 +10,20 @@ import kotlin.collections.ArrayList
 class VideoDetectionServiceImpl(
         private val configuration: Configuration
 ) : VideoDetectionService {
+
+    override fun removeUnreliableDetectedObjects(frames: List<Frame>): List<Frame> {
+        return frames.map { frame ->
+            val reliableObjects = frame.objects.filter {
+                val minConfidence = when {
+                    it.objectType.isTip() -> configuration.minTipDetectionConfidence
+                    it.objectType == DetectedObjectType.CHOPSTICK -> configuration.minChopstickDetectionConfidence
+                    else -> configuration.minArmDetectionConfidence
+                }
+                it.confidence >= minConfidence
+            }
+            Frame(frame.index, reliableObjects, frame.imageX, frame.imageY)
+        }
+    }
 
     override fun compensateCameraMotion(frames: List<Frame>): List<Frame> {
         val compensatedFrames = ArrayList<Frame>()
@@ -35,7 +46,7 @@ class VideoDetectionServiceImpl(
                                     DetectedTipMatchResult(
                                             prevFrameDetectedTip,
                                             currFrameDetectedTip,
-                                            computeTipMatchingScore(prevFrameDetectedTip, currFrameDetectedTip))
+                                            computeObjectMatchingScore(prevFrameDetectedTip, currFrameDetectedTip))
                                 }
                     }
                     .sorted(Comparator.comparing(DetectedTipMatchResult::score))
@@ -71,14 +82,14 @@ class VideoDetectionServiceImpl(
             val currFrame = frames[frameIndex]
             val prevCompensatedFrame = compensatedFrames[frameIndex - 1]
 
-            val currFrameImageX = prevCompensatedFrame.imageX + dx
-            val currFrameImageY = prevCompensatedFrame.imageY + dy
+            val currFrameImageX = prevCompensatedFrame.imageX - dx
+            val currFrameImageY = prevCompensatedFrame.imageY - dy
 
             val compensatedObjects = currFrame.objects.stream()
                     .map {
                         DetectedObject(
-                                Math.round(it.x - currFrameImageX).toInt(),
-                                Math.round(it.y - currFrameImageY).toInt(),
+                                Math.round(it.x + currFrameImageX).toInt(),
+                                Math.round(it.y + currFrameImageY).toInt(),
                                 it.width,
                                 it.height,
                                 it.objectType,
@@ -91,6 +102,53 @@ class VideoDetectionServiceImpl(
         }
 
         return compensatedFrames
+    }
+
+    override fun addObjectsHiddenByArm(frames: List<Frame>): List<Frame> {
+        val augmentedFrames = ArrayList<Frame>()
+
+        for (frame in frames) {
+            augmentedFrames.add(frame)
+
+            if (frame.index <= 0) {
+                continue
+            }
+
+            // Find arms and continue if none have been found
+            val detectedArms = frame.objects.filter { it.objectType == DetectedObjectType.ARM }
+            if (detectedArms.isEmpty()) {
+                continue
+            }
+
+            // Find objects in the previous frame that are now under the arms
+            val prevFrame = augmentedFrames[frame.index - 1]
+            val prevObjectsThatOverlapWithArms = prevFrame.objects.filter {
+                detectedArms.any { arm -> it.objectType != DetectedObjectType.ARM && objectsOverlap(arm, it) }
+            }
+            if (prevObjectsThatOverlapWithArms.isEmpty()) {
+                continue
+            }
+
+            // Because the arm box includes areas that are not hidden by the arm,
+            // ignore objects that overlap with other ones from current frame.
+            val hiddenPrevObjects = prevObjectsThatOverlapWithArms.filter { prevObject ->
+                !frame.objects.any { computeObjectMatchingScore(prevObject, it) < 20 } // TODO why 20?
+            }
+            if (hiddenPrevObjects.isEmpty()) {
+                continue
+            }
+
+            // Add hidden objects into the current frame
+            val copiedObjects = hiddenPrevObjects.map {
+                DetectedObject(it.x, it.y, it.width, it.height, it.objectType, it.confidence,
+                        DetectedObjectStatus.HIDDEN_BY_ARM)
+            }
+            val frameObjects = ArrayList(frame.objects)
+            frameObjects.addAll(copiedObjects)
+            augmentedFrames[frame.index] = Frame(frame.index, frameObjects, frame.imageX, frame.imageY)
+        }
+
+        return augmentedFrames
     }
 
     override fun findAllTips(frames: List<Frame>): List<Tip> {
@@ -118,7 +176,7 @@ class VideoDetectionServiceImpl(
                                     val prevFrameDetectedTip = it.detectionByFrameIndex.lastEntry().value
 
                                     // Compute a score for each tip (smaller is better)
-                                    val score = computeTipMatchingScore(prevFrameDetectedTip, detectedTip)
+                                    val score = computeObjectMatchingScore(prevFrameDetectedTip, detectedTip)
 
                                     TipMatchResult(currentFrameTip, it, score)
                                 }
@@ -179,12 +237,12 @@ class VideoDetectionServiceImpl(
                 .collect(Collectors.toList())
     }
 
-    private fun computeTipMatchingScore(prevFrameDetectedTip: DetectedObject, currFrameDetectedTip: DetectedObject): Double {
-        val dx = (currFrameDetectedTip.x - prevFrameDetectedTip.x).toDouble()
-        val dy = (currFrameDetectedTip.y - prevFrameDetectedTip.y).toDouble()
+    private fun computeObjectMatchingScore(prevObject: DetectedObject, currObject: DetectedObject): Double {
+        val dx = (currObject.x - prevObject.x).toDouble()
+        val dy = (currObject.y - prevObject.y).toDouble()
         var score = Math.abs(Math.sqrt(Math.pow(dx, 2.0) + Math.pow(dy, 2.0)))
-        score += Math.abs(currFrameDetectedTip.width - prevFrameDetectedTip.width)
-        score += Math.abs(currFrameDetectedTip.height - prevFrameDetectedTip.height)
+        score += Math.abs(currObject.width - prevObject.width)
+        score += Math.abs(currObject.height - prevObject.height)
         return score
     }
 
@@ -194,6 +252,11 @@ class VideoDetectionServiceImpl(
         val frameDiagonal = Math.sqrt(Math.pow(frameWidth, 2.0) + Math.pow(frameHeight, 2.0))
 
         return configuration.maxTipMatchingScore * frameDiagonal
+    }
+
+    private fun objectsOverlap(object1: DetectedObject, object2: DetectedObject): Boolean {
+        return object1.x < object2.x + object2.width && object1.x + object1.width > object2.x &&
+                object1.y < object2.y + object2.height && object1.y + object1.height > object2.y
     }
 
     private data class DetectedTipMatchResult(

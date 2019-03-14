@@ -1,6 +1,7 @@
 package fr.marcsworld.chopstickstracker.services.impl
 
 import fr.marcsworld.chopstickstracker.model.Configuration
+import fr.marcsworld.chopstickstracker.model.DetectedObjectStatus
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
 import fr.marcsworld.chopstickstracker.services.FrameService
@@ -31,8 +32,8 @@ class VisualizationServiceImpl(
 
             val g = outputImage.createGraphics()
             g.drawImage(frameImage,
-                    Math.round(firstFrameImageX - frame.imageX).toInt(),
-                    Math.round(firstFrameImageY - frame.imageY).toInt(),
+                    Math.round(firstFrameImageX + frame.imageX).toInt(),
+                    Math.round(firstFrameImageY + frame.imageY).toInt(),
                     null)
 
             val tipsInFrame = tips.stream()
@@ -68,15 +69,14 @@ class VisualizationServiceImpl(
 
             val g = outputImage.createGraphics()
             g.drawImage(frameImage,
-                    Math.round(firstFrameImageX - frame.imageX).toInt(),
-                    Math.round(firstFrameImageY - frame.imageY).toInt(),
+                    Math.round(firstFrameImageX + frame.imageX).toInt(),
+                    Math.round(firstFrameImageY + frame.imageY).toInt(),
                     null)
 
-            for (pastIndex in 0 until maxFramesInPast) {
+            for (pastIndex in maxFramesInPast downTo 0) {
                 val frameIndex = frame.index - pastIndex
                 if (frameIndex >= 0) {
                     val alpha = (maxFramesInPast - pastIndex) * (255.0 / maxFramesInPast)
-                    g.color = Color(255, 255, 255, Math.round(alpha).toInt())
 
                     val detectedTips = frames[frameIndex].objects.stream()
                             .filter { it.objectType.isTip() }
@@ -84,6 +84,13 @@ class VisualizationServiceImpl(
                             .collect(Collectors.toList())
 
                     for (detectedTip in detectedTips) {
+                        when {
+                            detectedTip.status == DetectedObjectStatus.VISIBLE ->
+                                g.color = Color(255, 255, 255, Math.round(alpha).toInt())
+                            else ->
+                                g.color = Color(0, 0, 255, Math.round(alpha).toInt())
+                        }
+
                         val x = Math.round(firstFrameImageX + detectedTip.x).toInt()
                         val y = Math.round(firstFrameImageY + detectedTip.y).toInt()
                         g.drawRect(x, y, detectedTip.width, detectedTip.height)

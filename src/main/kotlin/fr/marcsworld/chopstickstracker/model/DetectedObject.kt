@@ -10,4 +10,5 @@ data class DetectedObject(
         val width: Int,
         val height: Int,
         @JsonProperty("object_type") val objectType: DetectedObjectType,
-        val confidence: Double)
+        val confidence: Double,
+        val status: DetectedObjectStatus = DetectedObjectStatus.VISIBLE)

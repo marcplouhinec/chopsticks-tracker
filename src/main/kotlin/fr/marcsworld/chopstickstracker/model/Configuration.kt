@@ -6,6 +6,8 @@ data class Configuration(
         val frameWidth: Int,
         val frameHeight: Int,
         val minTipDetectionConfidence: Double,
+        val minChopstickDetectionConfidence: Double,
+        val minArmDetectionConfidence: Double,
         val nbTipsToUseToDetectCameraMotion: Int,
         val maxTipMatchingScore: Double,
         val nbFramesAfterWhichATipIsConsideredMissing: Int)
