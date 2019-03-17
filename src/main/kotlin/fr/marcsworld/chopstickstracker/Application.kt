@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
             0.7,
             0.7,
             7,
-            0.03,
+            66,
             7)
     val frameService: FrameService = LocalStorageFrameServiceImpl(configuration)
     val videoDetectionService: VideoDetectionService = VideoDetectionServiceImpl(configuration)

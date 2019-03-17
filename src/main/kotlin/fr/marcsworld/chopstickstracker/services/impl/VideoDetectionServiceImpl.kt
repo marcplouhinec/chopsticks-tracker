@@ -32,7 +32,7 @@ class VideoDetectionServiceImpl(
         }
         compensatedFrames.add(frames[0])
 
-        val maxScore = getMaxTipMatchingScoreInPixels()
+        val maxScore = configuration.maxTipMatchingScoreInPixels
 
         for (frameIndex in 1 until frames.size) {
             val prevFrameDetectedTips = findDetectedTips(frames[frameIndex - 1])
@@ -154,7 +154,7 @@ class VideoDetectionServiceImpl(
     }
 
     override fun findAllTips(frames: List<Frame>): List<Tip> {
-        val maxScore = getMaxTipMatchingScoreInPixels()
+        val maxScore = configuration.maxTipMatchingScoreInPixels
 
         val tips = ArrayList(findTipsInFrame(frames[0]))
 
@@ -246,14 +246,6 @@ class VideoDetectionServiceImpl(
         score += Math.abs(currObject.width - prevObject.width)
         score += Math.abs(currObject.height - prevObject.height)
         return score
-    }
-
-    private fun getMaxTipMatchingScoreInPixels(): Double {
-        val frameWidth = configuration.frameWidth.toDouble()
-        val frameHeight = configuration.frameHeight.toDouble()
-        val frameDiagonal = Math.sqrt(Math.pow(frameWidth, 2.0) + Math.pow(frameHeight, 2.0))
-
-        return configuration.maxTipMatchingScore * frameDiagonal
     }
 
     private fun objectsOverlap(object1: DetectedObject, object2: DetectedObject): Boolean {
