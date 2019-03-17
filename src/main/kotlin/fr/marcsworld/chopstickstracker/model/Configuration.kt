@@ -9,5 +9,5 @@ data class Configuration(
         val minChopstickDetectionConfidence: Double,
         val minArmDetectionConfidence: Double,
         val nbTipsToUseToDetectCameraMotion: Int,
-        val maxTipMatchingScore: Double,
+        val maxTipMatchingScore: Double, // TODO better in pixels
         val nbFramesAfterWhichATipIsConsideredMissing: Int)

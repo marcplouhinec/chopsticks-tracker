@@ -146,6 +146,8 @@ class VideoDetectionServiceImpl(
             val frameObjects = ArrayList(frame.objects)
             frameObjects.addAll(copiedObjects)
             augmentedFrames[frame.index] = Frame(frame.index, frameObjects, frame.imageX, frame.imageY)
+            // TODO copy the x previous detected objects into the last x frames instead so that we can keep
+            // the "natural heat map"
         }
 
         return augmentedFrames
