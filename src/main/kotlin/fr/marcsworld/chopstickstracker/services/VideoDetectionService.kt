@@ -20,11 +20,6 @@ interface VideoDetectionService {
     fun compensateCameraMotion(frames: List<Frame>): List<Frame>
 
     /**
-     * Because the arm hides objects, this method artificially adds them back at their expected locations.
-     */
-    fun addObjectsHiddenByArm(frames: List<Frame>): List<Frame>
-
-    /**
      * Track the tips in the given frames.
      */
     fun findAllTips(frames: List<Frame>): List<Tip>

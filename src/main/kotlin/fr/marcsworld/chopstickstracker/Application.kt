@@ -34,16 +34,13 @@ fun main(args: Array<String>) {
     println("Compensate for camera motion...")
     val compensatedFrames = videoDetectionService.compensateCameraMotion(reliableFrames)
 
-    println("Add hidden objects under the arm...")
-    val augmentedFrames = videoDetectionService.addObjectsHiddenByArm(compensatedFrames)
-
     println("Detecting tips...")
-    val tips = videoDetectionService.findAllTips(augmentedFrames)
+    val tips = videoDetectionService.findAllTips(compensatedFrames)
     println("${tips.size} tips detected.")
 
     println("Render images...")
     //visualizationService.renderTips(augmentedFrames, tips, "/Users/marcplouhinec/projects/chopsticks-tracker/output")
     visualizationService.renderCurrentAndPastTipDetections(
-            augmentedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
+            compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
     println("Images rendered.")
 }
