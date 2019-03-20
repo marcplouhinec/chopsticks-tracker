@@ -48,6 +48,7 @@ class VisualizationServiceImpl(
                 val tip = shapeWithTip.second
 
                 g.color = when {
+                    shape.status == EstimatedShapeStatus.DETECTED_ONCE -> Color.GREEN
                     shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
                     shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
                     else -> Color.WHITE

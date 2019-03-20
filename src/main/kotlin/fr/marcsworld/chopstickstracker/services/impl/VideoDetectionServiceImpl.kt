@@ -156,6 +156,7 @@ class VideoDetectionServiceImpl(
                 // ignore objects that overlap with other ones from current frame.
                 tips.stream()
                         .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
+                        .filter { it.shapes.last().status != EstimatedShapeStatus.DETECTED_ONCE }
                         .filter { detectedArms.any { arm -> objectsOverlap(arm, it.shapes.last()) } }
                         .filter { overlappingTip ->
                             !frame.objects.any { computeMatchingScore(overlappingTip.shapes.last(), it) < 20 } // TODO why 20?
@@ -187,7 +188,7 @@ class VideoDetectionServiceImpl(
                     // TODO is an average what we really want for (x, y, width, height)?
                     val newShape = EstimatedShape(
                             currShape.frameIndex,
-                            currShape.status,
+                            if (recentShapes.size == 1) EstimatedShapeStatus.DETECTED_ONCE else EstimatedShapeStatus.DETECTED,
                             currShape.detectedObject,
                             Math.round(avgX).toInt(),
                             Math.round(avgY).toInt(),
@@ -232,7 +233,8 @@ class VideoDetectionServiceImpl(
                 // Check if the tip is lost
                 val recentShapes = tip.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing)
                 val isNotLost = recentShapes.any {
-                    it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM
+                    it.status == EstimatedShapeStatus.DETECTED ||
+                            it.status == EstimatedShapeStatus.HIDDEN_BY_ARM
                 }
                 val undetectedShape = EstimatedShape(
                         frame.index,
@@ -261,7 +263,7 @@ class VideoDetectionServiceImpl(
 
         return findDetectedTips(frame).map {
             val tipId = "T" + frame.index + "_" + nextTipId.incrementAndGet()
-            val shape = EstimatedShape(frame.index, EstimatedShapeStatus.DETECTED, it, it.x, it.y, it.width, it.height)
+            val shape = EstimatedShape(frame.index, EstimatedShapeStatus.DETECTED_ONCE, it, it.x, it.y, it.width, it.height)
             Tip(tipId, mutableListOf(shape))
         }
     }
