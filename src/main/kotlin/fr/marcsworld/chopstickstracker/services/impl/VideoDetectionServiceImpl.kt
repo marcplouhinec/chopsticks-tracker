@@ -148,7 +148,22 @@ class VideoDetectionServiceImpl(
                 }
             }
 
-            // TODO find the tips hidden by arms
+            // Find tips hidden by arms
+            val detectedArms = frame.objects.filter { it.objectType == DetectedObjectType.ARM }
+            val hiddenTips = if (detectedArms.isNotEmpty()) {
+                // Find tips in the previous frame that are now under the arms, then
+                // because the arm box includes areas that are not hidden by the arm,
+                // ignore objects that overlap with other ones from current frame.
+                tips.stream()
+                        .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
+                        .filter { detectedArms.any { arm -> objectsOverlap(arm, it.shapes.last()) } }
+                        .filter { overlappingTip ->
+                            !frame.objects.any { computeMatchingScore(overlappingTip.shapes.last(), it) < 20 } // TODO why 20?
+                        }
+                        .collect(Collectors.toSet())
+            } else {
+                emptySet<Tip>()
+            }
 
             // Update the tips
             for (tip in tips) {
@@ -183,10 +198,23 @@ class VideoDetectionServiceImpl(
                     continue
                 }
 
-                // TODO Handle the case when the tip is hidden by an arm
+                // Check when the tip is hidden by an arm
+                val lastTipShape = tip.shapes.last()
+                if (hiddenTips.contains(tip)) {
+                    val hiddenShape = EstimatedShape(
+                            frame.index,
+                            EstimatedShapeStatus.HIDDEN_BY_ARM,
+                            null,
+                            lastTipShape.x,
+                            lastTipShape.y,
+                            lastTipShape.width,
+                            lastTipShape.height)
+                    tip.shapes.add(hiddenShape)
+
+                    continue
+                }
 
                 // Check if the tip is already lost
-                val lastTipShape = tip.shapes.last()
                 if (lastTipShape.status == EstimatedShapeStatus.LOST) {
                     val lostShape = EstimatedShape(
                             frame.index,
@@ -254,7 +282,7 @@ class VideoDetectionServiceImpl(
         return score
     }
 
-    private fun objectsOverlap(object1: DetectedObject, object2: DetectedObject): Boolean {
+    private fun objectsOverlap(object1: Rectangle, object2: Rectangle): Boolean {
         return object1.x < object2.x + object2.width && object1.x + object1.width > object2.x &&
                 object1.y < object2.y + object2.height && object1.y + object1.height > object2.y
     }

@@ -43,10 +43,15 @@ class VisualizationServiceImpl(
 
             val shapesWithTips = shapesWithTipsByFrameIndex[frame.index] ?: listOf()
 
-            g.color = Color.WHITE
             for (shapeWithTip in shapesWithTips) {
                 val shape = shapeWithTip.first
                 val tip = shapeWithTip.second
+
+                g.color = when {
+                    shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
+                    shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
+                    else -> Color.WHITE
+                }
 
                 val x = Math.round(firstFrameImageX + shape.x).toInt()
                 val y = Math.round(firstFrameImageY + shape.y).toInt()
