@@ -1,9 +1,6 @@
 package fr.marcsworld.chopstickstracker.services.impl
 
-import fr.marcsworld.chopstickstracker.model.Configuration
-import fr.marcsworld.chopstickstracker.model.DetectedObjectType
-import fr.marcsworld.chopstickstracker.model.Frame
-import fr.marcsworld.chopstickstracker.model.Tip
+import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.services.FrameService
 import fr.marcsworld.chopstickstracker.services.VisualizationService
 import java.awt.Color
@@ -23,6 +20,14 @@ class VisualizationServiceImpl(
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
 
+        val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedShape, Tip>>> = tips
+                .flatMap { tip ->
+                    tip.shapes
+                            .filter { it.status != EstimatedShapeStatus.LOST }
+                            .map { Pair(it, tip) }
+                }
+                .groupBy { it.first.frameIndex }
+
         // Draw the tips on each frame
         for (frame in frames) {
             println("    Rendering tips in frame ${frame.index} / ${frames.size}...")
@@ -36,17 +41,16 @@ class VisualizationServiceImpl(
                     Math.round(firstFrameImageY + frame.imageY).toInt(),
                     null)
 
-            val tipsInFrame = tips.stream()
-                    .filter { it.detectionByFrameIndex.containsKey(frame.index) }
-                    .collect(Collectors.toList())
+            val shapesWithTips = shapesWithTipsByFrameIndex[frame.index] ?: listOf()
 
             g.color = Color.WHITE
-            for (tip in tipsInFrame) {
-                val detectedObject = tip.detectionByFrameIndex[frame.index]
-                        ?: throw IllegalStateException("Unable to find tip in frame: ${frame.index}")
-                val x = Math.round(firstFrameImageX + detectedObject.x).toInt()
-                val y = Math.round(firstFrameImageY + detectedObject.y).toInt()
-                g.drawRect(x, y, detectedObject.width, detectedObject.height)
+            for (shapeWithTip in shapesWithTips) {
+                val shape = shapeWithTip.first
+                val tip = shapeWithTip.second
+
+                val x = Math.round(firstFrameImageX + shape.x).toInt()
+                val y = Math.round(firstFrameImageY + shape.y).toInt()
+                g.drawRect(x, y, shape.width, shape.height)
                 g.drawString(tip.id, x, y + 16)
             }
             g.dispose()

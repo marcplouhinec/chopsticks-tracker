@@ -46,7 +46,7 @@ class VideoDetectionServiceImpl(
                                     ObjectMatchResult(
                                             prevFrameDetectedTip,
                                             currFrameDetectedTip,
-                                            computeObjectMatchingScore(prevFrameDetectedTip, currFrameDetectedTip))
+                                            computeMatchingScore(prevFrameDetectedTip, currFrameDetectedTip))
                                 }
                     }
                     .sorted(Comparator.comparing(ObjectMatchResult::score))
@@ -105,32 +105,29 @@ class VideoDetectionServiceImpl(
     }
 
     override fun findAllTips(frames: List<Frame>): List<Tip> {
-        val maxScore = configuration.maxTipMatchingScoreInPixels
+        val tips = mutableListOf<Tip>()
 
-        val tips = ArrayList(findTipsInFrame(frames[0]))
+        for (frame in frames) {
+            println("    Detecting tips in frame ${frame.index} / ${frames.size}...")
 
-        for (frameIndex in 1 until frames.size) {
-            println("    Detecting tips in frame $frameIndex / ${frames.size}...")
-            val frameTips = findTipsInFrame(frames[frameIndex])
+            // Detect the tips in the current frame
+            val frameTips = findTipsInFrame(frame)
+
+            if (frame.index < 1) {
+                tips.addAll(frameTips)
+                continue
+            }
 
             // For each tip in this frame, try to find the corresponding one in the previous frame
             val tipMatchResults = frameTips.stream()
                     .flatMap { currentFrameTip ->
-                        val detectedTip = currentFrameTip.detectionByFrameIndex[frameIndex]
-                                ?: throw IllegalStateException("Unable to find tip in current frame.")
+                        val currentShape = currentFrameTip.shapes.last()
 
                         tips.stream()
-                                .filter {
-                                    // Only consider eligible tips in the previous frames
-                                    it.detectionByFrameIndex.lastKey() + 1 >=
-                                            frameIndex - configuration.nbFramesAfterWhichATipIsConsideredMissing
-                                }
+                                .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
                                 .map {
-                                    val prevFrameDetectedTip = it.detectionByFrameIndex.lastEntry().value
-
-                                    // Compute a score for each tip (smaller is better)
-                                    val score = computeObjectMatchingScore(prevFrameDetectedTip, detectedTip)
-
+                                    val prevShape = it.shapes.last()
+                                    val score = computeMatchingScore(prevShape, currentShape)
                                     TipMatchResult(currentFrameTip, it, score)
                                 }
                     }
@@ -139,24 +136,85 @@ class VideoDetectionServiceImpl(
 
             // Match the tips together
             val matchedTips = HashSet<Tip>()
-            val reliableTipMatchResults = ArrayList<TipMatchResult>()
+            val matchResultByPrevTip = mutableMapOf<Tip, TipMatchResult>()
             for (tipMatchResult in tipMatchResults) {
-                if (tipMatchResult.score > maxScore) {
+                if (tipMatchResult.score > configuration.maxTipMatchingScoreInPixels) {
                     break
                 }
                 if (!matchedTips.contains(tipMatchResult.currentFrameTip) && !matchedTips.contains(tipMatchResult.prevFrameTip)) {
-                    reliableTipMatchResults.add(tipMatchResult)
+                    matchResultByPrevTip[tipMatchResult.prevFrameTip] = tipMatchResult
                     matchedTips.add(tipMatchResult.currentFrameTip)
                     matchedTips.add(tipMatchResult.prevFrameTip)
                 }
             }
 
-            // Update the tips
-            for (tipMatchResult in reliableTipMatchResults) {
-                val detectedTip = tipMatchResult.currentFrameTip.detectionByFrameIndex[frameIndex]
-                        ?: throw IllegalStateException("Unable to find tip in current frame.")
+            // TODO find the tips hidden by arms
 
-                tipMatchResult.prevFrameTip.detectionByFrameIndex[frameIndex] = detectedTip
+            // Update the tips
+            for (tip in tips) {
+                // Check if the tip was matched to a detected object
+                val matchResult = matchResultByPrevTip[tip]
+                if (matchResult != null) {
+                    val currShape = matchResult.currentFrameTip.shapes.last()
+
+                    val recentShapes = ArrayList<EstimatedShape>(tip.shapes.takeLast(9)) // TODO why 9?
+                    recentShapes.add(currShape)
+
+                    val avgX = recentShapes.stream().mapToInt { it.detectedObject?.x ?: it.x }.average().orElse(0.0)
+                    val avgY = recentShapes.stream().mapToInt { it.detectedObject?.y ?: it.y }.average().orElse(0.0)
+                    val avgWith = recentShapes.stream()
+                            .mapToInt { it.detectedObject?.width ?: it.width }
+                            .average().orElse(0.0)
+                    val avgHeight = recentShapes.stream()
+                            .mapToInt { it.detectedObject?.height ?: it.height }
+                            .average().orElse(0.0)
+
+                    // TODO is an average what we really want for (x, y, width, height)?
+                    val newShape = EstimatedShape(
+                            currShape.frameIndex,
+                            currShape.status,
+                            currShape.detectedObject,
+                            Math.round(avgX).toInt(),
+                            Math.round(avgY).toInt(),
+                            Math.round(avgWith).toInt(),
+                            Math.round(avgHeight).toInt())
+                    tip.shapes.add(newShape)
+
+                    continue
+                }
+
+                // TODO Handle the case when the tip is hidden by an arm
+
+                // Check if the tip is already lost
+                val lastTipShape = tip.shapes.last()
+                if (lastTipShape.status == EstimatedShapeStatus.LOST) {
+                    val lostShape = EstimatedShape(
+                            frame.index,
+                            EstimatedShapeStatus.LOST,
+                            null,
+                            lastTipShape.x,
+                            lastTipShape.y,
+                            lastTipShape.width,
+                            lastTipShape.height)
+                    tip.shapes.add(lostShape)
+
+                    continue
+                }
+
+                // Check if the tip is lost
+                val recentShapes = tip.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing)
+                val isNotLost = recentShapes.any {
+                    it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM
+                }
+                val undetectedShape = EstimatedShape(
+                        frame.index,
+                        if (isNotLost) EstimatedShapeStatus.NOT_DETECTED else EstimatedShapeStatus.LOST,
+                        null,
+                        lastTipShape.x,
+                        lastTipShape.y,
+                        lastTipShape.width,
+                        lastTipShape.height)
+                tip.shapes.add(undetectedShape)
             }
 
             // Add new tips
@@ -173,14 +231,11 @@ class VideoDetectionServiceImpl(
     private fun findTipsInFrame(frame: Frame): List<Tip> {
         val nextTipId = AtomicInteger()
 
-        return findDetectedTips(frame).stream()
-                .map {
-                    val tipId = "T" + frame.index + "_" + nextTipId.incrementAndGet()
-                    val detectionByFrameIndex = TreeMap<Int, DetectedObject>()
-                    detectionByFrameIndex[frame.index] = it
-                    Tip(tipId, detectionByFrameIndex)
-                }
-                .collect(Collectors.toList())
+        return findDetectedTips(frame).map {
+            val tipId = "T" + frame.index + "_" + nextTipId.incrementAndGet()
+            val shape = EstimatedShape(frame.index, EstimatedShapeStatus.DETECTED, it, it.x, it.y, it.width, it.height)
+            Tip(tipId, mutableListOf(shape))
+        }
     }
 
     private fun findDetectedTips(frame: Frame): List<DetectedObject> {
@@ -190,7 +245,7 @@ class VideoDetectionServiceImpl(
                 .collect(Collectors.toList())
     }
 
-    private fun computeObjectMatchingScore(prevObject: DetectedObject, currObject: DetectedObject): Double {
+    private fun computeMatchingScore(prevObject: Rectangle, currObject: Rectangle): Double {
         val dx = (currObject.x - prevObject.x).toDouble()
         val dy = (currObject.y - prevObject.y).toDouble()
         var score = Math.abs(Math.sqrt(Math.pow(dx, 2.0) + Math.pow(dy, 2.0)))

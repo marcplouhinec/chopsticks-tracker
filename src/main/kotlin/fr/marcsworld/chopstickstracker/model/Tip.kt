@@ -1,10 +1,8 @@
 package fr.marcsworld.chopstickstracker.model
 
-import java.util.*
-
 data class Tip(
         val id: String,
-        val detectionByFrameIndex: TreeMap<Int, DetectedObject>
+        val shapes: MutableList<EstimatedShape>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -20,11 +18,5 @@ data class Tip(
     override fun hashCode(): Int {
         return id.hashCode()
     }
-
-    /**
-     * @return Date of birth in "frame index".
-     */
-    fun getDateOfBirth(): Int {
-        return detectionByFrameIndex.firstKey()
-    }
 }
+

@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class DetectedObject(
-        val x: Int,
-        val y: Int,
-        val width: Int,
-        val height: Int,
+        override val x: Int,
+        override val y: Int,
+        override val width: Int,
+        override val height: Int,
         @JsonProperty("object_type") val objectType: DetectedObjectType,
-        val confidence: Double)
+        val confidence: Double) : Rectangle
