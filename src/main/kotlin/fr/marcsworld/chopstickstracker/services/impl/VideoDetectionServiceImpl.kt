@@ -154,12 +154,13 @@ class VideoDetectionServiceImpl(
                 // Find tips in the previous frame that are now under the arms, then
                 // because the arm box includes areas that are not hidden by the arm,
                 // ignore objects that overlap with other ones from current frame.
+                val maxScore = configuration.maxMatchingScoreToConsiderTipNotHiddenByArm
                 tips.stream()
                         .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
                         .filter { it.shapes.last().status != EstimatedShapeStatus.DETECTED_ONCE }
                         .filter { detectedArms.any { arm -> objectsOverlap(arm, it.shapes.last()) } }
                         .filter { overlappingTip ->
-                            !frame.objects.any { computeMatchingScore(overlappingTip.shapes.last(), it) < 20 } // TODO why 20?
+                            !frame.objects.any { computeMatchingScore(overlappingTip.shapes.last(), it) <= maxScore }
                         }
                         .collect(Collectors.toSet())
             } else {
@@ -173,7 +174,8 @@ class VideoDetectionServiceImpl(
                 if (matchResult != null) {
                     val currShape = matchResult.currentFrameTip.shapes.last()
 
-                    val recentShapes = ArrayList<EstimatedShape>(tip.shapes.takeLast(9)) // TODO why 9?
+                    val maxNbShapes = configuration.nbShapesToConsiderForComputingAverageTipPositionAndSize
+                    val recentShapes = ArrayList<EstimatedShape>(tip.shapes.takeLast(maxNbShapes))
                     recentShapes.add(currShape)
 
                     val avgX = recentShapes.stream().mapToInt { it.detectedObject?.x ?: it.x }.average().orElse(0.0)
@@ -185,7 +187,6 @@ class VideoDetectionServiceImpl(
                             .mapToInt { it.detectedObject?.height ?: it.height }
                             .average().orElse(0.0)
 
-                    // TODO is an average what we really want for (x, y, width, height)?
                     val newShape = EstimatedShape(
                             currShape.frameIndex,
                             if (recentShapes.size == 1) EstimatedShapeStatus.DETECTED_ONCE else EstimatedShapeStatus.DETECTED,
@@ -232,10 +233,7 @@ class VideoDetectionServiceImpl(
 
                 // Check if the tip is lost
                 val recentShapes = tip.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing)
-                val isNotLost = recentShapes.any {
-                    it.status == EstimatedShapeStatus.DETECTED ||
-                            it.status == EstimatedShapeStatus.HIDDEN_BY_ARM
-                }
+                val isNotLost = recentShapes.any { it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM }
                 val undetectedShape = EstimatedShape(
                         frame.index,
                         if (isNotLost) EstimatedShapeStatus.NOT_DETECTED else EstimatedShapeStatus.LOST,
@@ -250,7 +248,7 @@ class VideoDetectionServiceImpl(
             // Add new tips
             for (frameTip in frameTips) {
                 if (!matchedTips.contains(frameTip)) {
-                    tips.add(frameTip)
+                    tips.add(frameTip) // TODO check if we can ignore it because it is too similar to an existing one
                 }
             }
         }
