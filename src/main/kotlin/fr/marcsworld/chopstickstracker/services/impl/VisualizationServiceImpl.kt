@@ -15,7 +15,7 @@ class VisualizationServiceImpl(
         private val frameService: FrameService
 ) : VisualizationService {
 
-    override fun renderTips(frames: List<Frame>, tips: List<Tip>, outputDirPath: String) {
+    override fun renderTips(frames: List<Frame>, tips: List<Tip>, outputDirPath: String, chopstickVisible: Boolean) {
         // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
@@ -40,6 +40,18 @@ class VisualizationServiceImpl(
                     Math.round(firstFrameImageX + frame.imageX).toInt(),
                     Math.round(firstFrameImageY + frame.imageY).toInt(),
                     null)
+
+            if (chopstickVisible) {
+                g.color = Color.CYAN
+                for (detectedChopstick in frame.objects) {
+                    if (detectedChopstick.objectType == DetectedObjectType.CHOPSTICK) {
+                        val x = Math.round(firstFrameImageX + detectedChopstick.x).toInt()
+                        val y = Math.round(firstFrameImageY + detectedChopstick.y).toInt()
+
+                        g.drawRect(x, y, detectedChopstick.width, detectedChopstick.height)
+                    }
+                }
+            }
 
             val shapesWithTips = shapesWithTipsByFrameIndex[frame.index] ?: listOf()
 
