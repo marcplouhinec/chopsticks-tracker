@@ -245,10 +245,26 @@ class VideoDetectionServiceImpl(
                 tip.shapes.add(undetectedShape)
             }
 
+            // Before adding new tips, filter the ones that are too close to existing ones in the same frame
+            val frameTipsToIgnore = frameTips.stream()
+                    .filter { !matchedTips.contains(it) }
+                    .flatMap { frameTip ->
+                        tips.stream()
+                                .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
+                                .map {
+                                    val prevShape = it.shapes.last()
+                                    val score = computeMatchingScore(prevShape, frameTip.shapes.last())
+                                    TipMatchResult(frameTip, it, score)
+                                }
+                    }
+                    .filter { it.score <= configuration.maxScoreToConsiderNewTipAsTheSameAsAnExistingOne }
+                    .map { it.currentFrameTip }
+                    .collect(Collectors.toSet())
+
             // Add new tips
             for (frameTip in frameTips) {
-                if (!matchedTips.contains(frameTip)) {
-                    tips.add(frameTip) // TODO check if we can ignore it because it is too similar to an existing one
+                if (!matchedTips.contains(frameTip) && !frameTipsToIgnore.contains(frameTip)) {
+                    tips.add(frameTip)
                 }
             }
         }

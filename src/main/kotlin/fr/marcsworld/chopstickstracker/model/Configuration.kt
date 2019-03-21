@@ -27,4 +27,10 @@ data class Configuration(
 
         val nbFramesAfterWhichATipIsConsideredMissing: Int,
 
-        val nbShapesToConsiderForComputingAverageTipPositionAndSize: Int)
+        val nbShapesToConsiderForComputingAverageTipPositionAndSize: Int,
+
+        /**
+         * Maximum score between a newly detected tip and an existing one in the same frame in order to
+         * consider them as the same tip.
+         */
+        val maxScoreToConsiderNewTipAsTheSameAsAnExistingOne: Int)
