@@ -158,7 +158,7 @@ class VideoDetectionServiceImpl(
                 tips.stream()
                         .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
                         .filter { it.shapes.last().status != EstimatedShapeStatus.DETECTED_ONCE }
-                        .filter { detectedArms.any { arm -> objectsOverlap(arm, it.shapes.last()) } }
+                        .filter { detectedArms.any { arm -> arm.isOverlappingWith(it.shapes.last()) } }
                         .filter { overlappingTip ->
                             !frame.objects.any { computeMatchingScore(overlappingTip.shapes.last(), it) <= maxScore }
                         }
@@ -272,6 +272,65 @@ class VideoDetectionServiceImpl(
         return tips
     }
 
+    override fun findChopsticksByFrameIndex(frames: List<Frame>, tips: List<Tip>): List<List<Chopstick>> {
+        val shapesAndTipsByFrameIndex: Map<Int, List<ShapeAndTip>> = tips.stream()
+                .flatMap { tip -> tip.shapes.stream().map { shape -> ShapeAndTip(shape, tip) } }
+                .filter { it.shape.status != EstimatedShapeStatus.LOST }
+                .collect(Collectors.groupingBy { it.shape.frameIndex })
+
+        return frames.map { frame ->
+
+            val shapesAndTips = shapesAndTipsByFrameIndex[frame.index] ?: throw IllegalStateException()
+            val detectedChopsticks = frame.objects.filter { it.objectType == DetectedObjectType.CHOPSTICK }
+
+            // Find potential matching tips
+            val results = shapesAndTips.stream()
+                    .flatMap { shapeAndTip ->
+                        shapesAndTips.stream()
+                                .filter { it.tip != shapeAndTip.tip }
+                                .filter {
+                                    val dist = distance(it.shape.x, it.shape.y, shapeAndTip.shape.x, shapeAndTip.shape.y)
+                                    dist > 350 && dist < 450 // TODO why these values?
+                                }
+                                .flatMap { candidate ->
+                                    val tipsBoundingBox = Rectangle.getBoundingBox(shapeAndTip.shape, candidate.shape)
+                                    val boundingBoxArea = tipsBoundingBox.getArea()
+
+                                    detectedChopsticks.stream()
+                                            .filter { detectedChopstick -> tipsBoundingBox.isOverlappingWith(detectedChopstick) }
+                                            .map { detectedChopstick ->
+                                                val intersection = Rectangle.getIntersection(tipsBoundingBox, detectedChopstick)
+                                                val intersectionArea = intersection.getArea()
+                                                val score = boundingBoxArea.toDouble() / intersectionArea.toDouble()
+
+                                                ChopstickMatchResult(
+                                                        shapeAndTip, candidate, detectedChopstick, boundingBoxArea, intersectionArea, score)
+                                            }
+                                }
+                    }
+                    .sorted(Comparator.comparingDouble { it.score })
+                    .filter { it.score <= 4 } // TODO why 4?
+                    .collect(Collectors.toList())
+
+            val processedTips = mutableSetOf<Tip>()
+            val chopsticks = mutableListOf<Chopstick>()
+            for (result in results) {
+                val tip1 = result.shapeAndTip1.tip
+                val tip2 = result.shapeAndTip2.tip
+
+                if (!processedTips.contains(tip1) && !processedTips.contains(tip2)) {
+                    processedTips.add(tip1)
+                    processedTips.add(tip2)
+
+                    val chopstickTips = listOf(tip1, tip2).sortedBy { it.id }
+                    chopsticks.add(Chopstick("${chopstickTips[0].id}_${chopstickTips[1].id}", chopstickTips))
+                }
+            }
+
+            chopsticks
+        }
+    }
+
     private fun findTipsInFrame(frame: Frame): List<Tip> {
         val nextTipId = AtomicInteger()
 
@@ -290,17 +349,16 @@ class VideoDetectionServiceImpl(
     }
 
     private fun computeMatchingScore(prevObject: Rectangle, currObject: Rectangle): Double {
-        val dx = (currObject.x - prevObject.x).toDouble()
-        val dy = (currObject.y - prevObject.y).toDouble()
-        var score = Math.abs(Math.sqrt(Math.pow(dx, 2.0) + Math.pow(dy, 2.0)))
+        var score = distance(currObject.x, currObject.y, prevObject.x, prevObject.y)
         score += Math.abs(currObject.width - prevObject.width)
         score += Math.abs(currObject.height - prevObject.height)
         return score
     }
 
-    private fun objectsOverlap(object1: Rectangle, object2: Rectangle): Boolean {
-        return object1.x < object2.x + object2.width && object1.x + object1.width > object2.x &&
-                object1.y < object2.y + object2.height && object1.y + object1.height > object2.y
+    private fun distance(x1: Int, y1: Int, x2: Int, y2: Int): Double {
+        val dx = x1 - x2
+        val dy = y1 - y2
+        return Math.sqrt(Math.pow(dx.toDouble(), 2.0) + Math.pow(dy.toDouble(), 2.0))
     }
 
     private data class ObjectMatchResult(
@@ -314,4 +372,17 @@ class VideoDetectionServiceImpl(
             val prevFrameTip: Tip,
             val score: Double
     )
+
+    private data class ShapeAndTip(
+            val shape: EstimatedShape,
+            val tip: Tip
+    )
+
+    private data class ChopstickMatchResult(
+            val shapeAndTip1: ShapeAndTip,
+            val shapeAndTip2: ShapeAndTip,
+            val detectedChopstick: DetectedObject,
+            val boundingBoxArea: Int,
+            val intersectionArea: Int,
+            val score: Double)
 }

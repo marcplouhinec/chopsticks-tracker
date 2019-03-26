@@ -41,8 +41,12 @@ fun main(args: Array<String>) {
     val tips = videoDetectionService.findAllTips(compensatedFrames)
     println("${tips.size} tips detected.")
 
+    println("Detecting chopsticks...")
+    val chopsticksByFrameIndex = videoDetectionService.findChopsticksByFrameIndex(compensatedFrames, tips)
+
     println("Render images...")
-    visualizationService.renderTips(compensatedFrames, tips, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
+    visualizationService.renderTips(
+            compensatedFrames, tips, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true, chopsticksByFrameIndex)
     //visualizationService.renderCurrentAndPastTipDetections(
     //        compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
     println("Images rendered.")

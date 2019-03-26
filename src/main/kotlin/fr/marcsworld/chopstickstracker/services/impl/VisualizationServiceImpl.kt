@@ -15,18 +15,19 @@ class VisualizationServiceImpl(
         private val frameService: FrameService
 ) : VisualizationService {
 
-    override fun renderTips(frames: List<Frame>, tips: List<Tip>, outputDirPath: String, chopstickVisible: Boolean) {
+    override fun renderTips(
+            frames: List<Frame>, tips: List<Tip>, outputDirPath: String, chopstickVisible: Boolean, chopsticksByFrameIndex: List<List<Chopstick>>) {
         // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
 
-        val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedShape, Tip>>> = tips
+        val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedShape, Tip>>> = tips.stream()
                 .flatMap { tip ->
-                    tip.shapes
+                    tip.shapes.stream()
                             .filter { it.status != EstimatedShapeStatus.LOST }
                             .map { Pair(it, tip) }
                 }
-                .groupBy { it.first.frameIndex }
+                .collect(Collectors.groupingBy { it.first.frameIndex })
 
         // Draw the tips on each frame
         for (frame in frames) {
@@ -71,6 +72,22 @@ class VisualizationServiceImpl(
                 g.drawRect(x, y, shape.width, shape.height)
                 g.drawString(tip.id, x, y + 16)
             }
+
+            g.color = Color.RED
+            val shapeByTip: Map<Tip, EstimatedShape> = shapesWithTips.stream()
+                    .collect(Collectors.toMap({ it.second }, { it.first }))
+            for (chopstick in chopsticksByFrameIndex[frame.index]) {
+                val shape0 = shapeByTip[chopstick.tips[0]] ?: throw IllegalStateException()
+                val shape1 = shapeByTip[chopstick.tips[1]] ?: throw IllegalStateException()
+
+                val x0 = Math.round(firstFrameImageX + shape0.x + shape0.width / 2).toInt()
+                val y0 = Math.round(firstFrameImageY + shape0.y + shape0.height / 2).toInt()
+                val x1 = Math.round(firstFrameImageX + shape1.x + shape1.width / 2).toInt()
+                val y1 = Math.round(firstFrameImageY + shape1.y + shape1.height / 2).toInt()
+
+                g.drawLine(x0, y0, x1, y1)
+            }
+
             g.dispose()
 
             ImageIO.write(outputImage, "jpg", File(outputFile, "${frame.index}.jpg"))

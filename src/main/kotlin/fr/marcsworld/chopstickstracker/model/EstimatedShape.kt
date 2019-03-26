@@ -8,4 +8,4 @@ data class EstimatedShape(
         override val y: Int,
         override val width: Int,
         override val height: Int
-) : Rectangle
+) : Rectangle(x, y, width, height)

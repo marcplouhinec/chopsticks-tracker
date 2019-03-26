@@ -10,4 +10,4 @@ data class DetectedObject(
         override val width: Int,
         override val height: Int,
         @JsonProperty("object_type") val objectType: DetectedObjectType,
-        val confidence: Double) : Rectangle
+        val confidence: Double) : Rectangle(x, y, width, height)

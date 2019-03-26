@@ -1,5 +1,6 @@
 package fr.marcsworld.chopstickstracker.services
 
+import fr.marcsworld.chopstickstracker.model.Chopstick
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
 
@@ -24,4 +25,8 @@ interface VideoDetectionService {
      */
     fun findAllTips(frames: List<Frame>): List<Tip>
 
+    /**
+     * Link the tips into chopsticks.
+     */
+    fun findChopsticksByFrameIndex(frames: List<Frame>, tips: List<Tip>): List<List<Chopstick>>
 }
