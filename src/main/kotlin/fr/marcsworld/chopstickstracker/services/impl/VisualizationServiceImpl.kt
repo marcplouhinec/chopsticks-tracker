@@ -73,7 +73,7 @@ class VisualizationServiceImpl(
                 g.drawString(tip.id, x, y + 16)
             }
 
-            g.color = Color.RED
+            g.color = Color.YELLOW
             val shapeByTip: Map<Tip, EstimatedShape> = shapesWithTips.stream()
                     .collect(Collectors.toMap({ it.second }, { it.first }))
             for (chopstick in chopsticksByFrameIndex[frame.index]) {

@@ -290,7 +290,7 @@ class VideoDetectionServiceImpl(
                                 .filter { it.tip != shapeAndTip.tip }
                                 .filter {
                                     val dist = distance(it.shape.x, it.shape.y, shapeAndTip.shape.x, shapeAndTip.shape.y)
-                                    dist > 350 && dist < 450 // TODO why these values?
+                                    dist > 350 && dist < 550 // TODO why these values?
                                 }
                                 .flatMap { candidate ->
                                     val tipsBoundingBox = Rectangle.getBoundingBox(shapeAndTip.shape, candidate.shape)
@@ -317,18 +317,22 @@ class VideoDetectionServiceImpl(
                                 }
                     }
                     .sorted(Comparator.comparingDouble { it.score })
-                    .filter { it.score <= 4 } // TODO not good enough
+                    .filter { it.score <= 0.8 } // TODO why this value
                     .collect(Collectors.toList())
 
             val processedTips = mutableSetOf<Tip>()
+            val processedDetectedChopsticks = mutableSetOf<DetectedObject>()
             val chopsticks = mutableListOf<Chopstick>()
             for (result in results) {
                 val tip1 = result.shapeAndTip1.tip
                 val tip2 = result.shapeAndTip2.tip
+                val detectedChopstick = result.detectedChopstick
 
-                if (!processedTips.contains(tip1) && !processedTips.contains(tip2)) {
+                if (!processedTips.contains(tip1) && !processedTips.contains(tip2) &&
+                        !processedDetectedChopsticks.contains(detectedChopstick)) {
                     processedTips.add(tip1)
                     processedTips.add(tip2)
+                    processedDetectedChopsticks.add(detectedChopstick)
 
                     val chopstickTips = listOf(tip1, tip2).sortedBy { it.id }
                     chopsticks.add(Chopstick("${chopstickTips[0].id}_${chopstickTips[1].id}", chopstickTips))
