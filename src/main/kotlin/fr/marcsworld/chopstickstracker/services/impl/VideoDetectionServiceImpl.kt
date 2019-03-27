@@ -301,15 +301,23 @@ class VideoDetectionServiceImpl(
                                             .map { detectedChopstick ->
                                                 val intersection = Rectangle.getIntersection(tipsBoundingBox, detectedChopstick)
                                                 val intersectionArea = intersection.getArea()
-                                                val score = boundingBoxArea.toDouble() / intersectionArea.toDouble()
+                                                val unionArea = boundingBoxArea + detectedChopstick.getArea() - intersectionArea
+                                                //val score = boundingBoxArea.toDouble() / intersectionArea.toDouble()
+                                                val score = Math.abs(intersectionArea.toDouble() / unionArea.toDouble() - 1.0)
 
                                                 ChopstickMatchResult(
-                                                        shapeAndTip, candidate, detectedChopstick, boundingBoxArea, intersectionArea, score)
+                                                        shapeAndTip,
+                                                        candidate,
+                                                        detectedChopstick,
+                                                        boundingBoxArea,
+                                                        intersectionArea,
+                                                        unionArea,
+                                                        score)
                                             }
                                 }
                     }
                     .sorted(Comparator.comparingDouble { it.score })
-                    .filter { it.score <= 4 } // TODO why 4?
+                    .filter { it.score <= 4 } // TODO not good enough
                     .collect(Collectors.toList())
 
             val processedTips = mutableSetOf<Tip>()
@@ -384,5 +392,6 @@ class VideoDetectionServiceImpl(
             val detectedChopstick: DetectedObject,
             val boundingBoxArea: Int,
             val intersectionArea: Int,
+            val unionArea: Int,
             val score: Double)
 }
