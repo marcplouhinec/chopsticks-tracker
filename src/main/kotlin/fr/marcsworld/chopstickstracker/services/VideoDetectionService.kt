@@ -28,5 +28,5 @@ interface VideoDetectionService {
     /**
      * Link the tips into chopsticks.
      */
-    fun findChopsticksByFrameIndex(frames: List<Frame>, tips: List<Tip>): List<List<Chopstick>>
+    fun findAllChopsticks(frames: List<Frame>, tips: List<Tip>): List<Chopstick>
 }

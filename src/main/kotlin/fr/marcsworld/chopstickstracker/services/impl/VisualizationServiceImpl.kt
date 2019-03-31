@@ -16,16 +16,24 @@ class VisualizationServiceImpl(
 ) : VisualizationService {
 
     override fun renderTips(
-            frames: List<Frame>, tips: List<Tip>, outputDirPath: String, chopstickVisible: Boolean, chopsticksByFrameIndex: List<List<Chopstick>>) {
+            frames: List<Frame>, tips: List<Tip>, outputDirPath: String, detectedChopstickVisible: Boolean, chopsticks: List<Chopstick>) {
         // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
 
-        val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedShape, Tip>>> = tips.stream()
+        val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedTipShape, Tip>>> = tips.stream()
                 .flatMap { tip ->
                     tip.shapes.stream()
                             .filter { it.status != EstimatedShapeStatus.LOST }
                             .map { Pair(it, tip) }
+                }
+                .collect(Collectors.groupingBy { it.first.frameIndex })
+
+        val shapesWithChopsticksByFrameIndex: Map<Int, List<Pair<EstimatedChopstickShape, Chopstick>>> = chopsticks.stream()
+                .flatMap { chopstick ->
+                    chopstick.shapes.stream()
+                            .filter { it.status != EstimatedShapeStatus.LOST }
+                            .map { Pair(it, chopstick) }
                 }
                 .collect(Collectors.groupingBy { it.first.frameIndex })
 
@@ -42,7 +50,7 @@ class VisualizationServiceImpl(
                     Math.round(firstFrameImageY + frame.imageY).toInt(),
                     null)
 
-            if (chopstickVisible) {
+            if (detectedChopstickVisible) {
                 g.color = Color.CYAN
                 for (detectedChopstick in frame.objects) {
                     if (detectedChopstick.objectType == DetectedObjectType.CHOPSTICK) {
@@ -73,19 +81,22 @@ class VisualizationServiceImpl(
                 g.drawString(tip.id, x, y + 16)
             }
 
-            g.color = Color.YELLOW
-            val shapeByTip: Map<Tip, EstimatedShape> = shapesWithTips.stream()
-                    .collect(Collectors.toMap({ it.second }, { it.first }))
-            for (chopstick in chopsticksByFrameIndex[frame.index]) {
-                val shape0 = shapeByTip[chopstick.tips[0]] ?: throw IllegalStateException()
-                val shape1 = shapeByTip[chopstick.tips[1]] ?: throw IllegalStateException()
+            val shapesWithChopsticks = shapesWithChopsticksByFrameIndex[frame.index] ?: listOf()
+            for (shapeWithChopstick in shapesWithChopsticks) {
+                val shape = shapeWithChopstick.first
 
-                val x0 = Math.round(firstFrameImageX + shape0.x + shape0.width / 2).toInt()
-                val y0 = Math.round(firstFrameImageY + shape0.y + shape0.height / 2).toInt()
-                val x1 = Math.round(firstFrameImageX + shape1.x + shape1.width / 2).toInt()
-                val y1 = Math.round(firstFrameImageY + shape1.y + shape1.height / 2).toInt()
+                g.color = when {
+                    shape.status == EstimatedShapeStatus.DETECTED_ONCE -> Color.GREEN
+                    shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
+                    shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
+                    else -> Color.WHITE
+                }
 
-                g.drawLine(x0, y0, x1, y1)
+                val x1 = Math.round(firstFrameImageX + shape.tip1X).toInt()
+                val y1 = Math.round(firstFrameImageY + shape.tip1Y).toInt()
+                val x2 = Math.round(firstFrameImageX + shape.tip2X).toInt()
+                val y2 = Math.round(firstFrameImageY + shape.tip2Y).toInt()
+                g.drawLine(x1, y1, x2, y2)
             }
 
             g.dispose()

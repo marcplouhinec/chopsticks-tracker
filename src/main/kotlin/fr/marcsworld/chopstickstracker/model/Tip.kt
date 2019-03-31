@@ -2,7 +2,7 @@ package fr.marcsworld.chopstickstracker.model
 
 data class Tip(
         val id: String,
-        val shapes: MutableList<EstimatedShape>
+        val shapes: MutableList<EstimatedTipShape>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

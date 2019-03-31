@@ -175,7 +175,7 @@ class VideoDetectionServiceImpl(
                     val currShape = matchResult.currentFrameTip.shapes.last()
 
                     val maxNbShapes = configuration.nbShapesToConsiderForComputingAverageTipPositionAndSize
-                    val recentShapes = ArrayList<EstimatedShape>(tip.shapes.takeLast(maxNbShapes))
+                    val recentShapes = ArrayList<EstimatedTipShape>(tip.shapes.takeLast(maxNbShapes))
                     recentShapes.add(currShape)
 
                     val avgX = recentShapes.stream().mapToInt { it.detectedObject?.x ?: it.x }.average().orElse(0.0)
@@ -187,7 +187,7 @@ class VideoDetectionServiceImpl(
                             .mapToInt { it.detectedObject?.height ?: it.height }
                             .average().orElse(0.0)
 
-                    val newShape = EstimatedShape(
+                    val newShape = EstimatedTipShape(
                             currShape.frameIndex,
                             if (recentShapes.size == 1) EstimatedShapeStatus.DETECTED_ONCE else EstimatedShapeStatus.DETECTED,
                             currShape.detectedObject,
@@ -203,7 +203,7 @@ class VideoDetectionServiceImpl(
                 // Check when the tip is hidden by an arm
                 val lastTipShape = tip.shapes.last()
                 if (hiddenTips.contains(tip)) {
-                    val hiddenShape = EstimatedShape(
+                    val hiddenShape = EstimatedTipShape(
                             frame.index,
                             EstimatedShapeStatus.HIDDEN_BY_ARM,
                             null,
@@ -218,7 +218,7 @@ class VideoDetectionServiceImpl(
 
                 // Check if the tip is already lost
                 if (lastTipShape.status == EstimatedShapeStatus.LOST) {
-                    val lostShape = EstimatedShape(
+                    val lostShape = EstimatedTipShape(
                             frame.index,
                             EstimatedShapeStatus.LOST,
                             null,
@@ -234,7 +234,7 @@ class VideoDetectionServiceImpl(
                 // Check if the tip is lost
                 val recentShapes = tip.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing)
                 val isNotLost = recentShapes.any { it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM }
-                val undetectedShape = EstimatedShape(
+                val undetectedShape = EstimatedTipShape(
                         frame.index,
                         if (isNotLost) EstimatedShapeStatus.NOT_DETECTED else EstimatedShapeStatus.LOST,
                         null,
@@ -272,19 +272,22 @@ class VideoDetectionServiceImpl(
         return tips
     }
 
-    override fun findChopsticksByFrameIndex(frames: List<Frame>, tips: List<Tip>): List<List<Chopstick>> {
+    override fun findAllChopsticks(frames: List<Frame>, tips: List<Tip>): List<Chopstick> {
         val shapesAndTipsByFrameIndex: Map<Int, List<ShapeAndTip>> = tips.stream()
                 .flatMap { tip -> tip.shapes.stream().map { shape -> ShapeAndTip(shape, tip) } }
                 .filter { it.shape.status != EstimatedShapeStatus.LOST }
                 .collect(Collectors.groupingBy { it.shape.frameIndex })
 
-        return frames.map { frame ->
+        val chopsticks = mutableListOf<Chopstick>()
 
+        for (frame in frames) {
+            println("    Detecting chopsticks in frame ${frame.index} / ${frames.size}...")
+
+            // Try to match tips with each others by using detected chopsticks
             val shapesAndTips = shapesAndTipsByFrameIndex[frame.index] ?: throw IllegalStateException()
             val detectedChopsticks = frame.objects.filter { it.objectType == DetectedObjectType.CHOPSTICK }
 
-            // Find potential matching tips
-            val results = shapesAndTips.stream()
+            val matchResults = shapesAndTips.stream()
                     .flatMap { shapeAndTip ->
                         shapesAndTips.stream()
                                 .filter { it.tip != shapeAndTip.tip }
@@ -320,27 +323,159 @@ class VideoDetectionServiceImpl(
                     .filter { it.score <= 0.8 } // TODO why this value
                     .collect(Collectors.toList())
 
+            // Find the best match results independently from other frames
             val processedTips = mutableSetOf<Tip>()
             val processedDetectedChopsticks = mutableSetOf<DetectedObject>()
-            val chopsticks = mutableListOf<Chopstick>()
-            for (result in results) {
+            val bestMatchResultsInFrame = mutableListOf<ChopstickMatchResult>()
+            for (result in matchResults) {
                 val tip1 = result.shapeAndTip1.tip
                 val tip2 = result.shapeAndTip2.tip
                 val detectedChopstick = result.detectedChopstick
 
-                if (!processedTips.contains(tip1) && !processedTips.contains(tip2) &&
-                        !processedDetectedChopsticks.contains(detectedChopstick)) {
+                if (!processedTips.contains(tip1) && !processedTips.contains(tip2) && !processedDetectedChopsticks.contains(detectedChopstick)) {
                     processedTips.add(tip1)
                     processedTips.add(tip2)
                     processedDetectedChopsticks.add(detectedChopstick)
 
-                    val chopstickTips = listOf(tip1, tip2).sortedBy { it.id }
-                    chopsticks.add(Chopstick("${chopstickTips[0].id}_${chopstickTips[1].id}", chopstickTips))
+                    bestMatchResultsInFrame.add(result)
                 }
             }
 
-            chopsticks
+            // Find the best match results by considering previous frame results
+            val processedTips2 = mutableSetOf<Tip>()
+            val processedDetectedChopsticks2 = mutableSetOf<DetectedObject>()
+            val bestMatchResults = mutableListOf<ChopstickMatchResult>()
+            for (result in matchResults) {
+                val tip1 = result.shapeAndTip1.tip
+                val tip2 = result.shapeAndTip2.tip
+                val detectedChopstick = result.detectedChopstick
+
+                // Ignore this result if any of its elements is conflicting with a selected match result
+                if (processedTips2.contains(tip1) || processedTips2.contains(tip2) || processedDetectedChopsticks2.contains(detectedChopstick)) {
+                    continue
+                }
+
+                // Find conflicts
+                val conflictingChopsticks = chopsticks.stream()
+                        .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
+                        .filter { it.tip1 == tip1 || it.tip1 == tip2 || it.tip2 == tip1 || it.tip2 == tip2 }
+                        .collect(Collectors.toList())
+
+                val hasIdenticalChopsticks =
+                        conflictingChopsticks.any { (it.tip1 == tip1 && it.tip2 == tip2) || (it.tip1 == tip2 && it.tip2 == tip1) }
+
+                // Check if we need to keep the result or not
+                if (conflictingChopsticks.isEmpty() || hasIdenticalChopsticks) {
+                    processedTips2.add(tip1)
+                    processedTips2.add(tip2)
+                    processedDetectedChopsticks2.add(detectedChopstick)
+
+                    bestMatchResults.add(result)
+                }
+            }
+
+            // TODO conflicts should be preferred when they are present for several frames
+
+            // Update the existing chopsticks
+            val processedMatchResults = mutableSetOf<ChopstickMatchResult>()
+            for (chopstick in chopsticks) {
+                // Check if the chopstick is already lost
+                val lastChopstickShape = chopstick.shapes.last()
+                val shapeAndTip1 = shapesAndTips.find { it.tip == chopstick.tip1 }
+                val shapeAndTip2 = shapesAndTips.find { it.tip == chopstick.tip2 }
+                if (lastChopstickShape.status == EstimatedShapeStatus.LOST || shapeAndTip1 == null || shapeAndTip2 == null) {
+                    val lostShape = EstimatedChopstickShape(
+                            frame.index,
+                            EstimatedShapeStatus.LOST,
+                            null,
+                            lastChopstickShape.tip1X,
+                            lastChopstickShape.tip1Y,
+                            lastChopstickShape.tip2X,
+                            lastChopstickShape.tip2Y)
+                    chopstick.shapes.add(lostShape)
+
+                    continue
+                }
+
+                // Check if the chopstick was matched in this frame
+                val tip1X = shapeAndTip1.shape.x + shapeAndTip1.shape.width / 2
+                val tip1Y = shapeAndTip1.shape.y + shapeAndTip1.shape.height / 2
+                val tip2X = shapeAndTip2.shape.x + shapeAndTip2.shape.width / 2
+                val tip2Y = shapeAndTip2.shape.y + shapeAndTip2.shape.height / 2
+
+                val identicalMatchResults = bestMatchResults.filter {
+                    val tip1 = it.shapeAndTip1.tip
+                    val tip2 = it.shapeAndTip2.tip
+                    (tip1 == chopstick.tip1 && tip2 == chopstick.tip2) || (tip1 == chopstick.tip2 && tip2 == chopstick.tip1)
+                }
+                if (identicalMatchResults.isNotEmpty()) {
+                    val matchResult = identicalMatchResults[0]
+                    processedMatchResults.add(matchResult)
+
+                    val shape = EstimatedChopstickShape(
+                            frame.index,
+                            EstimatedShapeStatus.DETECTED,
+                            matchResult.detectedChopstick,
+                            tip1X, tip1Y, tip2X, tip2Y)
+                    chopstick.shapes.add(shape)
+                    continue
+                }
+
+                // Check when the chopstick is hidden by an arm
+                if (shapeAndTip1.shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM ||
+                        shapeAndTip2.shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM) {
+                    val hiddenShape = EstimatedChopstickShape(
+                            frame.index,
+                            EstimatedShapeStatus.HIDDEN_BY_ARM,
+                            null,
+                            tip1X, tip1Y, tip2X, tip2Y)
+                    chopstick.shapes.add(hiddenShape)
+                    continue
+                }
+
+                // Check if the chopstick is lost
+                // TODO Do not consider a chopstick lost when the tips are still here and there is no conflict
+                // TODO see frame 697
+                val recentShapes = chopstick.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing) // TODO create different conf
+                val isNotLost = recentShapes.any { it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM }
+                val undetectedShape = EstimatedChopstickShape(
+                        frame.index,
+                        if (isNotLost) EstimatedShapeStatus.NOT_DETECTED else EstimatedShapeStatus.LOST,
+                        null,
+                        tip1X, tip1Y, tip2X, tip2Y)
+                chopstick.shapes.add(undetectedShape)
+            }
+
+            // Add other match results that would have been selected if they would not have conflicted with previous frames
+            // TODO
+
+            // Add new chopsticks
+            for (bestMatchResult in bestMatchResults) {
+                if (!processedMatchResults.contains(bestMatchResult)) {
+                    val chopstickShapeAndTips = listOf(bestMatchResult.shapeAndTip1, bestMatchResult.shapeAndTip2).sortedBy { it.tip.id }
+                    val tip1 = chopstickShapeAndTips[0].tip
+                    val tip2 = chopstickShapeAndTips[1].tip
+
+                    val tip1X = chopstickShapeAndTips[0].shape.x + chopstickShapeAndTips[0].shape.width / 2
+                    val tip1Y = chopstickShapeAndTips[0].shape.y + chopstickShapeAndTips[0].shape.height / 2
+                    val tip2X = chopstickShapeAndTips[1].shape.x + chopstickShapeAndTips[1].shape.width / 2
+                    val tip2Y = chopstickShapeAndTips[1].shape.y + chopstickShapeAndTips[1].shape.height / 2
+
+                    val shapes = mutableListOf<EstimatedChopstickShape>()
+                    val shape = EstimatedChopstickShape(
+                            frame.index,
+                            EstimatedShapeStatus.DETECTED_ONCE,
+                            bestMatchResult.detectedChopstick,
+                            tip1X, tip1Y, tip2X, tip2Y)
+                    shapes.add(shape)
+
+                    val chopstick = Chopstick("C_${tip1.id}_${tip2.id}", tip1, tip2, shapes)
+                    chopsticks.add(chopstick)
+                }
+            }
         }
+
+        return chopsticks
     }
 
     private fun findTipsInFrame(frame: Frame): List<Tip> {
@@ -348,7 +483,7 @@ class VideoDetectionServiceImpl(
 
         return findDetectedTips(frame).map {
             val tipId = "T" + frame.index + "_" + nextTipId.incrementAndGet()
-            val shape = EstimatedShape(frame.index, EstimatedShapeStatus.DETECTED_ONCE, it, it.x, it.y, it.width, it.height)
+            val shape = EstimatedTipShape(frame.index, EstimatedShapeStatus.DETECTED_ONCE, it, it.x, it.y, it.width, it.height)
             Tip(tipId, mutableListOf(shape))
         }
     }
@@ -386,7 +521,7 @@ class VideoDetectionServiceImpl(
     )
 
     private data class ShapeAndTip(
-            val shape: EstimatedShape,
+            val shape: EstimatedTipShape,
             val tip: Tip
     )
 
