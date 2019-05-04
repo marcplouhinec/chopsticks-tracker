@@ -5,6 +5,7 @@ import fr.marcsworld.chopstickstracker.services.VideoDetectionService
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
+import java.util.stream.Stream
 import kotlin.collections.ArrayList
 
 class VideoDetectionServiceImpl(
@@ -358,6 +359,7 @@ class VideoDetectionServiceImpl(
                 // Find conflicts
                 val conflictingChopsticks = chopsticks.stream()
                         .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
+                        .filter { !it.shapes.last().isRejectedBecauseOfConflict }
                         .filter { it.tip1 == tip1 || it.tip1 == tip2 || it.tip2 == tip1 || it.tip2 == tip2 }
                         .collect(Collectors.toList())
 
@@ -374,7 +376,21 @@ class VideoDetectionServiceImpl(
                 }
             }
 
+            // Extract results in frame that conflicts with the ones when considering the previous frame results
+            val conflictingBestMatchResultsInFrame = bestMatchResultsInFrame.filter { resultInFrame ->
+                bestMatchResults.none { bestResult ->
+                    val bestTip1 = bestResult.shapeAndTip1.tip
+                    val bestTip2 = bestResult.shapeAndTip2.tip
+
+                    val sameTips = (bestTip1 == resultInFrame.shapeAndTip1.tip && bestTip2 == resultInFrame.shapeAndTip2.tip) ||
+                            (bestTip2 == resultInFrame.shapeAndTip1.tip && bestTip1 == resultInFrame.shapeAndTip2.tip)
+
+                    sameTips && bestResult.detectedChopstick == resultInFrame.detectedChopstick
+                }
+            }
+
             // TODO conflicts should be preferred when they are present for several frames
+            // TODO check frames 131, 980, 1081, 1155, 1788
 
             // Update the existing chopsticks
             val processedMatchResults = mutableSetOf<ChopstickMatchResult>()
@@ -391,7 +407,8 @@ class VideoDetectionServiceImpl(
                             lastChopstickShape.tip1X,
                             lastChopstickShape.tip1Y,
                             lastChopstickShape.tip2X,
-                            lastChopstickShape.tip2Y)
+                            lastChopstickShape.tip2Y,
+                            lastChopstickShape.isRejectedBecauseOfConflict)
                     chopstick.shapes.add(lostShape)
 
                     continue
@@ -416,7 +433,28 @@ class VideoDetectionServiceImpl(
                             frame.index,
                             EstimatedShapeStatus.DETECTED,
                             matchResult.detectedChopstick,
-                            tip1X, tip1Y, tip2X, tip2Y)
+                            tip1X, tip1Y, tip2X, tip2Y,
+                            false)
+                    chopstick.shapes.add(shape)
+                    continue
+                }
+
+                // Check if the chopstick would have been matched without considering history (= conflicts with previous detections)
+                val identicalMatchResultsInFrame = conflictingBestMatchResultsInFrame.filter {
+                    val tip1 = it.shapeAndTip1.tip
+                    val tip2 = it.shapeAndTip2.tip
+                    (tip1 == chopstick.tip1 && tip2 == chopstick.tip2) || (tip1 == chopstick.tip2 && tip2 == chopstick.tip1)
+                }
+                if (identicalMatchResultsInFrame.isNotEmpty()) {
+                    val matchResult = identicalMatchResultsInFrame[0]
+                    processedMatchResults.add(matchResult)
+
+                    val shape = EstimatedChopstickShape(
+                            frame.index,
+                            EstimatedShapeStatus.DETECTED,
+                            matchResult.detectedChopstick,
+                            tip1X, tip1Y, tip2X, tip2Y,
+                            true)
                     chopstick.shapes.add(shape)
                     continue
                 }
@@ -428,7 +466,8 @@ class VideoDetectionServiceImpl(
                             frame.index,
                             EstimatedShapeStatus.HIDDEN_BY_ARM,
                             null,
-                            tip1X, tip1Y, tip2X, tip2Y)
+                            tip1X, tip1Y, tip2X, tip2Y,
+                            lastChopstickShape.isRejectedBecauseOfConflict)
                     chopstick.shapes.add(hiddenShape)
                     continue
                 }
@@ -442,37 +481,43 @@ class VideoDetectionServiceImpl(
                         frame.index,
                         if (isNotLost) EstimatedShapeStatus.NOT_DETECTED else EstimatedShapeStatus.LOST,
                         null,
-                        tip1X, tip1Y, tip2X, tip2Y)
+                        tip1X, tip1Y, tip2X, tip2Y,
+                        lastChopstickShape.isRejectedBecauseOfConflict)
                 chopstick.shapes.add(undetectedShape)
             }
 
-            // Add other match results that would have been selected if they would not have conflicted with previous frames
-            // TODO
-
             // Add new chopsticks
-            for (bestMatchResult in bestMatchResults) {
-                if (!processedMatchResults.contains(bestMatchResult)) {
-                    val chopstickShapeAndTips = listOf(bestMatchResult.shapeAndTip1, bestMatchResult.shapeAndTip2).sortedBy { it.tip.id }
-                    val tip1 = chopstickShapeAndTips[0].tip
-                    val tip2 = chopstickShapeAndTips[1].tip
+            val newChopsticks = Stream.concat(
+                    bestMatchResults.stream().map { Pair(it, false) },
+                    conflictingBestMatchResultsInFrame.stream().map { Pair(it, true) }
+            )
+                    .filter { !processedMatchResults.contains(it.first) }
+                    .map { pair ->
+                        val bestMatchResult = pair.first
+                        val isRejectedBecauseOfConflict = pair.second
 
-                    val tip1X = chopstickShapeAndTips[0].shape.x + chopstickShapeAndTips[0].shape.width / 2
-                    val tip1Y = chopstickShapeAndTips[0].shape.y + chopstickShapeAndTips[0].shape.height / 2
-                    val tip2X = chopstickShapeAndTips[1].shape.x + chopstickShapeAndTips[1].shape.width / 2
-                    val tip2Y = chopstickShapeAndTips[1].shape.y + chopstickShapeAndTips[1].shape.height / 2
+                        val chopstickShapeAndTips = listOf(bestMatchResult.shapeAndTip1, bestMatchResult.shapeAndTip2).sortedBy { it.tip.id }
+                        val tip1 = chopstickShapeAndTips[0].tip
+                        val tip2 = chopstickShapeAndTips[1].tip
 
-                    val shapes = mutableListOf<EstimatedChopstickShape>()
-                    val shape = EstimatedChopstickShape(
-                            frame.index,
-                            EstimatedShapeStatus.DETECTED_ONCE,
-                            bestMatchResult.detectedChopstick,
-                            tip1X, tip1Y, tip2X, tip2Y)
-                    shapes.add(shape)
+                        val tip1X = chopstickShapeAndTips[0].shape.x + chopstickShapeAndTips[0].shape.width / 2
+                        val tip1Y = chopstickShapeAndTips[0].shape.y + chopstickShapeAndTips[0].shape.height / 2
+                        val tip2X = chopstickShapeAndTips[1].shape.x + chopstickShapeAndTips[1].shape.width / 2
+                        val tip2Y = chopstickShapeAndTips[1].shape.y + chopstickShapeAndTips[1].shape.height / 2
 
-                    val chopstick = Chopstick("C_${tip1.id}_${tip2.id}", tip1, tip2, shapes)
-                    chopsticks.add(chopstick)
-                }
-            }
+                        val shapes = mutableListOf<EstimatedChopstickShape>()
+                        val shape = EstimatedChopstickShape(
+                                frame.index,
+                                EstimatedShapeStatus.DETECTED_ONCE,
+                                bestMatchResult.detectedChopstick,
+                                tip1X, tip1Y, tip2X, tip2Y,
+                                isRejectedBecauseOfConflict)
+                        shapes.add(shape)
+
+                        Chopstick("C_${tip1.id}_${tip2.id}", tip1, tip2, shapes)
+                    }
+                    .collect(Collectors.toList())
+            chopsticks.addAll(newChopsticks)
         }
 
         return chopsticks

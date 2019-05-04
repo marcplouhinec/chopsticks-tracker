@@ -7,6 +7,7 @@ data class EstimatedChopstickShape(
         val tip1X: Int,
         val tip1Y: Int,
         val tip2X: Int,
-        val tip2Y: Int
+        val tip2Y: Int,
+        val isRejectedBecauseOfConflict: Boolean
         // TODO direction
 ) : EstimatedShape

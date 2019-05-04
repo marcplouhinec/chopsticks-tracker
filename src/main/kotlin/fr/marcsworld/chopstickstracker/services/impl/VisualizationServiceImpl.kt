@@ -3,6 +3,7 @@ package fr.marcsworld.chopstickstracker.services.impl
 import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.services.FrameService
 import fr.marcsworld.chopstickstracker.services.VisualizationService
+import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -36,6 +37,9 @@ class VisualizationServiceImpl(
                             .map { Pair(it, chopstick) }
                 }
                 .collect(Collectors.groupingBy { it.first.frameIndex })
+
+        val normalStroke = BasicStroke()
+        val dashedStroke = BasicStroke(1F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0F, FloatArray(1) { 9F }, 0F)
 
         // Draw the tips on each frame
         for (frame in frames) {
@@ -91,6 +95,7 @@ class VisualizationServiceImpl(
                     shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
                     else -> Color.WHITE
                 }
+                g.stroke = if (shape.isRejectedBecauseOfConflict) dashedStroke else normalStroke
 
                 val x1 = Math.round(firstFrameImageX + shape.tip1X).toInt()
                 val y1 = Math.round(firstFrameImageY + shape.tip1Y).toInt()

@@ -49,7 +49,7 @@ fun main(args: Array<String>) {
             compensatedFrames,
             tips,
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
-            true,
+            false,
             chopsticks)
     //visualizationService.renderCurrentAndPastTipDetections(
     //        compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
