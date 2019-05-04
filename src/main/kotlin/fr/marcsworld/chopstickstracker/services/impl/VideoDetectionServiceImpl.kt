@@ -431,7 +431,8 @@ class VideoDetectionServiceImpl(
                             EstimatedShapeStatus.DETECTED,
                             matchResult.detectedChopstick,
                             tip1X, tip1Y, tip2X, tip2Y,
-                            false)
+                            false,
+                            matchResult.score)
                     chopstick.shapes.add(shape)
                     continue
                 }
@@ -451,7 +452,8 @@ class VideoDetectionServiceImpl(
                             EstimatedShapeStatus.DETECTED,
                             matchResult.detectedChopstick,
                             tip1X, tip1Y, tip2X, tip2Y,
-                            true)
+                            true,
+                            matchResult.score)
                     chopstick.shapes.add(shape)
                     continue
                 }
@@ -508,7 +510,8 @@ class VideoDetectionServiceImpl(
                                 EstimatedShapeStatus.DETECTED_ONCE,
                                 bestMatchResult.detectedChopstick,
                                 tip1X, tip1Y, tip2X, tip2Y,
-                                isRejectedBecauseOfConflict)
+                                isRejectedBecauseOfConflict,
+                                bestMatchResult.score)
                         shapes.add(shape)
 
                         Chopstick("C_${tip1.id}_${tip2.id}", tip1, tip2, shapes)
@@ -516,19 +519,18 @@ class VideoDetectionServiceImpl(
                     .collect(Collectors.toList())
             chopsticks.addAll(newChopsticks)
 
-            // TODO conflicts should be preferred when they are present for several frames
-            // TODO check frames 131, 980, 1081, 1155, 1788
-
             // Find chopsticks in conflicts and switch their "rejected" status by comparing their detections
             val notLostChopsticks = chopsticks.filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
 
             val sortedChopsticks = notLostChopsticks.stream()
                     .map { chopstick ->
-                        // TODO also consider matching score, can change 292, 967, 1842?
-                        val score = chopstick.shapes.stream().filter { it.status.isDetected() }.count() // TODO takeLast 5?
+                        val score = chopstick.shapes.stream()
+                                .filter { it.status.isDetected() }
+                                .mapToDouble { 1.0 / it.matchingScore }
+                                .sum()
                         Pair(chopstick, score)
                     }
-                    .sorted(Comparator.comparingLong { -it.second })
+                    .sorted(Comparator.comparingDouble { -it.second })
                     .map { it.first }
                     .collect(Collectors.toList())
 

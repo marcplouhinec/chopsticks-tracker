@@ -8,6 +8,7 @@ data class EstimatedChopstickShape(
         val tip1Y: Int,
         val tip2X: Int,
         val tip2Y: Int,
-        var isRejectedBecauseOfConflict: Boolean
+        var isRejectedBecauseOfConflict: Boolean,
+        val matchingScore: Double = Double.MAX_VALUE // Smaller is better
         // TODO direction
 ) : EstimatedShape
