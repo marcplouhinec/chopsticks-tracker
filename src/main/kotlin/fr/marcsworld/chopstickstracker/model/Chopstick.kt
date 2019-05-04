@@ -10,7 +10,7 @@ data class Chopstick(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Tip
+        other as Chopstick
 
         if (id != other.id) return false
 

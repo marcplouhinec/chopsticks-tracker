@@ -389,9 +389,6 @@ class VideoDetectionServiceImpl(
                 }
             }
 
-            // TODO conflicts should be preferred when they are present for several frames
-            // TODO check frames 131, 980, 1081, 1155, 1788
-
             // Update the existing chopsticks
             val processedMatchResults = mutableSetOf<ChopstickMatchResult>()
             for (chopstick in chopsticks) {
@@ -475,7 +472,7 @@ class VideoDetectionServiceImpl(
                 // Check if the chopstick is lost
                 // TODO Do not consider a chopstick lost when the tips are still here and there is no conflict
                 // TODO see frame 697
-                val recentShapes = chopstick.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing) // TODO create different conf
+                val recentShapes = chopstick.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing) // TODO create different conf, and can be increased, see 902
                 val isNotLost = recentShapes.any { it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM }
                 val undetectedShape = EstimatedChopstickShape(
                         frame.index,
@@ -518,6 +515,57 @@ class VideoDetectionServiceImpl(
                     }
                     .collect(Collectors.toList())
             chopsticks.addAll(newChopsticks)
+
+            // TODO conflicts should be preferred when they are present for several frames
+            // TODO check frames 131, 980, 1081, 1155, 1788
+
+            // Find chopsticks in conflicts and switch their "rejected" status by comparing their detections
+            val notLostChopsticks = chopsticks.filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
+
+            val sortedChopsticks = notLostChopsticks.stream()
+                    .map { chopstick ->
+                        // TODO also consider matching score, can change 292, 967, 1842?
+                        val score = chopstick.shapes.stream().filter { it.status.isDetected() }.count() // TODO takeLast 5?
+                        Pair(chopstick, score)
+                    }
+                    .sorted(Comparator.comparingLong { -it.second })
+                    .map { it.first }
+                    .collect(Collectors.toList())
+
+            // Find chopsticks to accept and reject
+            val rejectedChopsticks = mutableSetOf<Chopstick>()
+            val acceptedChopsticks = mutableListOf<Chopstick>()
+            for (sortedChopstick in sortedChopsticks) {
+                if (!rejectedChopsticks.contains(sortedChopstick)) {
+                    acceptedChopsticks.add(sortedChopstick)
+
+                    // Reject conflicts
+                    val conflictingChopsticks = notLostChopsticks.stream()
+                            .filter { it.id != sortedChopstick.id }
+                            .filter {
+                                sortedChopstick.tip1 == it.tip1 || sortedChopstick.tip1 == it.tip2 ||
+                                        sortedChopstick.tip2 == it.tip1 || sortedChopstick.tip2 == it.tip2
+                            }
+                            .collect(Collectors.toList())
+                    if (conflictingChopsticks.isNotEmpty()) {
+                        rejectedChopsticks.addAll(conflictingChopsticks)
+                    }
+                }
+            }
+
+            // Update the chopsticks rejection status
+            for (acceptedChopstick in acceptedChopsticks) {
+                val lastShape = acceptedChopstick.shapes.last()
+                if (lastShape.isRejectedBecauseOfConflict) {
+                    lastShape.isRejectedBecauseOfConflict = false
+                }
+            }
+            for (rejectedChopstick in rejectedChopsticks) {
+                val lastShape = rejectedChopstick.shapes.last()
+                if (!lastShape.isRejectedBecauseOfConflict) {
+                    lastShape.isRejectedBecauseOfConflict = true
+                }
+            }
         }
 
         return chopsticks
