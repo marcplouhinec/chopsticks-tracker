@@ -6,8 +6,17 @@ import fr.marcsworld.chopstickstracker.model.Tip
 
 interface VisualizationService {
 
-    fun renderTips(frames: List<Frame>, tips: List<Tip>, outputDirPath: String, detectedChopstickVisible: Boolean = false, chopsticks: List<Chopstick> = emptyList())
+    fun renderTips(
+            frames: List<Frame>,
+            tips: List<Tip>,
+            outputDirPath: String,
+            detectedChopstickVisible: Boolean = false,
+            chopsticks: List<Chopstick> = emptyList(),
+            alternativeChopsticksVisible: Boolean = false)
 
     fun renderCurrentAndPastTipDetections(
-            frames: List<Frame>, maxFramesInPast: Int, outputDirPath: String, armVisible: Boolean = false)
+            frames: List<Frame>,
+            maxFramesInPast: Int,
+            outputDirPath: String,
+            armVisible: Boolean = false)
 }

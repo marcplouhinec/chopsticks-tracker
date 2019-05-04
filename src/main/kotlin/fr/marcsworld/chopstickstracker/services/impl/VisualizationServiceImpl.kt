@@ -17,7 +17,12 @@ class VisualizationServiceImpl(
 ) : VisualizationService {
 
     override fun renderTips(
-            frames: List<Frame>, tips: List<Tip>, outputDirPath: String, detectedChopstickVisible: Boolean, chopsticks: List<Chopstick>) {
+            frames: List<Frame>,
+            tips: List<Tip>,
+            outputDirPath: String,
+            detectedChopstickVisible: Boolean,
+            chopsticks: List<Chopstick>,
+            alternativeChopsticksVisible: Boolean) {
         // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
@@ -89,19 +94,21 @@ class VisualizationServiceImpl(
             for (shapeWithChopstick in shapesWithChopsticks) {
                 val shape = shapeWithChopstick.first
 
-                g.color = when {
-                    shape.status == EstimatedShapeStatus.DETECTED_ONCE -> Color.GREEN
-                    shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
-                    shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
-                    else -> Color.WHITE
-                }
-                g.stroke = if (shape.isRejectedBecauseOfConflict) dashedStroke else normalStroke
+                if (!shape.isRejectedBecauseOfConflict || (shape.isRejectedBecauseOfConflict && alternativeChopsticksVisible)) {
+                    g.color = when {
+                        shape.status == EstimatedShapeStatus.DETECTED_ONCE -> Color.GREEN
+                        shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
+                        shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
+                        else -> Color.WHITE
+                    }
+                    g.stroke = if (shape.isRejectedBecauseOfConflict) dashedStroke else normalStroke
 
-                val x1 = Math.round(firstFrameImageX + shape.tip1X).toInt()
-                val y1 = Math.round(firstFrameImageY + shape.tip1Y).toInt()
-                val x2 = Math.round(firstFrameImageX + shape.tip2X).toInt()
-                val y2 = Math.round(firstFrameImageY + shape.tip2Y).toInt()
-                g.drawLine(x1, y1, x2, y2)
+                    val x1 = Math.round(firstFrameImageX + shape.tip1X).toInt()
+                    val y1 = Math.round(firstFrameImageY + shape.tip1Y).toInt()
+                    val x2 = Math.round(firstFrameImageX + shape.tip2X).toInt()
+                    val y2 = Math.round(firstFrameImageY + shape.tip2Y).toInt()
+                    g.drawLine(x1, y1, x2, y2)
+                }
             }
 
             g.dispose()

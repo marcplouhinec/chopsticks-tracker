@@ -50,7 +50,8 @@ fun main(args: Array<String>) {
             tips,
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
             false,
-            chopsticks)
+            chopsticks,
+            false)
     //visualizationService.renderCurrentAndPastTipDetections(
     //        compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
     println("Images rendered.")

@@ -472,9 +472,7 @@ class VideoDetectionServiceImpl(
                 }
 
                 // Check if the chopstick is lost
-                // TODO Do not consider a chopstick lost when the tips are still here and there is no conflict
-                // TODO see frame 697
-                val recentShapes = chopstick.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing) // TODO create different conf, and can be increased, see 902
+                val recentShapes = chopstick.shapes.takeLast(70) // Why this value?
                 val isNotLost = recentShapes.any { it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM }
                 val undetectedShape = EstimatedChopstickShape(
                         frame.index,
