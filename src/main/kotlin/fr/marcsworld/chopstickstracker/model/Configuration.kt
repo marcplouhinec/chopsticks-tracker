@@ -33,4 +33,14 @@ data class Configuration(
          * Maximum score between a newly detected tip and an existing one in the same frame in order to
          * consider them as the same tip.
          */
-        val maxScoreToConsiderNewTipAsTheSameAsAnExistingOne: Int)
+        val maxScoreToConsiderNewTipAsTheSameAsAnExistingOne: Int,
+
+        val minChopstickLengthInPixels: Int,
+
+        val maxChopstickLengthInPixels: Int,
+
+        /**
+         * Maximum score between two tips and a detected object (chopstick type), in order to consider them as
+         * a chopstick.
+         */
+        val maxMatchingScoreToConsiderTwoTipsAsAChopstick: Double)

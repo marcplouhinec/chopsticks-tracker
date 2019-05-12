@@ -294,7 +294,7 @@ class VideoDetectionServiceImpl(
                                 .filter { it.tip != shapeAndTip.tip }
                                 .filter {
                                     val dist = distance(it.shape.x, it.shape.y, shapeAndTip.shape.x, shapeAndTip.shape.y)
-                                    dist > 350 && dist < 550 // TODO why these values?
+                                    dist > configuration.minChopstickLengthInPixels && dist < configuration.maxChopstickLengthInPixels
                                 }
                                 .flatMap { candidate ->
                                     val tipsBoundingBox = Rectangle.getBoundingBox(shapeAndTip.shape, candidate.shape)
@@ -306,7 +306,6 @@ class VideoDetectionServiceImpl(
                                                 val intersection = Rectangle.getIntersection(tipsBoundingBox, detectedChopstick)
                                                 val intersectionArea = intersection.getArea()
                                                 val unionArea = boundingBoxArea + detectedChopstick.getArea() - intersectionArea
-                                                //val score = boundingBoxArea.toDouble() / intersectionArea.toDouble()
                                                 val score = Math.abs(intersectionArea.toDouble() / unionArea.toDouble() - 1.0)
 
                                                 ChopstickMatchResult(
@@ -321,7 +320,7 @@ class VideoDetectionServiceImpl(
                                 }
                     }
                     .sorted(Comparator.comparingDouble { it.score })
-                    .filter { it.score <= 0.8 } // TODO why this value
+                    .filter { it.score <= configuration.maxMatchingScoreToConsiderTwoTipsAsAChopstick }
                     .collect(Collectors.toList())
 
             // Find the best match results independently from other frames
