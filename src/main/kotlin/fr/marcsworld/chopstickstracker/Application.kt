@@ -1,5 +1,6 @@
 package fr.marcsworld.chopstickstracker
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import fr.marcsworld.chopstickstracker.model.Configuration
 import fr.marcsworld.chopstickstracker.services.FrameService
 import fr.marcsworld.chopstickstracker.services.ObjectDetectionService
@@ -9,19 +10,36 @@ import fr.marcsworld.chopstickstracker.services.impl.LocalStorageFrameServiceImp
 import fr.marcsworld.chopstickstracker.services.impl.VideoDetectionServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VisualizationServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.YoloObjectDetectionServiceImpl
+import org.bytedeco.javacpp.Loader
+import org.bytedeco.opencv.opencv_java
+import org.opencv.imgcodecs.Imgcodecs
 import java.io.File
 
 class Application
 
 fun main(args: Array<String>) {
 
+    Loader.load(opencv_java::class.java)
+
     val yoloModelConfigFile = File(args[0])
     val yoloModelWeightsFile = File(args[1])
     val objectDetectionService: ObjectDetectionService = YoloObjectDetectionServiceImpl(yoloModelConfigFile, yoloModelWeightsFile)
 
     val videoFile = File(args[2])
-    objectDetectionService.detectObjectsInVideo(videoFile) { frameIndex, detectedObjects ->
-        println("frameIndex = $frameIndex, detectedObjects = ${detectedObjects.size}")
+    val objectMapper = ObjectMapper()
+    val extractedFrameObjectsPath = "/Users/marcplouhinec/tmp/extracted_frame_objects"
+    val extractedFrameImagesPath = "/Users/marcplouhinec/tmp/extracted_frame_images"
+    objectDetectionService.detectObjectsInVideo(videoFile) { frameIndex, frame, detectedObjects ->
+        println("        frameIndex = $frameIndex, frame size = ${frame.size()}, detectedObjects = ${detectedObjects.size}")
+
+        val objectsJson = objectMapper.writeValueAsString(detectedObjects)
+        val jsonFile = File("$extractedFrameObjectsPath/$frameIndex.json")
+        jsonFile.bufferedWriter().use { out ->
+            out.write(objectsJson)
+        }
+
+        val jpgFile = File("$extractedFrameImagesPath/$frameIndex.jpg")
+        Imgcodecs.imwrite(jpgFile.absolutePath, frame)
     }
     if (1 + 1 == 2) { // TODO
         return
