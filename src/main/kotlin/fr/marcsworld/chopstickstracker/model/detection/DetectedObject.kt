@@ -1,7 +1,8 @@
-package fr.marcsworld.chopstickstracker.model
+package fr.marcsworld.chopstickstracker.model.detection
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import fr.marcsworld.chopstickstracker.model.Rectangle
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class DetectedObject(

@@ -1,5 +1,7 @@
 package fr.marcsworld.chopstickstracker.model
 
+import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
+
 data class EstimatedChopstickShape(
         override val frameIndex: Int,
         override val status: EstimatedShapeStatus,

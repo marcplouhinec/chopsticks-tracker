@@ -1,6 +1,7 @@
 package fr.marcsworld.chopstickstracker.services.impl
 
 import fr.marcsworld.chopstickstracker.model.*
+import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
 import fr.marcsworld.chopstickstracker.services.FrameService
 import fr.marcsworld.chopstickstracker.services.VisualizationService
 import java.awt.BasicStroke

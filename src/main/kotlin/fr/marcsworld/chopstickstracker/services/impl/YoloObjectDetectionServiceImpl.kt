@@ -1,7 +1,7 @@
 package fr.marcsworld.chopstickstracker.services.impl
 
-import fr.marcsworld.chopstickstracker.model.DetectedObject
-import fr.marcsworld.chopstickstracker.model.DetectedObjectType
+import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
+import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
 import fr.marcsworld.chopstickstracker.services.ObjectDetectionService
 import org.opencv.core.Mat
 import org.opencv.core.Scalar

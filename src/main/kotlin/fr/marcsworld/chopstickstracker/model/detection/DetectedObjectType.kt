@@ -1,4 +1,4 @@
-package fr.marcsworld.chopstickstracker.model
+package fr.marcsworld.chopstickstracker.model.detection
 
 enum class DetectedObjectType {
     ARM, CHOPSTICK, BIG_TIP, SMALL_TIP;

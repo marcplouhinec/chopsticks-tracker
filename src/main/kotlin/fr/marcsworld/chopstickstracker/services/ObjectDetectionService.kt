@@ -1,6 +1,6 @@
 package fr.marcsworld.chopstickstracker.services
 
-import fr.marcsworld.chopstickstracker.model.DetectedObject
+import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
 import org.opencv.core.Mat
 import java.io.File
 

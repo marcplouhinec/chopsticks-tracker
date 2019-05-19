@@ -3,44 +3,39 @@ package fr.marcsworld.chopstickstracker
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.marcsworld.chopstickstracker.model.Configuration
 import fr.marcsworld.chopstickstracker.services.FrameService
-import fr.marcsworld.chopstickstracker.services.ObjectDetectionService
 import fr.marcsworld.chopstickstracker.services.VideoDetectionService
 import fr.marcsworld.chopstickstracker.services.VisualizationService
+import fr.marcsworld.chopstickstracker.services.detection.ObjectDetectionService
 import fr.marcsworld.chopstickstracker.services.impl.LocalStorageFrameServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VideoDetectionServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VisualizationServiceImpl
-import fr.marcsworld.chopstickstracker.services.impl.YoloObjectDetectionServiceImpl
-import org.bytedeco.javacpp.Loader
-import org.bytedeco.opencv.opencv_java
 import org.opencv.imgcodecs.Imgcodecs
+import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.io.File
 
-class Application
+fun main() {
+    val context = AnnotationConfigApplicationContext(ApplicationConfiguration::class.java)
+    val objectDetectionService = context.getBean(ObjectDetectionService::class.java)
 
-fun main(args: Array<String>) {
-
-    Loader.load(opencv_java::class.java)
-
-    val yoloModelConfigFile = File(args[0])
-    val yoloModelWeightsFile = File(args[1])
-    val objectDetectionService: ObjectDetectionService = YoloObjectDetectionServiceImpl(yoloModelConfigFile, yoloModelWeightsFile)
-
-    val videoFile = File(args[2])
+    val videoFile = File("/Users/marcplouhinec/projects/chopsticks-tracker/data/input-video/VID_20181231_133114.mp4")
     val objectMapper = ObjectMapper()
     val extractedFrameObjectsPath = "/Users/marcplouhinec/tmp/extracted_frame_objects"
     val extractedFrameImagesPath = "/Users/marcplouhinec/tmp/extracted_frame_images"
-    objectDetectionService.detectObjectsInVideo(videoFile) { frameIndex, frame, detectedObjects ->
-        println("        frameIndex = $frameIndex, frame size = ${frame.size()}, detectedObjects = ${detectedObjects.size}")
 
-        val objectsJson = objectMapper.writeValueAsString(detectedObjects)
-        val jsonFile = File("$extractedFrameObjectsPath/$frameIndex.json")
+    val frameDetectionResultIterable = objectDetectionService.detectObjectsInVideo(videoFile)
+    for (result in frameDetectionResultIterable) {
+        println("frameIndex = ${result.frameIndex}, frame size = ${result.frameImage.size()}, detectedObjects = ${result.detectedObjects.size}")
+
+        val objectsJson = objectMapper.writeValueAsString(result.detectedObjects)
+        val jsonFile = File("$extractedFrameObjectsPath/${result.frameIndex}.json")
         jsonFile.bufferedWriter().use { out ->
             out.write(objectsJson)
         }
 
-        val jpgFile = File("$extractedFrameImagesPath/$frameIndex.jpg")
-        Imgcodecs.imwrite(jpgFile.absolutePath, frame)
+        val jpgFile = File("$extractedFrameImagesPath/${result.frameIndex}.jpg")
+        Imgcodecs.imwrite(jpgFile.absolutePath, result.frameImage)
     }
+
     if (1 + 1 == 2) { // TODO
         return
     }

@@ -3,10 +3,9 @@ package fr.marcsworld.chopstickstracker.services.impl
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import fr.marcsworld.chopstickstracker.model.Configuration
-import fr.marcsworld.chopstickstracker.model.DetectedObject
+import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.services.FrameService
-import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.File
 import java.util.*
