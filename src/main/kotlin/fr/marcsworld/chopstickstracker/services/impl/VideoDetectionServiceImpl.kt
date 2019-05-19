@@ -299,13 +299,13 @@ class VideoDetectionServiceImpl(
                                     dist > configuration.minChopstickLengthInPixels && dist < configuration.maxChopstickLengthInPixels
                                 }
                                 .flatMap { candidate ->
-                                    val tipsBoundingBox = Rectangle.getBoundingBox(shapeAndTip.shape, candidate.shape)
+                                    val tipsBoundingBox = Rectangular.getBoundingBox(shapeAndTip.shape, candidate.shape)
                                     val boundingBoxArea = tipsBoundingBox.getArea()
 
                                     detectedChopsticks.stream()
                                             .filter { detectedChopstick -> tipsBoundingBox.isOverlappingWith(detectedChopstick) }
                                             .map { detectedChopstick ->
-                                                val intersection = Rectangle.getIntersection(tipsBoundingBox, detectedChopstick)
+                                                val intersection = Rectangular.getIntersection(tipsBoundingBox, detectedChopstick)
                                                 val intersectionArea = intersection.getArea()
                                                 val unionArea = boundingBoxArea + detectedChopstick.getArea() - intersectionArea
                                                 val score = Math.abs(intersectionArea.toDouble() / unionArea.toDouble() - 1.0)
@@ -589,7 +589,7 @@ class VideoDetectionServiceImpl(
                 .collect(Collectors.toList())
     }
 
-    private fun computeMatchingScore(prevObject: Rectangle, currObject: Rectangle): Double {
+    private fun computeMatchingScore(prevObject: Rectangular, currObject: Rectangular): Double {
         var score = distance(currObject.x, currObject.y, prevObject.x, prevObject.y)
         score += Math.abs(currObject.width - prevObject.width)
         score += Math.abs(currObject.height - prevObject.height)

@@ -10,4 +10,4 @@ data class EstimatedTipShape(
         override val y: Int,
         override val width: Int,
         override val height: Int
-) : Rectangle(x, y, width, height), EstimatedShape
+) : Rectangular, EstimatedShape

@@ -68,6 +68,8 @@ class YoloObjectDetectionServiceImpl(
         private var frameWidth = -1
         private var frameHeight = -1
         private val frame = Mat()
+        private var frameProcessed = true
+        private var frameGrabbed = true
 
         init {
             // Load the neural network model
@@ -97,8 +99,24 @@ class YoloObjectDetectionServiceImpl(
             LOGGER.info("Number of frames in video file: {}", nbFrames)
         }
 
+        override fun hasNext(): Boolean {
+            if (frameProcessed) {
+                frameProcessed = false
+
+                frameIndex += 1
+                frameGrabbed = videoCapture.read(frame)
+
+                if (!frameGrabbed) {
+                    videoCapture.release()
+                }
+            }
+
+            return frameGrabbed
+        }
+
         override fun next(): FrameDetectionResult {
             LOGGER.info("Processing frame {} / {}", frameIndex + 1, nbFrames)
+            frameProcessed = true
 
             if (frameWidth == -1 || frameHeight == -1) {
                 val size = frame.size()
@@ -145,17 +163,6 @@ class YoloObjectDetectionServiceImpl(
                 }
             }
             return FrameDetectionResult(frameIndex, frame, detectedObjects)
-        }
-
-        override fun hasNext(): Boolean {
-            frameIndex += 1
-            val grabbed = videoCapture.read(frame)
-
-            if (!grabbed) {
-                videoCapture.release()
-            }
-
-            return grabbed
         }
 
         private fun getResourceFilePath(resource: Resource): String {
