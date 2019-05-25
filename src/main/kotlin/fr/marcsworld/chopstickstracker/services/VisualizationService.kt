@@ -4,13 +4,14 @@ import fr.marcsworld.chopstickstracker.model.Chopstick
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
 import fr.marcsworld.chopstickstracker.model.detection.FrameDetectionResult
+import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
 
 interface VisualizationService {
 
     fun renderTips(
             frames: List<Frame>,
             tips: List<Tip>,
-            outputDirPath: String,
+            frameImageWriter: FrameImageWriter,
             detectedChopstickVisible: Boolean = false,
             chopsticks: List<Chopstick> = emptyList(),
             alternativeChopsticksVisible: Boolean = false,
@@ -19,9 +20,9 @@ interface VisualizationService {
     fun renderCurrentAndPastTipDetections(
             frames: List<Frame>,
             maxFramesInPast: Int,
-            outputDirPath: String,
+            frameImageWriter: FrameImageWriter,
             armVisible: Boolean = false,
             frameDetectionResults: Iterable<FrameDetectionResult>)
 
-    fun renderDetectedObjects(frameDetectionResults: Iterable<FrameDetectionResult>, outputDirPath: String)
+    fun renderDetectedObjects(frameDetectionResults: Iterable<FrameDetectionResult>, frameImageWriter: FrameImageWriter)
 }

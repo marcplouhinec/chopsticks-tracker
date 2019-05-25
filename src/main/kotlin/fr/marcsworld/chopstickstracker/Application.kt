@@ -8,6 +8,10 @@ import fr.marcsworld.chopstickstracker.services.detection.ObjectDetectionService
 import fr.marcsworld.chopstickstracker.services.detection.impl.CachedYoloObjectDetectionServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VideoDetectionServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VisualizationServiceImpl
+import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
+import fr.marcsworld.chopstickstracker.services.rendering.writer.impl.VideoFrameImageWriter
+import org.opencv.videoio.VideoCapture
+import org.opencv.videoio.Videoio
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.io.File
 
@@ -59,22 +63,34 @@ fun main() {
     val chopsticks = videoDetectionService.findAllChopsticks(compensatedFrames, tips)
 
     println("Render images...")
-    visualizationService.renderTips(
-            compensatedFrames,
-            tips,
-            "/Users/marcplouhinec/projects/chopsticks-tracker/output",
-            false,
-            chopsticks,
-            false,
-            frameDetectionResultIterable)
-    /*visualizationService.renderCurrentAndPastTipDetections(
+    /*val frameImageWriter: FrameImageWriter = FolderFrameImageWriter(
+            File("/Users/marcplouhinec/projects/chopsticks-tracker/output")
+    )*/
+    val videoCapture = VideoCapture(videoFile.absolutePath)
+    val fps = videoCapture.get(Videoio.CAP_PROP_FPS)
+    videoCapture.release()
+    val frameImageWriter: FrameImageWriter = VideoFrameImageWriter(
+            File("/Users/marcplouhinec/projects/chopsticks-tracker/output/${videoFile.nameWithoutExtension}.mpg"),
+            fps
+    )
+    frameImageWriter.use { writer ->
+        visualizationService.renderTips(
+                compensatedFrames,
+                tips,
+                writer,
+                false,
+                chopsticks,
+                false,
+                frameDetectionResultIterable)
+        /*visualizationService.renderCurrentAndPastTipDetections(
             compensatedFrames,
             10,
-            "/Users/marcplouhinec/projects/chopsticks-tracker/output",
+            writer,
             true,
             frameDetectionResultIterable)*/
-    /*visualizationService.renderDetectedObjects(
+        /*visualizationService.renderDetectedObjects(
             frameDetectionResultIterable,
-            "/Users/marcplouhinec/projects/chopsticks-tracker/output")*/
+            writer)*/
+    }
     println("Images rendered.")
 }

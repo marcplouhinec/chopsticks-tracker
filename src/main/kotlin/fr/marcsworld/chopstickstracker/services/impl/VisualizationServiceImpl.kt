@@ -4,10 +4,9 @@ import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
 import fr.marcsworld.chopstickstracker.model.detection.FrameDetectionResult
 import fr.marcsworld.chopstickstracker.services.VisualizationService
+import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
 import org.opencv.core.*
-import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
-import java.io.File
 import java.util.stream.Collectors
 
 
@@ -18,14 +17,14 @@ class VisualizationServiceImpl(
     override fun renderTips(
             frames: List<Frame>,
             tips: List<Tip>,
-            outputDirPath: String,
+            frameImageWriter: FrameImageWriter,
             detectedChopstickVisible: Boolean,
             chopsticks: List<Chopstick>,
             alternativeChopsticksVisible: Boolean,
             frameDetectionResults: Iterable<FrameDetectionResult>) {
         // Preparations
-        val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
+        frameImageWriter.initFrameSize(outputWidth, outputHeight)
 
         val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedTipShape, Tip>>> = tips.stream()
                 .flatMap { tip ->
@@ -117,17 +116,17 @@ class VisualizationServiceImpl(
                 }
             }
 
-            Imgcodecs.imwrite(File(outputFile, "${frame.index}.jpg").absolutePath, outputImage)
+            frameImageWriter.write(frameDetectionResult.frameIndex, outputImage)
         }
     }
 
     override fun renderCurrentAndPastTipDetections(
-            frames: List<Frame>, maxFramesInPast: Int, outputDirPath: String, armVisible: Boolean,
+            frames: List<Frame>, maxFramesInPast: Int, frameImageWriter: FrameImageWriter, armVisible: Boolean,
             frameDetectionResults: Iterable<FrameDetectionResult>) {
         // Preparations
         val yellowColor = Scalar(0.0, 255.0, 255.0)
-        val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
+        frameImageWriter.initFrameSize(outputWidth, outputHeight)
 
         // Draw the current and past tip detections on each frame
         for (frameDetectionResult in frameDetectionResults) {
@@ -174,23 +173,32 @@ class VisualizationServiceImpl(
                 }
             }
 
-            Imgcodecs.imwrite(File(outputFile, "${frame.index}.jpg").absolutePath, outputImage)
+            frameImageWriter.write(frameDetectionResult.frameIndex, outputImage)
         }
     }
 
-    override fun renderDetectedObjects(frameDetectionResults: Iterable<FrameDetectionResult>, outputDirPath: String) {
+    override fun renderDetectedObjects(
+            frameDetectionResults: Iterable<FrameDetectionResult>, frameImageWriter: FrameImageWriter) {
         // Preparations
         val yellowColor = Scalar(0.0, 255.0, 255.0)
         val greenColor = Scalar(0.0, 255.0, 0.0)
         val orangeColor = Scalar(0.0, 200.0, 255.0)
         val magentaColor = Scalar(255.0, 0.0, 255.0)
-        val outputFile = eraseOutputFolder(outputDirPath)
+
+        var frameImageWriterInitialized = false
 
         // Draw the current and past tip detections on each frame
         for (frameDetectionResult in frameDetectionResults) {
             println("    Rendering frame ${frameDetectionResult.frameIndex}...")
 
             val frameImage = frameDetectionResult.frameImageProvider()
+
+            if (!frameImageWriterInitialized) {
+                val size = frameImage.size()
+                frameImageWriter.initFrameSize(size.width.toInt(), size.height.toInt())
+                frameImageWriterInitialized = true
+            }
+
             for (detectedObject in frameDetectionResult.detectedObjects) {
                 val color = when (detectedObject.objectType) {
                     DetectedObjectType.CHOPSTICK -> orangeColor
@@ -204,19 +212,8 @@ class VisualizationServiceImpl(
                         color)
             }
 
-            Imgcodecs.imwrite(File(outputFile, "${frameDetectionResult.frameIndex}.jpg").absolutePath, frameImage)
+            frameImageWriter.write(frameDetectionResult.frameIndex, frameImage)
         }
-    }
-
-    private fun eraseOutputFolder(outputDirPath: String): File {
-        val outputFile = File(outputDirPath)
-        if (outputFile.exists()) {
-            if (!outputFile.deleteRecursively()) {
-                throw IllegalStateException("Unable to delete the directory: $outputDirPath")
-            }
-        }
-        outputFile.mkdirs()
-        return outputFile
     }
 
     private fun computeNewFrameDimension(frames: List<Frame>): NewFrameDimension {
