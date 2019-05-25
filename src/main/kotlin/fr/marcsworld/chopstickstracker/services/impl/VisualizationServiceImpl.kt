@@ -2,19 +2,17 @@ package fr.marcsworld.chopstickstracker.services.impl
 
 import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
-import fr.marcsworld.chopstickstracker.services.FrameService
+import fr.marcsworld.chopstickstracker.model.detection.FrameDetectionResult
 import fr.marcsworld.chopstickstracker.services.VisualizationService
-import java.awt.BasicStroke
-import java.awt.Color
-import java.awt.image.BufferedImage
+import org.opencv.core.*
+import org.opencv.imgcodecs.Imgcodecs
+import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.util.stream.Collectors
-import javax.imageio.ImageIO
 
 
 class VisualizationServiceImpl(
-        private val configuration: Configuration,
-        private val frameService: FrameService
+        private val configuration: Configuration
 ) : VisualizationService {
 
     override fun renderTips(
@@ -23,7 +21,8 @@ class VisualizationServiceImpl(
             outputDirPath: String,
             detectedChopstickVisible: Boolean,
             chopsticks: List<Chopstick>,
-            alternativeChopsticksVisible: Boolean) {
+            alternativeChopsticksVisible: Boolean,
+            frameDetectionResults: Iterable<FrameDetectionResult>) {
         // Preparations
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
@@ -44,30 +43,35 @@ class VisualizationServiceImpl(
                 }
                 .collect(Collectors.groupingBy { it.first.frameIndex })
 
-        val normalStroke = BasicStroke()
-        val dashedStroke = BasicStroke(1F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0F, FloatArray(1) { 9F }, 0F)
+        val cyanColor = Scalar(255.0, 255.0, 0.0)
+        val greenColor = Scalar(0.0, 255.0, 0.0)
+        val orangeColor = Scalar(0.0, 200.0, 255.0)
+        val magentaColor = Scalar(255.0, 0.0, 255.0)
+        val whiteColor = Scalar(255.0, 255.0, 255.0)
 
         // Draw the tips on each frame
-        for (frame in frames) {
+        for (frameDetectionResult in frameDetectionResults) {
+            val frame = frames[frameDetectionResult.frameIndex]
             println("    Rendering tips in frame ${frame.index} / ${frames.size}...")
 
-            val frameImage = frameService.findImageByIndex(frame.index)
-            val outputImage = BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB)
+            val frameImage = frameDetectionResult.frameImageProvider()
+            val outputImage = Mat(outputHeight, outputWidth, CvType.CV_8UC3, Scalar(0.0, 0.0, 0.0))
 
-            val g = outputImage.createGraphics()
-            g.drawImage(frameImage,
-                    Math.round(firstFrameImageX + frame.imageX).toInt(),
-                    Math.round(firstFrameImageY + frame.imageY).toInt(),
-                    null)
+            val frameImageX = Math.round(firstFrameImageX + frame.imageX).toInt()
+            val frameImageY = Math.round(firstFrameImageY + frame.imageY).toInt()
+            val roi = Rect(frameImageX, frameImageY, frameImage.width(), frameImage.height())
+            frameImage.copyTo(Mat(outputImage, roi))
 
             if (detectedChopstickVisible) {
-                g.color = Color.CYAN
                 for (detectedChopstick in frame.objects) {
                     if (detectedChopstick.objectType == DetectedObjectType.CHOPSTICK) {
                         val x = Math.round(firstFrameImageX + detectedChopstick.x).toInt()
                         val y = Math.round(firstFrameImageY + detectedChopstick.y).toInt()
 
-                        g.drawRect(x, y, detectedChopstick.width, detectedChopstick.height)
+                        Imgproc.rectangle(
+                                outputImage,
+                                Rect(x, y, detectedChopstick.width, detectedChopstick.height),
+                                cyanColor)
                     }
                 }
             }
@@ -78,17 +82,18 @@ class VisualizationServiceImpl(
                 val shape = shapeWithTip.first
                 val tip = shapeWithTip.second
 
-                g.color = when {
-                    shape.status == EstimatedShapeStatus.DETECTED_ONCE -> Color.GREEN
-                    shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
-                    shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
-                    else -> Color.WHITE
+                val color = when {
+                    shape.status == EstimatedShapeStatus.DETECTED_ONCE -> greenColor
+                    shape.status == EstimatedShapeStatus.NOT_DETECTED -> orangeColor
+                    shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> magentaColor
+                    else -> whiteColor
                 }
 
                 val x = Math.round(firstFrameImageX + shape.x).toInt()
                 val y = Math.round(firstFrameImageY + shape.y).toInt()
-                g.drawRect(x, y, shape.width, shape.height)
-                g.drawString(tip.id, x, y + 16)
+                Imgproc.rectangle(outputImage, Rect(x, y, shape.width, shape.height), color)
+                Imgproc.putText(outputImage, tip.id, Point(x.toDouble(), y + 16.0),
+                        Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, color)
             }
 
             val shapesWithChopsticks = shapesWithChopsticksByFrameIndex[frame.index] ?: listOf()
@@ -96,52 +101,52 @@ class VisualizationServiceImpl(
                 val shape = shapeWithChopstick.first
 
                 if (!shape.isRejectedBecauseOfConflict || (shape.isRejectedBecauseOfConflict && alternativeChopsticksVisible)) {
-                    g.color = when {
-                        shape.status == EstimatedShapeStatus.DETECTED_ONCE -> Color.GREEN
-                        shape.status == EstimatedShapeStatus.NOT_DETECTED -> Color.ORANGE
-                        shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> Color.MAGENTA
-                        else -> Color.WHITE
+                    val color = when {
+                        shape.status == EstimatedShapeStatus.DETECTED_ONCE -> greenColor
+                        shape.status == EstimatedShapeStatus.NOT_DETECTED -> orangeColor
+                        shape.status == EstimatedShapeStatus.HIDDEN_BY_ARM -> magentaColor
+                        else -> whiteColor
                     }
-                    g.stroke = if (shape.isRejectedBecauseOfConflict) dashedStroke else normalStroke
+                    val thickness = if (shape.isRejectedBecauseOfConflict) 1 else 2
 
-                    val x1 = Math.round(firstFrameImageX + shape.tip1X).toInt()
-                    val y1 = Math.round(firstFrameImageY + shape.tip1Y).toInt()
-                    val x2 = Math.round(firstFrameImageX + shape.tip2X).toInt()
-                    val y2 = Math.round(firstFrameImageY + shape.tip2Y).toInt()
-                    g.drawLine(x1, y1, x2, y2)
+                    val x1 = Math.round(firstFrameImageX + shape.tip1X).toDouble()
+                    val y1 = Math.round(firstFrameImageY + shape.tip1Y).toDouble()
+                    val x2 = Math.round(firstFrameImageX + shape.tip2X).toDouble()
+                    val y2 = Math.round(firstFrameImageY + shape.tip2Y).toDouble()
+                    Imgproc.line(outputImage, Point(x1, y1), Point(x2, y2), color, thickness)
                 }
             }
 
-            g.dispose()
-
-            ImageIO.write(outputImage, "jpg", File(outputFile, "${frame.index}.jpg"))
+            Imgcodecs.imwrite(File(outputFile, "${frame.index}.jpg").absolutePath, outputImage)
         }
     }
 
     override fun renderCurrentAndPastTipDetections(
-            frames: List<Frame>, maxFramesInPast: Int, outputDirPath: String, armVisible: Boolean) {
+            frames: List<Frame>, maxFramesInPast: Int, outputDirPath: String, armVisible: Boolean,
+            frameDetectionResults: Iterable<FrameDetectionResult>) {
         // Preparations
+        val yellowColor = Scalar(0.0, 255.0, 255.0)
         val outputFile = eraseOutputFolder(outputDirPath)
         val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
 
         // Draw the current and past tip detections on each frame
-        for (frame in frames) {
+        for (frameDetectionResult in frameDetectionResults) {
+            val frame = frames[frameDetectionResult.frameIndex]
             println("    Rendering frame ${frame.index} / ${frames.size}...")
 
-            val frameImage = frameService.findImageByIndex(frame.index)
-            val outputImage = BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB)
+            val frameImage = frameDetectionResult.frameImageProvider()
+            val outputImage = Mat(outputHeight, outputWidth, CvType.CV_8UC3, Scalar(0.0, 0.0, 0.0))
 
-            val g = outputImage.createGraphics()
-            g.drawImage(frameImage,
-                    Math.round(firstFrameImageX + frame.imageX).toInt(),
-                    Math.round(firstFrameImageY + frame.imageY).toInt(),
-                    null)
+            val frameImageX = Math.round(firstFrameImageX + frame.imageX).toInt()
+            val frameImageY = Math.round(firstFrameImageY + frame.imageY).toInt()
+            val roi = Rect(frameImageX, frameImageY, frameImage.width(), frameImage.height())
+            frameImage.copyTo(Mat(outputImage, roi))
 
             for (pastIndex in maxFramesInPast downTo 0) {
                 val frameIndex = frame.index - pastIndex
                 if (frameIndex >= 0) {
-                    val alpha = (maxFramesInPast - pastIndex) * (255.0 / maxFramesInPast)
-                    g.color = Color(255, 255, 255, Math.round(alpha).toInt())
+                    //val alpha = (maxFramesInPast - pastIndex) * (1.0 / maxFramesInPast)
+                    val color = Scalar(255.0, 255.0, 255.0) //, Math.round(alpha).toDouble())
 
                     val detectedTips = frames[frameIndex].objects.stream()
                             .filter { it.objectType.isTip() }
@@ -151,23 +156,25 @@ class VisualizationServiceImpl(
                     for (detectedTip in detectedTips) {
                         val x = Math.round(firstFrameImageX + detectedTip.x).toInt()
                         val y = Math.round(firstFrameImageY + detectedTip.y).toInt()
-                        g.drawRect(x, y, detectedTip.width, detectedTip.height)
+                        Imgproc.rectangle(outputImage, Rect(x, y, detectedTip.width, detectedTip.height), color)
                     }
                 }
             }
 
             if (armVisible) {
-                g.color = Color.YELLOW
                 for (detectedArm in frame.objects) {
                     if (detectedArm.objectType == DetectedObjectType.ARM) {
-                        g.drawRect(detectedArm.x, detectedArm.y, detectedArm.width, detectedArm.height)
+                        val x = Math.round(firstFrameImageX + detectedArm.x).toInt()
+                        val y = Math.round(firstFrameImageY + detectedArm.y).toInt()
+                        Imgproc.rectangle(
+                                outputImage,
+                                Rect(x, y, detectedArm.width, detectedArm.height),
+                                yellowColor)
                     }
                 }
             }
 
-            g.dispose()
-
-            ImageIO.write(outputImage, "jpg", File(outputFile, "${frame.index}.jpg"))
+            Imgcodecs.imwrite(File(outputFile, "${frame.index}.jpg").absolutePath, outputImage)
         }
     }
 

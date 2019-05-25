@@ -162,7 +162,7 @@ class YoloObjectDetectionServiceImpl(
                     }
                 }
             }
-            return FrameDetectionResult(frameIndex, frame, detectedObjects)
+            return FrameDetectionResult(frameIndex, detectedObjects) { frame }
         }
 
         private fun getResourceFilePath(resource: Resource): String {

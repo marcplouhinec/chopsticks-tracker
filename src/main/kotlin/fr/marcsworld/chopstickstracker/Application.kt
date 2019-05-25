@@ -1,12 +1,11 @@
 package fr.marcsworld.chopstickstracker
 
 import fr.marcsworld.chopstickstracker.model.Configuration
-import fr.marcsworld.chopstickstracker.services.FrameService
+import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.services.VideoDetectionService
 import fr.marcsworld.chopstickstracker.services.VisualizationService
 import fr.marcsworld.chopstickstracker.services.detection.ObjectDetectionService
 import fr.marcsworld.chopstickstracker.services.detection.impl.CachedYoloObjectDetectionServiceImpl
-import fr.marcsworld.chopstickstracker.services.impl.LocalStorageFrameServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VideoDetectionServiceImpl
 import fr.marcsworld.chopstickstracker.services.impl.VisualizationServiceImpl
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
@@ -22,12 +21,8 @@ fun main() {
     val frameDetectionResultIterable = objectDetectionService.detectObjectsInVideo(videoFile)
 
     // Process the frames
-    for (result in frameDetectionResultIterable) {
-        println("frameIndex = ${result.frameIndex}, frame size = ${result.frameImage.size()}, detectedObjects = ${result.detectedObjects.size}")
-    }
-
-    if (1 + 1 == 2) { // TODO
-        return
+    val frames = frameDetectionResultIterable.map {
+        Frame(it.frameIndex, it.detectedObjects)
     }
 
     val configuration = Configuration(
@@ -46,12 +41,10 @@ fun main() {
             350,
             550,
             0.8)
-    val frameService: FrameService = LocalStorageFrameServiceImpl(configuration)
     val videoDetectionService: VideoDetectionService = VideoDetectionServiceImpl(configuration)
-    val visualizationService: VisualizationService = VisualizationServiceImpl(configuration, frameService)
+    val visualizationService: VisualizationService = VisualizationServiceImpl(configuration)
 
     println("Load all frames...")
-    val frames = frameService.findAll()
     println("${frames.size} frames loaded.")
 
     println("Remove unreliable detected objects...")
@@ -74,8 +67,13 @@ fun main() {
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
             false,
             chopsticks,
-            false)
-    //visualizationService.renderCurrentAndPastTipDetections(
-    //        compensatedFrames, 10, "/Users/marcplouhinec/projects/chopsticks-tracker/output", true)
+            false,
+            frameDetectionResultIterable)
+    /*visualizationService.renderCurrentAndPastTipDetections(
+            compensatedFrames,
+            10,
+            "/Users/marcplouhinec/projects/chopsticks-tracker/output",
+            true,
+            frameDetectionResultIterable)*/
     println("Images rendered.")
 }

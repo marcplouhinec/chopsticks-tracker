@@ -3,6 +3,7 @@ package fr.marcsworld.chopstickstracker.services
 import fr.marcsworld.chopstickstracker.model.Chopstick
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
+import fr.marcsworld.chopstickstracker.model.detection.FrameDetectionResult
 
 interface VisualizationService {
 
@@ -12,11 +13,13 @@ interface VisualizationService {
             outputDirPath: String,
             detectedChopstickVisible: Boolean = false,
             chopsticks: List<Chopstick> = emptyList(),
-            alternativeChopsticksVisible: Boolean = false)
+            alternativeChopsticksVisible: Boolean = false,
+            frameDetectionResults: Iterable<FrameDetectionResult>)
 
     fun renderCurrentAndPastTipDetections(
             frames: List<Frame>,
             maxFramesInPast: Int,
             outputDirPath: String,
-            armVisible: Boolean = false)
+            armVisible: Boolean = false,
+            frameDetectionResults: Iterable<FrameDetectionResult>)
 }

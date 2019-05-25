@@ -9,6 +9,6 @@ import org.opencv.core.Mat
  */
 data class FrameDetectionResult(
         val frameIndex: Int,
-        val frameImage: Mat,
-        val detectedObjects: List<DetectedObject>
+        val detectedObjects: List<DetectedObject>,
+        val frameImageProvider: () -> Mat
 )
