@@ -90,7 +90,7 @@ class CachedYoloObjectDetectionServiceImpl(
                 }
 
                 // Stop if we have reached the total
-                if (frameIndex > total) {
+                if (frameIndex >= total) {
                     return false
                 }
 
