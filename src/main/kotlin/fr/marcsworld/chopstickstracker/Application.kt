@@ -21,7 +21,7 @@ fun main() {
     val frameDetectionResultIterable = objectDetectionService.detectObjectsInVideo(videoFile)
 
     // Process the frames
-    val frames = frameDetectionResultIterable.map {
+    val frames = frameDetectionResultIterable.take(20).map {
         Frame(it.frameIndex, it.detectedObjects)
     }
 
@@ -61,19 +61,22 @@ fun main() {
     val chopsticks = videoDetectionService.findAllChopsticks(compensatedFrames, tips)
 
     println("Render images...")
-    visualizationService.renderTips(
+    /*visualizationService.renderTips(
             compensatedFrames,
             tips,
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
             false,
             chopsticks,
             false,
-            frameDetectionResultIterable)
+            frameDetectionResultIterable)*/
     /*visualizationService.renderCurrentAndPastTipDetections(
             compensatedFrames,
             10,
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
             true,
             frameDetectionResultIterable)*/
+    visualizationService.renderDetectedObjects(
+            frameDetectionResultIterable.take(20),
+            "/Users/marcplouhinec/projects/chopsticks-tracker/output")
     println("Images rendered.")
 }

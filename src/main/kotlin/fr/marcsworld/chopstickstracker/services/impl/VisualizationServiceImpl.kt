@@ -178,6 +178,36 @@ class VisualizationServiceImpl(
         }
     }
 
+    override fun renderDetectedObjects(frameDetectionResults: Iterable<FrameDetectionResult>, outputDirPath: String) {
+        // Preparations
+        val yellowColor = Scalar(0.0, 255.0, 255.0)
+        val greenColor = Scalar(0.0, 255.0, 0.0)
+        val orangeColor = Scalar(0.0, 200.0, 255.0)
+        val magentaColor = Scalar(255.0, 0.0, 255.0)
+        val outputFile = eraseOutputFolder(outputDirPath)
+
+        // Draw the current and past tip detections on each frame
+        for (frameDetectionResult in frameDetectionResults) {
+            println("    Rendering frame ${frameDetectionResult.frameIndex}...")
+
+            val frameImage = frameDetectionResult.frameImageProvider()
+            for (detectedObject in frameDetectionResult.detectedObjects) {
+                val color = when (detectedObject.objectType) {
+                    DetectedObjectType.CHOPSTICK -> orangeColor
+                    DetectedObjectType.ARM -> yellowColor
+                    DetectedObjectType.BIG_TIP -> greenColor
+                    DetectedObjectType.SMALL_TIP -> magentaColor
+                }
+
+                Imgproc.rectangle(frameImage,
+                        Rect(detectedObject.x, detectedObject.y, detectedObject.width, detectedObject.height),
+                        color)
+            }
+
+            Imgcodecs.imwrite(File(outputFile, "${frameDetectionResult.frameIndex}.jpg").absolutePath, frameImage)
+        }
+    }
+
     private fun eraseOutputFolder(outputDirPath: String): File {
         val outputFile = File(outputDirPath)
         if (outputFile.exists()) {

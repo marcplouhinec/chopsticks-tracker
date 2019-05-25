@@ -22,4 +22,6 @@ interface VisualizationService {
             outputDirPath: String,
             armVisible: Boolean = false,
             frameDetectionResults: Iterable<FrameDetectionResult>)
+
+    fun renderDetectedObjects(frameDetectionResults: Iterable<FrameDetectionResult>, outputDirPath: String)
 }

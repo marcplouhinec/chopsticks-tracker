@@ -142,7 +142,7 @@ class YoloObjectDetectionServiceImpl(
                             .boxed()
                             .collect(Collectors.toList())
 
-                    val scores = detection.subList(5, detection.size - 1).map { it }
+                    val scores = detection.subList(5, detection.size).map { it }
                     val classID = scores.indices.maxBy { scores[it] } ?: -1
                     val confidence = scores[classID]
 
@@ -163,7 +163,9 @@ class YoloObjectDetectionServiceImpl(
                     }
                 }
             }
-            return FrameDetectionResult(frameIndex, detectedObjects) { frame }
+            val copiedFrame = Mat()
+            frame.copyTo(copiedFrame)
+            return FrameDetectionResult(frameIndex, detectedObjects) { copiedFrame }
         }
 
         private fun getResourceFilePath(resource: Resource): String {
