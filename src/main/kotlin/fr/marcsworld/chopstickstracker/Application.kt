@@ -26,8 +26,6 @@ fun main() {
     }
 
     val configuration = Configuration(
-            "/Users/marcplouhinec/projects/yolo3/output/extracted_frame_objects",
-            "/Users/marcplouhinec/projects/yolo3/output/extracted_frame_images",
             1920, 1080,
             0.9,
             0.7,
@@ -61,22 +59,22 @@ fun main() {
     val chopsticks = videoDetectionService.findAllChopsticks(compensatedFrames, tips)
 
     println("Render images...")
-    /*visualizationService.renderTips(
+    visualizationService.renderTips(
             compensatedFrames,
             tips,
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
             false,
             chopsticks,
             false,
-            frameDetectionResultIterable)*/
+            frameDetectionResultIterable)
     /*visualizationService.renderCurrentAndPastTipDetections(
             compensatedFrames,
             10,
             "/Users/marcplouhinec/projects/chopsticks-tracker/output",
             true,
             frameDetectionResultIterable)*/
-    visualizationService.renderDetectedObjects(
+    /*visualizationService.renderDetectedObjects(
             frameDetectionResultIterable,
-            "/Users/marcplouhinec/projects/chopsticks-tracker/output")
+            "/Users/marcplouhinec/projects/chopsticks-tracker/output")*/
     println("Images rendered.")
 }
