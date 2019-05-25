@@ -175,7 +175,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>fr.marcsworld.chopstickstracker.Application</mainClass>
+                                    <mainClass>fr.marcsworld.chopstickstracker.ApplicationKt</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

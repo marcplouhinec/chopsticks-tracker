@@ -15,7 +15,20 @@ import java.io.File
 
 val LOGGER = LoggerFactory.getLogger("main")!!
 
-fun main() {
+/**
+ * Detect chopsticks in a video.
+ *
+ * @author Marc Plouhinec
+ */
+fun main(args: Array<String>) {
+    if (args.size != 2) {
+        return println("Usage: java -jar chopsticks-tracker-*-jar-with-dependencies.jar " +
+                "<input-video-path> " +
+                "<output-folder-path>")
+    }
+    val videoFile = File(args[0])
+    val outputFolderFile = File(args[1])
+
     // Load the context
     val context = AnnotationConfigApplicationContext(ApplicationConfiguration::class.java)
     val objectDetectionService: ObjectDetectionService = context.getBean(CachedYoloObjectDetectionServiceImpl::class.java)
@@ -23,7 +36,6 @@ fun main() {
     val visualizationService: VisualizationService = context.getBean(VisualizationService::class.java)
 
     // Detect objects in the video
-    val videoFile = File("/Users/marcplouhinec/projects/chopsticks-tracker/data/input-video/VID_20181231_133114.mp4")
     val frameDetectionResultIterable = objectDetectionService.detectObjectsInVideo(videoFile)
 
     // Process the frames
@@ -48,16 +60,14 @@ fun main() {
     val chopsticks = videoTrackingService.findAllChopsticks(compensatedFrames, tips)
 
     LOGGER.info("Render images...")
-    /*val frameImageWriter: FrameImageWriter = FolderFrameImageWriter(
-            File("/Users/marcplouhinec/projects/chopsticks-tracker/output")
-    )*/
+    // val frameImageWriter: FrameImageWriter = FolderFrameImageWriter(outputFolderFile)
     val videoCapture = VideoCapture(videoFile.absolutePath)
     val fps = videoCapture.get(Videoio.CAP_PROP_FPS)
     val frameWidth = videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH).toInt()
     val frameHeight = videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT).toInt()
     videoCapture.release()
     val frameImageWriter: FrameImageWriter = VideoFrameImageWriter(
-            File("/Users/marcplouhinec/projects/chopsticks-tracker/output/${videoFile.nameWithoutExtension}.mpg"),
+            File(outputFolderFile, "${videoFile.nameWithoutExtension}.mpg"),
             fps
     )
     frameImageWriter.use { writer ->
@@ -72,18 +82,18 @@ fun main() {
                 false,
                 frameDetectionResultIterable)
         /*visualizationService.renderCurrentAndPastTipDetections(
-                frameWidth,
-                frameHeight,
-                compensatedFrames,
-                10,
-                writer,
-                true,
-                frameDetectionResultIterable)*/
+            frameWidth,
+            frameHeight,
+            compensatedFrames,
+            10,
+            writer,
+            true,
+            frameDetectionResultIterable)*/
         /*visualizationService.renderDetectedObjects(
-                frameWidth,
-                frameHeight,
-                frameDetectionResultIterable,
-                writer)*/
+            frameWidth,
+            frameHeight,
+            frameDetectionResultIterable,
+            writer)*/
     }
     LOGGER.info("Images rendered.")
 }

@@ -7,6 +7,11 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import javax.annotation.PostConstruct
 
+/**
+ * Spring configuration class.
+ *
+ * @author Marc Plouhinec
+ */
 @Configuration
 @PropertySource("classpath:application.properties")
 @ComponentScan("fr.marcsworld.chopstickstracker.services")
