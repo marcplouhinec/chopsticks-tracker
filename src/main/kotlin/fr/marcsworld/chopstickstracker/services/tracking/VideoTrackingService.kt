@@ -1,10 +1,10 @@
-package fr.marcsworld.chopstickstracker.services
+package fr.marcsworld.chopstickstracker.services.tracking
 
 import fr.marcsworld.chopstickstracker.model.Chopstick
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
 
-interface VideoDetectionService {
+interface VideoTrackingService {
 
     /**
      * Filter all the objects of the frame that have too low confidence.

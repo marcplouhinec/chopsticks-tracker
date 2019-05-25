@@ -1,4 +1,4 @@
-package fr.marcsworld.chopstickstracker.services
+package fr.marcsworld.chopstickstracker.services.rendering
 
 import fr.marcsworld.chopstickstracker.model.Chopstick
 import fr.marcsworld.chopstickstracker.model.Frame

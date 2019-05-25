@@ -1,18 +1,18 @@
-package fr.marcsworld.chopstickstracker.services.impl
+package fr.marcsworld.chopstickstracker.services.tracking.impl
 
 import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
-import fr.marcsworld.chopstickstracker.services.VideoDetectionService
+import fr.marcsworld.chopstickstracker.services.tracking.VideoTrackingService
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.collections.ArrayList
 
-class VideoDetectionServiceImpl(
+class VideoTrackingServiceImpl(
         private val configuration: Configuration
-) : VideoDetectionService {
+) : VideoTrackingService {
 
     override fun removeUnreliableDetectedObjects(frames: List<Frame>): List<Frame> {
         return frames.map { frame ->

@@ -1,9 +1,9 @@
-package fr.marcsworld.chopstickstracker.services.impl
+package fr.marcsworld.chopstickstracker.services.rendering.impl
 
 import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
 import fr.marcsworld.chopstickstracker.model.detection.FrameDetectionResult
-import fr.marcsworld.chopstickstracker.services.VisualizationService
+import fr.marcsworld.chopstickstracker.services.rendering.VisualizationService
 import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc

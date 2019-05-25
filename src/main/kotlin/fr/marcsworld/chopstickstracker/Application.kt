@@ -2,12 +2,12 @@ package fr.marcsworld.chopstickstracker
 
 import fr.marcsworld.chopstickstracker.model.Configuration
 import fr.marcsworld.chopstickstracker.model.Frame
-import fr.marcsworld.chopstickstracker.services.VideoDetectionService
-import fr.marcsworld.chopstickstracker.services.VisualizationService
+import fr.marcsworld.chopstickstracker.services.tracking.VideoTrackingService
+import fr.marcsworld.chopstickstracker.services.rendering.VisualizationService
 import fr.marcsworld.chopstickstracker.services.detection.ObjectDetectionService
 import fr.marcsworld.chopstickstracker.services.detection.impl.CachedYoloObjectDetectionServiceImpl
-import fr.marcsworld.chopstickstracker.services.impl.VideoDetectionServiceImpl
-import fr.marcsworld.chopstickstracker.services.impl.VisualizationServiceImpl
+import fr.marcsworld.chopstickstracker.services.tracking.impl.VideoTrackingServiceImpl
+import fr.marcsworld.chopstickstracker.services.rendering.impl.VisualizationServiceImpl
 import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
 import fr.marcsworld.chopstickstracker.services.rendering.writer.impl.VideoFrameImageWriter
 import org.opencv.videoio.VideoCapture
@@ -43,24 +43,24 @@ fun main() {
             350,
             550,
             0.8)
-    val videoDetectionService: VideoDetectionService = VideoDetectionServiceImpl(configuration)
+    val videoTrackingService: VideoTrackingService = VideoTrackingServiceImpl(configuration)
     val visualizationService: VisualizationService = VisualizationServiceImpl(configuration)
 
     println("Load all frames...")
     println("${frames.size} frames loaded.")
 
     println("Remove unreliable detected objects...")
-    val reliableFrames = videoDetectionService.removeUnreliableDetectedObjects(frames)
+    val reliableFrames = videoTrackingService.removeUnreliableDetectedObjects(frames)
 
     println("Compensate for camera motion...")
-    val compensatedFrames = videoDetectionService.compensateCameraMotion(reliableFrames)
+    val compensatedFrames = videoTrackingService.compensateCameraMotion(reliableFrames)
 
     println("Detecting tips...")
-    val tips = videoDetectionService.findAllTips(compensatedFrames)
+    val tips = videoTrackingService.findAllTips(compensatedFrames)
     println("${tips.size} tips detected.")
 
     println("Detecting chopsticks...")
-    val chopsticks = videoDetectionService.findAllChopsticks(compensatedFrames, tips)
+    val chopsticks = videoTrackingService.findAllChopsticks(compensatedFrames, tips)
 
     println("Render images...")
     /*val frameImageWriter: FrameImageWriter = FolderFrameImageWriter(
