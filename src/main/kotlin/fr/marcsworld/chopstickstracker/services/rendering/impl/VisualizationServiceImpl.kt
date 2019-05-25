@@ -7,6 +7,7 @@ import fr.marcsworld.chopstickstracker.services.rendering.VisualizationService
 import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.stream.Collectors
@@ -23,6 +24,10 @@ class VisualizationServiceImpl(
         private val minTipDetectionConfidence: Double = 0.9
 
 ) : VisualizationService {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger(VisualizationServiceImpl::class.java)
+    }
 
     override fun renderTips(
             frameWidth: Int,
@@ -64,7 +69,7 @@ class VisualizationServiceImpl(
         // Draw the tips on each frame
         for (frameDetectionResult in frameDetectionResults) {
             val frame = frames[frameDetectionResult.frameIndex]
-            println("    Rendering tips in frame ${frame.index} / ${frames.size}...")
+            LOGGER.info("Rendering tips in frame {} / {}...", frame.index, frames.size)
 
             val frameImage = frameDetectionResult.frameImageProvider()
             val outputImage = Mat(outputHeight, outputWidth, CvType.CV_8UC3, Scalar(0.0, 0.0, 0.0))
@@ -150,7 +155,7 @@ class VisualizationServiceImpl(
         // Draw the current and past tip detections on each frame
         for (frameDetectionResult in frameDetectionResults) {
             val frame = frames[frameDetectionResult.frameIndex]
-            println("    Rendering frame ${frame.index} / ${frames.size}...")
+            LOGGER.info("Rendering frame {} / {}...", frame.index, frames.size)
 
             val frameImage = frameDetectionResult.frameImageProvider()
             val outputImage = Mat(outputHeight, outputWidth, CvType.CV_8UC3, Scalar(0.0, 0.0, 0.0))
@@ -209,7 +214,7 @@ class VisualizationServiceImpl(
 
         // Draw the current and past tip detections on each frame
         for (frameDetectionResult in frameDetectionResults) {
-            println("    Rendering frame ${frameDetectionResult.frameIndex}...")
+            LOGGER.info("Rendering frame {}...", frameDetectionResult.frameIndex)
 
             val frameImage = frameDetectionResult.frameImageProvider()
 

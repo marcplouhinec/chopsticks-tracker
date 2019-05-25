@@ -9,8 +9,11 @@ import fr.marcsworld.chopstickstracker.services.rendering.writer.impl.VideoFrame
 import fr.marcsworld.chopstickstracker.services.tracking.VideoTrackingService
 import org.opencv.videoio.VideoCapture
 import org.opencv.videoio.Videoio
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.io.File
+
+val LOGGER = LoggerFactory.getLogger("main")
 
 fun main() {
     // Load the context
@@ -28,23 +31,23 @@ fun main() {
         Frame(it.frameIndex, it.detectedObjects)
     }
 
-    println("Load all frames...")
-    println("${frames.size} frames loaded.")
+    LOGGER.info("Load all frames...")
+    LOGGER.info("{} frames loaded.", frames.size)
 
-    println("Remove unreliable detected objects...")
+    LOGGER.info("Remove unreliable detected objects...")
     val reliableFrames = videoTrackingService.removeUnreliableDetectedObjects(frames)
 
-    println("Compensate for camera motion...")
+    LOGGER.info("Compensate for camera motion...")
     val compensatedFrames = videoTrackingService.compensateCameraMotion(reliableFrames)
 
-    println("Detecting tips...")
+    LOGGER.info("Detecting tips...")
     val tips = videoTrackingService.findAllTips(compensatedFrames)
-    println("${tips.size} tips detected.")
+    LOGGER.info("{} tips detected.", tips.size)
 
-    println("Detecting chopsticks...")
+    LOGGER.info("Detecting chopsticks...")
     val chopsticks = videoTrackingService.findAllChopsticks(compensatedFrames, tips)
 
-    println("Render images...")
+    LOGGER.info("Render images...")
     /*val frameImageWriter: FrameImageWriter = FolderFrameImageWriter(
             File("/Users/marcplouhinec/projects/chopsticks-tracker/output")
     )*/
@@ -82,5 +85,5 @@ fun main() {
                 frameDetectionResultIterable,
                 writer)*/
     }
-    println("Images rendered.")
+    LOGGER.info("Images rendered.")
 }

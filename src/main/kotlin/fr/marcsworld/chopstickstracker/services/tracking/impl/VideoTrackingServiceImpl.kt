@@ -4,6 +4,7 @@ import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
 import fr.marcsworld.chopstickstracker.services.tracking.VideoTrackingService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
@@ -55,6 +56,10 @@ class VideoTrackingServiceImpl(
         @Value("\${tracking.maxMatchingScoreToConsiderTwoTipsAsAChopstick}")
         private val maxMatchingScoreToConsiderTwoTipsAsAChopstick: Double = 0.8
 ) : VideoTrackingService {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger(VideoTrackingServiceImpl::class.java)
+    }
 
     override fun removeUnreliableDetectedObjects(frames: List<Frame>): List<Frame> {
         return frames.map { frame ->
@@ -153,7 +158,7 @@ class VideoTrackingServiceImpl(
         val tips = mutableListOf<Tip>()
 
         for (frame in frames) {
-            println("    Detecting tips in frame ${frame.index} / ${frames.size}...")
+            LOGGER.info("Detecting tips in frame {} / {}...", frame.index, frames.size)
 
             // Detect the tips in the current frame
             val frameTips = findTipsInFrame(frame)
@@ -326,7 +331,7 @@ class VideoTrackingServiceImpl(
         val chopsticks = mutableListOf<Chopstick>()
 
         for (frame in frames) {
-            println("    Detecting chopsticks in frame ${frame.index} / ${frames.size}...")
+            LOGGER.info("Detecting chopsticks in frame {} / {}...", frame.index, frames.size)
 
             // Try to match tips with each others by using detected chopsticks
             val shapesAndTips = shapesAndTipsByFrameIndex[frame.index] ?: throw IllegalStateException()
