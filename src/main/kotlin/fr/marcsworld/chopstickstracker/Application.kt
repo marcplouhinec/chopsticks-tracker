@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.io.File
 
-val LOGGER = LoggerFactory.getLogger("main")
+val LOGGER = LoggerFactory.getLogger("main")!!
 
 fun main() {
     // Load the context

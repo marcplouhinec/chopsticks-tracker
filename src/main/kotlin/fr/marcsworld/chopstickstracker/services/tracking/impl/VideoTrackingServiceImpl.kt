@@ -58,7 +58,7 @@ class VideoTrackingServiceImpl(
 ) : VideoTrackingService {
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(VideoTrackingServiceImpl::class.java)
+        private val LOGGER = LoggerFactory.getLogger(VideoTrackingServiceImpl::class.java)!!
     }
 
     override fun removeUnreliableDetectedObjects(frames: List<Frame>): List<Frame> {

@@ -26,7 +26,7 @@ class VisualizationServiceImpl(
 ) : VisualizationService {
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(VisualizationServiceImpl::class.java)
+        private val LOGGER = LoggerFactory.getLogger(VisualizationServiceImpl::class.java)!!
     }
 
     override fun renderTips(
