@@ -4,23 +4,65 @@ import fr.marcsworld.chopstickstracker.model.*
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObject
 import fr.marcsworld.chopstickstracker.model.detection.DetectedObjectType
 import fr.marcsworld.chopstickstracker.services.tracking.VideoTrackingService
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.collections.ArrayList
 
+/**
+ * Default implementation of [VideoTrackingService].
+ *
+ * @author Marc Plouhinec
+ */
+@Service
 class VideoTrackingServiceImpl(
-        private val configuration: Configuration
+        @Value("\${tracking.minTipDetectionConfidence}")
+        private val minTipDetectionConfidence: Double = 0.9,
+
+        @Value("\${tracking.minChopstickDetectionConfidence}")
+        private val minChopstickDetectionConfidence: Double = 0.7,
+
+        @Value("\${tracking.minArmDetectionConfidence}")
+        private val minArmDetectionConfidence: Double = 0.7,
+
+        @Value("\${tracking.maxTipMatchingScoreInPixels}")
+        private val maxTipMatchingScoreInPixels: Int = 66,
+
+        @Value("\${tracking.nbTipsToUseToDetectCameraMotion}")
+        private val nbTipsToUseToDetectCameraMotion: Int = 7,
+
+        @Value("\${tracking.maxMatchingScoreToConsiderTipNotHiddenByArm}")
+        private val maxMatchingScoreToConsiderTipNotHiddenByArm: Int = 20,
+
+        @Value("\${tracking.nbShapesToConsiderForComputingAverageTipPositionAndSize}")
+        private val nbShapesToConsiderForComputingAverageTipPositionAndSize: Int = 9,
+
+        @Value("\${tracking.nbFramesAfterWhichATipIsConsideredMissing}")
+        private val nbFramesAfterWhichATipIsConsideredMissing: Int = 7,
+
+        @Value("\${tracking.maxScoreToConsiderNewTipAsTheSameAsAnExistingOne}")
+        private val maxScoreToConsiderNewTipAsTheSameAsAnExistingOne: Int = 15,
+
+        @Value("\${tracking.minChopstickLengthInPixels}")
+        private val minChopstickLengthInPixels: Int = 350,
+
+        @Value("\${tracking.maxChopstickLengthInPixels}")
+        private val maxChopstickLengthInPixels: Int = 550,
+
+        @Value("\${tracking.maxMatchingScoreToConsiderTwoTipsAsAChopstick}")
+        private val maxMatchingScoreToConsiderTwoTipsAsAChopstick: Double = 0.8
 ) : VideoTrackingService {
 
     override fun removeUnreliableDetectedObjects(frames: List<Frame>): List<Frame> {
         return frames.map { frame ->
             val reliableObjects = frame.objects.filter {
                 val minConfidence = when {
-                    it.objectType.isTip() -> configuration.minTipDetectionConfidence
-                    it.objectType == DetectedObjectType.CHOPSTICK -> configuration.minChopstickDetectionConfidence
-                    else -> configuration.minArmDetectionConfidence
+                    it.objectType.isTip() -> minTipDetectionConfidence
+                    it.objectType == DetectedObjectType.CHOPSTICK -> minChopstickDetectionConfidence
+                    else -> minArmDetectionConfidence
                 }
                 it.confidence >= minConfidence
             }
@@ -35,7 +77,7 @@ class VideoTrackingServiceImpl(
         }
         compensatedFrames.add(frames[0])
 
-        val maxScore = configuration.maxTipMatchingScoreInPixels
+        val maxScore = maxTipMatchingScoreInPixels
 
         for (frameIndex in 1 until frames.size) {
             val prevFrameDetectedTips = findDetectedTips(frames[frameIndex - 1])
@@ -69,7 +111,7 @@ class VideoTrackingServiceImpl(
             }
 
             // Use the best match results to calculate the translation coordinates between this frame and the previous one
-            val nbBestMatchResults = Math.min(reliableDetectedTipMatchResults.size, configuration.nbTipsToUseToDetectCameraMotion)
+            val nbBestMatchResults = Math.min(reliableDetectedTipMatchResults.size, nbTipsToUseToDetectCameraMotion)
             val dx = reliableDetectedTipMatchResults.stream()
                     .limit(nbBestMatchResults.toLong())
                     .mapToInt { it.currFrameDetectedObject.x - it.prevFrameDetectedObject.x }
@@ -141,7 +183,7 @@ class VideoTrackingServiceImpl(
             val matchedTips = HashSet<Tip>()
             val matchResultByPrevTip = mutableMapOf<Tip, TipMatchResult>()
             for (tipMatchResult in tipMatchResults) {
-                if (tipMatchResult.score > configuration.maxTipMatchingScoreInPixels) {
+                if (tipMatchResult.score > maxTipMatchingScoreInPixels) {
                     break
                 }
                 if (!matchedTips.contains(tipMatchResult.currentFrameTip) && !matchedTips.contains(tipMatchResult.prevFrameTip)) {
@@ -157,7 +199,7 @@ class VideoTrackingServiceImpl(
                 // Find tips in the previous frame that are now under the arms, then
                 // because the arm box includes areas that are not hidden by the arm,
                 // ignore objects that overlap with other ones from current frame.
-                val maxScore = configuration.maxMatchingScoreToConsiderTipNotHiddenByArm
+                val maxScore = maxMatchingScoreToConsiderTipNotHiddenByArm
                 tips.stream()
                         .filter { it.shapes.last().status != EstimatedShapeStatus.LOST }
                         .filter { it.shapes.last().status != EstimatedShapeStatus.DETECTED_ONCE }
@@ -177,7 +219,7 @@ class VideoTrackingServiceImpl(
                 if (matchResult != null) {
                     val currShape = matchResult.currentFrameTip.shapes.last()
 
-                    val maxNbShapes = configuration.nbShapesToConsiderForComputingAverageTipPositionAndSize
+                    val maxNbShapes = nbShapesToConsiderForComputingAverageTipPositionAndSize
                     val recentShapes = ArrayList<EstimatedTipShape>(tip.shapes.takeLast(maxNbShapes))
                     recentShapes.add(currShape)
 
@@ -235,7 +277,7 @@ class VideoTrackingServiceImpl(
                 }
 
                 // Check if the tip is lost
-                val recentShapes = tip.shapes.takeLast(configuration.nbFramesAfterWhichATipIsConsideredMissing)
+                val recentShapes = tip.shapes.takeLast(nbFramesAfterWhichATipIsConsideredMissing)
                 val isNotLost = recentShapes.any { it.status == EstimatedShapeStatus.DETECTED || it.status == EstimatedShapeStatus.HIDDEN_BY_ARM }
                 val undetectedShape = EstimatedTipShape(
                         frame.index,
@@ -260,7 +302,7 @@ class VideoTrackingServiceImpl(
                                     TipMatchResult(frameTip, it, score)
                                 }
                     }
-                    .filter { it.score <= configuration.maxScoreToConsiderNewTipAsTheSameAsAnExistingOne }
+                    .filter { it.score <= maxScoreToConsiderNewTipAsTheSameAsAnExistingOne }
                     .map { it.currentFrameTip }
                     .collect(Collectors.toSet())
 
@@ -296,7 +338,7 @@ class VideoTrackingServiceImpl(
                                 .filter { it.tip != shapeAndTip.tip }
                                 .filter {
                                     val dist = distance(it.shape.x, it.shape.y, shapeAndTip.shape.x, shapeAndTip.shape.y)
-                                    dist > configuration.minChopstickLengthInPixels && dist < configuration.maxChopstickLengthInPixels
+                                    dist > minChopstickLengthInPixels && dist < maxChopstickLengthInPixels
                                 }
                                 .flatMap { candidate ->
                                     val tipsBoundingBox = Rectangular.getBoundingBox(shapeAndTip.shape, candidate.shape)
@@ -322,7 +364,7 @@ class VideoTrackingServiceImpl(
                                 }
                     }
                     .sorted(Comparator.comparingDouble { it.score })
-                    .filter { it.score <= configuration.maxMatchingScoreToConsiderTwoTipsAsAChopstick }
+                    .filter { it.score <= maxMatchingScoreToConsiderTwoTipsAsAChopstick }
                     .collect(Collectors.toList())
 
             // Find the best match results independently from other frames
@@ -584,7 +626,7 @@ class VideoTrackingServiceImpl(
 
     private fun findDetectedTips(frame: Frame): List<DetectedObject> {
         return frame.objects.stream()
-                .filter { it.confidence > configuration.minTipDetectionConfidence }
+                .filter { it.confidence > minTipDetectionConfidence }
                 .filter { it.objectType.isTip() }
                 .collect(Collectors.toList())
     }

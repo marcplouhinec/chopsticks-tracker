@@ -7,14 +7,26 @@ import fr.marcsworld.chopstickstracker.services.rendering.VisualizationService
 import fr.marcsworld.chopstickstracker.services.rendering.writer.FrameImageWriter
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
 import java.util.stream.Collectors
 
-
+/**
+ * Default implementation of [VisualizationService].
+ *
+ * @author Marc Plouhinec
+ */
+@Service
 class VisualizationServiceImpl(
-        private val configuration: Configuration
+
+        @Value("\${tracking.minTipDetectionConfidence}")
+        private val minTipDetectionConfidence: Double = 0.9
+
 ) : VisualizationService {
 
     override fun renderTips(
+            frameWidth: Int,
+            frameHeight: Int,
             frames: List<Frame>,
             tips: List<Tip>,
             frameImageWriter: FrameImageWriter,
@@ -23,7 +35,8 @@ class VisualizationServiceImpl(
             alternativeChopsticksVisible: Boolean,
             frameDetectionResults: Iterable<FrameDetectionResult>) {
         // Preparations
-        val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
+        val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(
+                frameWidth, frameHeight, frames)
         frameImageWriter.initFrameSize(outputWidth, outputHeight)
 
         val shapesWithTipsByFrameIndex: Map<Int, List<Pair<EstimatedTipShape, Tip>>> = tips.stream()
@@ -121,11 +134,17 @@ class VisualizationServiceImpl(
     }
 
     override fun renderCurrentAndPastTipDetections(
-            frames: List<Frame>, maxFramesInPast: Int, frameImageWriter: FrameImageWriter, armVisible: Boolean,
+            frameWidth: Int,
+            frameHeight: Int,
+            frames: List<Frame>,
+            maxFramesInPast: Int,
+            frameImageWriter: FrameImageWriter,
+            armVisible: Boolean,
             frameDetectionResults: Iterable<FrameDetectionResult>) {
         // Preparations
         val yellowColor = Scalar(0.0, 255.0, 255.0)
-        val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(frames)
+        val (firstFrameImageX, firstFrameImageY, outputWidth, outputHeight) = computeNewFrameDimension(
+                frameWidth, frameHeight, frames)
         frameImageWriter.initFrameSize(outputWidth, outputHeight)
 
         // Draw the current and past tip detections on each frame
@@ -149,7 +168,7 @@ class VisualizationServiceImpl(
 
                     val detectedTips = frames[frameIndex].objects.stream()
                             .filter { it.objectType.isTip() }
-                            .filter { it.confidence >= configuration.minTipDetectionConfidence }
+                            .filter { it.confidence >= minTipDetectionConfidence }
                             .collect(Collectors.toList())
 
                     for (detectedTip in detectedTips) {
@@ -178,7 +197,8 @@ class VisualizationServiceImpl(
     }
 
     override fun renderDetectedObjects(
-            frameDetectionResults: Iterable<FrameDetectionResult>, frameImageWriter: FrameImageWriter) {
+            frameDetectionResults: Iterable<FrameDetectionResult>,
+            frameImageWriter: FrameImageWriter) {
         // Preparations
         val yellowColor = Scalar(0.0, 255.0, 255.0)
         val greenColor = Scalar(0.0, 255.0, 0.0)
@@ -216,7 +236,10 @@ class VisualizationServiceImpl(
         }
     }
 
-    private fun computeNewFrameDimension(frames: List<Frame>): NewFrameDimension {
+    private fun computeNewFrameDimension(
+            frameWidth: Int,
+            frameHeight: Int,
+            frames: List<Frame>): NewFrameDimension {
         var minImageX = 0.0
         var minImageY = 0.0
         var maxImageX = 0.0
@@ -229,8 +252,8 @@ class VisualizationServiceImpl(
             maxImageY = Math.max(maxImageY, frame.imageY)
         }
 
-        val width = configuration.frameWidth + Math.ceil(Math.abs(minImageX)) + Math.ceil(maxImageX)
-        val height = configuration.frameHeight + Math.ceil(Math.abs(minImageY)) + Math.ceil(maxImageY)
+        val width = frameWidth + Math.ceil(Math.abs(minImageX)) + Math.ceil(maxImageX)
+        val height = frameHeight + Math.ceil(Math.abs(minImageY)) + Math.ceil(maxImageY)
 
         return NewFrameDimension(-minImageX, -minImageY, width.toInt(), height.toInt())
     }

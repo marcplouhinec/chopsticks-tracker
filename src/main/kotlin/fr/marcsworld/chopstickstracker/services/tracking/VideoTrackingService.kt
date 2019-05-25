@@ -4,6 +4,11 @@ import fr.marcsworld.chopstickstracker.model.Chopstick
 import fr.marcsworld.chopstickstracker.model.Frame
 import fr.marcsworld.chopstickstracker.model.Tip
 
+/**
+ * Track tips and chopsticks in a video.
+ *
+ * @author Marc Plouhinec
+ */
 interface VideoTrackingService {
 
     /**
