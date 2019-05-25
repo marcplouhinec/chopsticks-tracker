@@ -39,11 +39,10 @@ fun main(args: Array<String>) {
     val frameDetectionResultIterable = objectDetectionService.detectObjectsInVideo(videoFile)
 
     // Process the frames
+    LOGGER.info("Load all frames...")
     val frames = frameDetectionResultIterable.map {
         Frame(it.frameIndex, it.detectedObjects)
     }
-
-    LOGGER.info("Load all frames...")
     LOGGER.info("{} frames loaded.", frames.size)
 
     LOGGER.info("Remove unreliable detected objects...")
