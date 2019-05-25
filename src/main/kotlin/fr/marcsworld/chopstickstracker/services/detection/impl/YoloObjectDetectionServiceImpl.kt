@@ -70,6 +70,7 @@ class YoloObjectDetectionServiceImpl(
         private val frame = Mat()
         private var frameProcessed = true
         private var frameGrabbed = true
+        private val mean = Scalar(0.0, 0.0, 0.0, 0.0)
 
         init {
             // Load the neural network model
@@ -126,7 +127,7 @@ class YoloObjectDetectionServiceImpl(
             }
 
             // Detect objects in the frame
-            val blob = Dnn.blobFromImage(frame, 1 / 255.0, blobSize, Scalar(1.0), true, false) // TODO why Scalar(1.0) ?
+            val blob = Dnn.blobFromImage(frame, 1 / 255.0, blobSize, mean, true, false)
             net.setInput(blob)
             val layerOutputs = mutableListOf<Mat>()
             net.forward(layerOutputs, outLayerNames)
