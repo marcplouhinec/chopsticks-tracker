@@ -10,6 +10,14 @@
 
 namespace service {
 
+    /**
+     * Iterator that provides {@link FrameDetectionResult}s.
+     * 
+     * This class allows object detection to be performed in a lazy way, when the {@link #increment()}
+     * method is called.
+     * 
+     * @author Marc Plouhinec
+     */
     class FrameDetectionResultIterator : public boost::iterator_facade<
         FrameDetectionResultIterator, model::FrameDetectionResult const, boost::forward_traversal_tag> {
 
@@ -20,11 +28,25 @@ namespace service {
             model::FrameDetectionResult nextFrameDetectionResult;
         
         public:
+            /**
+             * @param detectedObjectsProvider
+             *     Lambda that provides the detected objects for the given frame index.
+             * @param frameImageProvider
+             *     Lambda that provides the frame image for the given frame index.
+             */
             FrameDetectionResultIterator(
                 std::function<std::vector<model::DetectedObject>(int)> detectedObjectsProvider,
                 std::function<cv::Mat(int)> frameImageProvider
             ) : FrameDetectionResultIterator(0, detectedObjectsProvider, frameImageProvider) {}
 
+            /**
+             * @param frameIndex
+             *     Index of the current frame.
+             * @param detectedObjectsProvider
+             *     Lambda that provides the detected objects for the given frame index.
+             * @param frameImageProvider
+             *     Lambda that provides the frame image for the given frame index.
+             */
             explicit FrameDetectionResultIterator(
                 int frameIndex,
                 std::function<std::vector<model::DetectedObject>(int)> detectedObjectsProvider,
@@ -53,12 +75,12 @@ namespace service {
             }
 
             void computeNextFrameDetectionResult() {
-                std::vector<model::DetectedObject> detectedObjects = detectedObjectsProvider(frameIndex);
-
                 std::function<cv::Mat(int)> localFrameImageProvider = frameImageProvider;
                 int localFrameIndex = frameIndex;
 
-                nextFrameDetectionResult = model::FrameDetectionResult(frameIndex, detectedObjects,
+                nextFrameDetectionResult = model::FrameDetectionResult(
+                    frameIndex,
+                    detectedObjectsProvider(frameIndex),
                     [localFrameImageProvider, localFrameIndex]() {
                         return localFrameImageProvider(localFrameIndex);
                     });

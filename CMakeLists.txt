@@ -29,6 +29,14 @@ else()
     set(Darknet_LIBS "libdark.so")
 endif()
 
+if(APPLE)
+    set(Boost_LIBS "boost_log.dylib" "boost_log_setup.dylib")
+else()
+    set(Boost_LIBS "boost_log.so" "boost_log_setup.so")
+endif()
+
+add_definitions(-DBOOST_LOG_DYN_LINK)
+
 find_package(OpenCV REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR})
@@ -43,3 +51,4 @@ file(GLOB_RECURSE fileCollections "src/*.cpp")
 add_executable(ChopsticksTracker ${fileCollections})
 target_link_libraries(ChopsticksTracker ${OpenCV_LIBS})
 target_link_libraries(ChopsticksTracker ${Darknet_LIBS})
+target_link_libraries(ChopsticksTracker ${Boost_LIBS})
