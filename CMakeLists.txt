@@ -30,9 +30,9 @@ else()
 endif()
 
 if(APPLE)
-    set(Boost_LIBS "boost_log.dylib" "boost_log_setup.dylib")
+    set(Boost_LIBS "boost_log.dylib" "boost_log_setup.dylib" "boost_program_options.dylib" "boost_filesystem.dylib")
 else()
-    set(Boost_LIBS "boost_log.so" "boost_log_setup.so")
+    set(Boost_LIBS "boost_log.so" "boost_log_setup.so" "boost_program_options.so" "boost_filesystem.so")
 endif()
 
 add_definitions(-DBOOST_LOG_DYN_LINK)

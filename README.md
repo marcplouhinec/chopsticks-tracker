@@ -88,5 +88,5 @@ make
 ## Execution
 ```bash
 cd ~/projects/chopsticks-tracker/build
-./ChopsticksTracker
+./ChopsticksTracker --config-path=../config.ini
 ```
