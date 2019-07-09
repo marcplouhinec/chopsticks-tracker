@@ -75,12 +75,15 @@ namespace service {
             }
 
             void computeNextFrameDetectionResult() {
-                std::function<cv::Mat(int)> localFrameImageProvider = frameImageProvider;
+                auto localDetectedObjectsProvider = detectedObjectsProvider;
+                auto localFrameImageProvider = frameImageProvider;
                 int localFrameIndex = frameIndex;
 
                 nextFrameDetectionResult = model::FrameDetectionResult(
                     frameIndex,
-                    detectedObjectsProvider(frameIndex),
+                    [localDetectedObjectsProvider, localFrameIndex]() {
+                        return localDetectedObjectsProvider(localFrameIndex);
+                    },
                     [localFrameImageProvider, localFrameIndex]() {
                         return localFrameImageProvider(localFrameIndex);
                     });

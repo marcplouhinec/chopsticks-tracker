@@ -10,18 +10,22 @@ namespace model {
     class FrameDetectionResult {
         public:
             int frameIndex;
-            std::vector<DetectedObject> detectedObjects;
+            std::function<std::vector<DetectedObject>()> detectedObjectsProvider;
             std::function<cv::Mat()> frameImageProvider;
 
         public:
             FrameDetectionResult() : 
-                frameIndex(0),
-                detectedObjects(std::vector<DetectedObject>()),
-                frameImageProvider([](){ return cv::Mat(); }) {};
+                FrameDetectionResult(0,
+                [](){ return std::vector<DetectedObject>(); },
+                [](){ return cv::Mat(); }) {};
 
             explicit FrameDetectionResult(
-                int frameIndex, std::vector<DetectedObject> detectedObjects, std::function<cv::Mat()> frameImageProvider) : 
-                frameIndex(frameIndex), detectedObjects(detectedObjects), frameImageProvider(frameImageProvider) {}
+                int frameIndex,
+                std::function<std::vector<DetectedObject>()> detectedObjectsProvider,
+                std::function<cv::Mat()> frameImageProvider) : 
+                frameIndex(frameIndex),
+                detectedObjectsProvider(detectedObjectsProvider),
+                frameImageProvider(frameImageProvider) {}
     };
 }
 
