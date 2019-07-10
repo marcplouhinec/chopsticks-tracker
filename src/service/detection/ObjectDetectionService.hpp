@@ -1,16 +1,16 @@
 #ifndef SERVICE_OBJECT_DETECTION_SERVICE
 #define SERVICE_OBJECT_DETECTION_SERVICE
 
-#include <string>
-#include <boost/range.hpp>
-#include "../../model/detection/FrameDetectionResult.hpp"
-#include "FrameDetectionResultIterator.hpp"
+#include <vector>
+#include <boost/filesystem.hpp>
+#include <opencv2/opencv.hpp>
+#include "../../model/detection/DetectedObject.hpp"
 
 namespace service {
 
     /**
      * Detect objects in images and videos.
-     * Note: the detectable object types are listed in [fr.marcsworld.chopstickstracker.model.DetectedObjectType].
+     * Note: the detectable object types are listed in {@link DetectedObjectType}.
      *
      * @author Marc Plouhinec
      */
@@ -19,10 +19,9 @@ namespace service {
             virtual ~ObjectDetectionService() {}
 
             /**
-             * Detect objects in each frame of the given video.
+             * Detect objects in the given image.
              */
-            virtual boost::iterator_range<service::FrameDetectionResultIterator> 
-                detectObjectsInVideo(std::string videoFilePath) = 0;
+            virtual std::vector<model::DetectedObject> detectObjectsInImage(cv::Mat image) = 0;
     };
 
 }

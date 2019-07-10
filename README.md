@@ -88,5 +88,5 @@ make
 ## Execution
 ```bash
 cd ~/projects/chopsticks-tracker/build
-./ChopsticksTracker --config-path=../config.ini
+./ChopsticksTracker --config-path=../config.ini --video-path=../data/input-video/VID_20181231_133114.mp4
 ```

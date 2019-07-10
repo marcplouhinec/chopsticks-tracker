@@ -1,17 +1,15 @@
+#include "../../../utils/logging.hpp"
 #include "DarknetObjectDetectionServiceImpl.hpp"
 
-boost::iterator_range<service::FrameDetectionResultIterator>
-    service::DarknetObjectDetectionServiceImpl::detectObjectsInVideo(std::string videoFilePath) {
+using namespace service;
+using namespace model;
+namespace lg = boost::log;
 
+lg::sources::severity_logger<lg::trivial::severity_level> logger;
+
+std::vector<DetectedObject> DarknetObjectDetectionServiceImpl::detectObjectsInImage(cv::Mat image) {
+    LOG_INFO(logger) << "Detecting objects...";
     // TODO
 
-    std::function<std::vector<model::DetectedObject>(int)> detectedObjectsProvider =
-        [](int frameIndex) { return std::vector<model::DetectedObject>(); };
-    std::function<cv::Mat(int)> frameImageProvider =
-        [](int frameIndex) { return cv::Mat(1, frameIndex, CV_8UC1, cv::Scalar(70)); };
-
-    service::FrameDetectionResultIterator first(detectedObjectsProvider, frameImageProvider);
-    service::FrameDetectionResultIterator last(10, detectedObjectsProvider, frameImageProvider);
-
-    return boost::iterator_range<service::FrameDetectionResultIterator>(first, last);
+    return std::vector<DetectedObject>();
 }
