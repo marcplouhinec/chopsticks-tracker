@@ -11,12 +11,15 @@ namespace model {
             int width = 0;
             int height = 0;
             DetectedObjectType objectType = DetectedObjectType::CHOPSTICK;
-            double confidence = 0.0;
+            float confidence = 0.0;
 
         public:
-            DetectedObject(int x, int y, int width, int height,
-                DetectedObjectType objectType, double confidence) : 
-                x(x), y(y), width(width), height(height), objectType(objectType), confidence(confidence) {}
+            DetectedObject(
+                int x, int y, int width, int height, DetectedObjectType objectType, float confidence) : 
+                    x(x), y(y),
+                    width(width), height(height),
+                    objectType(objectType),
+                    confidence(confidence) {}
     };
 }
 

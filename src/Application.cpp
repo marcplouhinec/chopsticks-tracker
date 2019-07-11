@@ -1,18 +1,13 @@
 #include <iostream>
-#include <vector>
 #include <boost/program_options.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include "utils/logging.hpp"
-#include "service/detection/impl/DarknetObjectDetectionServiceImpl.hpp"
+#include "service/impl/ConfigurationReaderImpl.hpp"
 #include "service/impl/VideoFrameReaderImpl.hpp"
+#include "service/impl/ObjectDetectorDarknetImpl.hpp"
 
 namespace lg = boost::log;
 namespace po = boost::program_options;
-namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
 int main(int argc, char* argv[]) {
@@ -53,26 +48,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Load configuration
-    LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
-    pt::ptree propTree;
-    pt::ini_parser::read_ini(configurationPath.string(), propTree);
-    std::string yoloClassNamesAsString = propTree.get<std::string>("YOLO-model.classnames");
-    std::vector<std::string> yoloClassNames;
-    boost::split(yoloClassNames, yoloClassNamesAsString, boost::is_any_of(","), boost::token_compress_on);
-    fs::path relativeYoloCfgPath(propTree.get<std::string>("YOLO-model.cfgpath"));
-    fs::path relativeYoloWeightsPath(propTree.get<std::string>("YOLO-model.weightspath"));
-    fs::path rootPath = configurationPath.parent_path();
-    fs::path yoloCfgPath = fs::canonical(fs::path(rootPath / relativeYoloCfgPath));
-    fs::path yoloWeightsPath = fs::canonical(fs::path(rootPath / relativeYoloWeightsPath));
-    LOG_INFO(logger) << "Configuration:";
-    LOG_INFO(logger) << "\tYOLO model class names: " << yoloClassNamesAsString;
-    LOG_INFO(logger) << "\tYOLO model cfg path: " << yoloCfgPath.string();
-    LOG_INFO(logger) << "\tYOLO model weights path: " << yoloWeightsPath.string();
-
     // Prepare services
-    service::DarknetObjectDetectionServiceImpl objectDetectionService;
+    service::ConfigurationReaderImpl configurationReader(configurationPath);
     service::VideoFrameReaderImpl videoFrameReader(videoPath);
+    service::ObjectDetectorDarknetImpl objectDetector(&configurationReader, &videoFrameReader);
 
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";
@@ -84,7 +63,7 @@ int main(int argc, char* argv[]) {
         auto frame = videoFrameReader.getFrameAt(frameIndex);
         LOG_INFO(logger) << "frame resolution: " << frame.size();
 
-        auto detectedObjects = objectDetectionService.detectObjectsInImage(frame);
+        auto detectedObjects = objectDetector.detectObjectsAt(frameIndex);
         LOG_INFO(logger) << "nb detected objects: " << detectedObjects.size();
     }
     // TODO
