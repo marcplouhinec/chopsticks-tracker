@@ -1,11 +1,11 @@
-#ifndef PROVIDER_VIDEO_FRAME_PROVIDER_IMPL
-#define PROVIDER_VIDEO_FRAME_PROVIDER_IMPL
+#ifndef SERVICE_VIDEO_FRAME_READER_IMPL
+#define SERVICE_VIDEO_FRAME_READER_IMPL
 
-#include "../VideoFrameProvider.hpp"
+#include "../VideoFrameReader.hpp"
 
-namespace provider {
+namespace service {
 
-    class VideoFrameProviderImpl : public VideoFrameProvider {
+    class VideoFrameReaderImpl : public VideoFrameReader {
         private:
             boost::filesystem::path videoPath;
 
@@ -16,11 +16,11 @@ namespace provider {
 
             cv::Mat currentFrame;
             int currentFrameIndex = -1;
-            cv::VideoCapture* pVideoCapture = nullptr;
+            cv::VideoCapture* pVideoCapture = nullptr; // TODO use unique ptr
 
         public:
-            VideoFrameProviderImpl(boost::filesystem::path videoPath) : videoPath(videoPath) {}
-            virtual ~VideoFrameProviderImpl() {
+            VideoFrameReaderImpl(boost::filesystem::path videoPath) : videoPath(videoPath) {}
+            virtual ~VideoFrameReaderImpl() {
                 if (pVideoCapture != nullptr) {
                     pVideoCapture->release();
                     delete pVideoCapture;
@@ -39,4 +39,4 @@ namespace provider {
 
 }
 
-#endif // PROVIDER_VIDEO_FRAME_PROVIDER_IMPL
+#endif // SERVICE_VIDEO_FRAME_READER_IMPL

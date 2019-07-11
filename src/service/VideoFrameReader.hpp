@@ -1,13 +1,13 @@
-#ifndef PROVIDER_VIDEO_FRAME_PROVIDER
-#define PROVIDER_VIDEO_FRAME_PROVIDER
+#ifndef SERVICE_VIDEO_FRAME_READER
+#define SERVICE_VIDEO_FRAME_READER
 
 #include <opencv2/opencv.hpp>
 
-namespace provider {
+namespace service {
 
-    class VideoFrameProvider {
+    class VideoFrameReader {
         public:
-            virtual ~VideoFrameProvider() {}
+            virtual ~VideoFrameReader() {}
 
             virtual cv::Mat getFrameAt(int frameIndex) = 0;
             virtual int getNbFrames() = 0;
@@ -18,4 +18,4 @@ namespace provider {
 
 }
 
-#endif // PROVIDER_VIDEO_FRAME_PROVIDER
+#endif // SERVICE_VIDEO_FRAME_READER

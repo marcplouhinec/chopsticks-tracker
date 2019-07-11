@@ -8,7 +8,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include "utils/logging.hpp"
 #include "service/detection/impl/DarknetObjectDetectionServiceImpl.hpp"
-#include "provider/impl/VideoFrameProviderImpl.hpp"
+#include "service/impl/VideoFrameReaderImpl.hpp"
 
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -72,16 +72,16 @@ int main(int argc, char* argv[]) {
 
     // Prepare services
     service::DarknetObjectDetectionServiceImpl objectDetectionService;
-    provider::VideoFrameProviderImpl videoFrameProvider(videoPath);
+    service::VideoFrameReaderImpl videoFrameReader(videoPath);
 
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";
-    int nbFrames = videoFrameProvider.getNbFrames();
-    
+    int nbFrames = videoFrameReader.getNbFrames();
+
     for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
         LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
 
-        auto frame = videoFrameProvider.getFrameAt(frameIndex);
+        auto frame = videoFrameReader.getFrameAt(frameIndex);
         LOG_INFO(logger) << "frame resolution: " << frame.size();
 
         auto detectedObjects = objectDetectionService.detectObjectsInImage(frame);

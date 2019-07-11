@@ -2,15 +2,15 @@
 #include <string>
 #include <stdexcept>
 #include <boost/filesystem.hpp>
-#include "VideoFrameProviderImpl.hpp"
+#include "VideoFrameReaderImpl.hpp"
 
-using namespace provider;
+using namespace service;
 using std::max;
 using std::to_string;
 using std::out_of_range;
 using std::runtime_error;
 
-cv::Mat VideoFrameProviderImpl::getFrameAt(int frameIndex) {
+cv::Mat VideoFrameReaderImpl::getFrameAt(int frameIndex) {
     if (frameIndex == currentFrameIndex) {
         return currentFrame;
     }
@@ -39,35 +39,35 @@ cv::Mat VideoFrameProviderImpl::getFrameAt(int frameIndex) {
     return currentFrame;
 }
 
-int VideoFrameProviderImpl::getNbFrames() {
+int VideoFrameReaderImpl::getNbFrames() {
     if (nbFrames == -1) {
         nbFrames = getVideoCapture()->get(cv::CAP_PROP_FRAME_COUNT);
     }
     return nbFrames;
 }
 
-int VideoFrameProviderImpl::getFps() {
+int VideoFrameReaderImpl::getFps() {
     if (fps == -1) {
         fps = getVideoCapture()->get(cv::CAP_PROP_FPS);
     }
     return fps;
 }
 
-int VideoFrameProviderImpl::getFrameWidth() {
+int VideoFrameReaderImpl::getFrameWidth() {
     if (frameWidth == -1) {
         frameWidth = getVideoCapture()->get(cv::CAP_PROP_FRAME_WIDTH);
     }
     return frameWidth;
 }
 
-int VideoFrameProviderImpl::getFrameHeight() {
+int VideoFrameReaderImpl::getFrameHeight() {
     if (frameHeight == -1) {
         frameHeight = getVideoCapture()->get(cv::CAP_PROP_FRAME_HEIGHT);
     }
     return frameHeight;
 }
 
-cv::VideoCapture* VideoFrameProviderImpl::getVideoCapture() {
+cv::VideoCapture* VideoFrameReaderImpl::getVideoCapture() {
     if (pVideoCapture == nullptr) {
         pVideoCapture = new cv::VideoCapture(videoPath.string());
 
