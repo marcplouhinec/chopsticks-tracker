@@ -1,9 +1,14 @@
+#include <fstream>
+#include <streambuf>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include "ObjectDetectorOpenCvDnnImpl.hpp"
 
 using namespace model;
 using namespace service;
+using std::ifstream;
+using std::istreambuf_iterator;
+using std::stringstream;
 using std::string;
 using std::vector;
 namespace pt = boost::property_tree;
@@ -22,8 +27,15 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
         outLayerNames = neuralNetwork.getUnconnectedOutLayersNames();
         objectTypesByClassId = pConfigurationReader->getYoloModelClassEnums();
 
+        ifstream yoloModelCfgStream(yoloModelCfgPath);
+        string yoloModelCfg((istreambuf_iterator<char>(yoloModelCfgStream)), istreambuf_iterator<char>());
+        auto indexOfNet = yoloModelCfg.find("[net]");
+        auto indexOfNextSection = yoloModelCfg.find("[", indexOfNet + 5);
+        string cfgNetSection = yoloModelCfg.substr(indexOfNet, indexOfNextSection);
+        stringstream cfgNetSectionStream(cfgNetSection);
+
         pt::ptree propTree;
-        pt::ini_parser::read_ini(yoloModelCfgPath, propTree);
+        pt::ini_parser::read_ini(cfgNetSectionStream, propTree);
         int netWidth = propTree.get<int>("net.width");
         int netHeight = propTree.get<int>("net.height");
         blobSize = cv::Size(netWidth, netHeight);
@@ -46,30 +58,27 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
     float minConfidence = pConfigurationReader->getObjectDetectionMinConfidence();
     vector<DetectedObject> detectedObjects;
     for (cv::Mat layerOutput : layerOutputs) {
-        cv::Size layerOutputSize = layerOutput.size();
-        for (int rowIndex = 0; rowIndex < layerOutputSize.height; rowIndex++) {
-            vector<float> detections;
-            for (int colIndex = 0; colIndex < layerOutputSize.width; colIndex++) {
-                auto detection = layerOutput.at<float>(rowIndex, colIndex);
-                detections.push_back(detection);
-            }
+        for (int rowIndex = 0; rowIndex < layerOutput.rows; rowIndex++) {
+            int probStartIndex = 5;
+            int probSize = layerOutput.cols - probStartIndex;
 
             // Find the detected class and confidence
             int classId = -1;
             float confidence = -1.0f;
-            for (int i = objectTypesByClassId.size(); i < detections.size(); i++) {
-                if (detections[i] >= confidence) {
-                    classId = i;
-                    confidence = detections[i];
+            for (int probIndex = probStartIndex; probIndex < probStartIndex + probSize; probIndex++) {
+                float probability = layerOutput.at<float>(rowIndex, probIndex);
+                if (probability > confidence) {
+                    confidence = probability;
+                    classId = probIndex - probStartIndex;
                 }
             }
 
             // If the confidence is high enough, 
             if (confidence >= minConfidence) {
-                float centerX = detections[0] * frameWidth;
-                float centerY = detections[1] * frameHeight;
-                float width = detections[2] * frameWidth;
-                float height = detections[3] * frameHeight;
+                float centerX = layerOutput.at<float>(rowIndex, 0) * frameWidth;
+                float centerY = layerOutput.at<float>(rowIndex, 1) * frameHeight;
+                float width = layerOutput.at<float>(rowIndex, 2) * frameWidth;
+                float height = layerOutput.at<float>(rowIndex, 3) * frameHeight;
                 float x = centerX - (width / 2);
                 float y = centerY - (height / 2);
 

@@ -99,7 +99,7 @@ void ConfigurationReaderImpl::loadConfiguration() {
 
     objectDetectionMinConfidence = propTree.get<float>("objectDetection.minConfidence");
     objectDetectionNmsThreshold = propTree.get<float>("objectDetection.nmsThreshold");
-    objectDetectionImplementation = propTree.get<float>("objectDetection.implementation");
+    objectDetectionImplementation = propTree.get<string>("objectDetection.implementation");
 
     configurationLoaded = true;
 
