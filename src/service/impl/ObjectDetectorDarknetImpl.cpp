@@ -9,6 +9,12 @@ using std::round;
 using std::string;
 using std::vector;
 
+ObjectDetectorDarknetImpl::~ObjectDetectorDarknetImpl() {
+    if (pNeuralNetwork != nullptr) {
+        delete pNeuralNetwork;
+    }
+}
+
 vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex) {
     cv::Mat frame = pVideoFrameReader->getFrameAt(frameIndex);
     int frameWidth = pVideoFrameReader->getFrameWidth();
@@ -23,20 +29,7 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
             /*batch = */ 1);
         
         lastLayer = pNeuralNetwork->layers[pNeuralNetwork->n - 1];
-
-        // Find the classId for each object class
-        map<string, DetectedObjectType> detectedObjectTypeByName = {
-            {"ARM", DetectedObjectType::ARM},
-            {"CHOPSTICK", DetectedObjectType::CHOPSTICK},
-            {"BIG_TIP", DetectedObjectType::BIG_TIP},
-            {"SMALL_TIP", DetectedObjectType::SMALL_TIP}
-        };
-        vector<string> classNames = pConfigurationReader->getYoloModelClassNames();
-        for (int classId = 0; classId < classNames.size(); classId++) {
-            auto className = classNames[classId];
-            auto objectType = detectedObjectTypeByName[className];
-            detectedObjectTypeByClassId[classId] = objectType;
-        }
+        objectTypesByClassId = pConfigurationReader->getYoloModelClassEnums();
     }
 
     // Convert and resize the image for YOLO on Darknet
@@ -92,7 +85,7 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
             DetectedObject detectedObject(
                 round(x), round(y),
                 round(width), round(height),
-                detectedObjectTypeByClassId[classId], 
+                objectTypesByClassId[classId], 
                 confidence);
             detectedObjects.push_back(detectedObject);
         }

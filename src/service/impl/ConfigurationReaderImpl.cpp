@@ -1,11 +1,13 @@
+#include <map>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include "ConfigurationReaderImpl.hpp"
 
+using namespace model;
 using namespace service;
+using std::map;
 using std::string;
 using std::vector;
 namespace fs = boost::filesystem;
@@ -19,6 +21,26 @@ vector<string> ConfigurationReaderImpl::getYoloModelClassNames() {
         loadConfiguration();
     }
     return yoloModelClassNames;
+}
+
+vector<DetectedObjectType> ConfigurationReaderImpl::getYoloModelClassEnums() {
+    vector<string> classNames = getYoloModelClassNames();
+
+    map<string, DetectedObjectType> objectTypeByName = {
+        {"ARM", DetectedObjectType::ARM},
+        {"CHOPSTICK", DetectedObjectType::CHOPSTICK},
+        {"BIG_TIP", DetectedObjectType::BIG_TIP},
+        {"SMALL_TIP", DetectedObjectType::SMALL_TIP}
+    };
+
+    vector<DetectedObjectType> objectTypes;
+    for (int i = 0; i < classNames.size(); i++) {
+        auto className = classNames[i];
+        auto objectType = objectTypeByName[className];
+        objectTypes.push_back(objectType);
+    }
+
+    return objectTypes;
 }
 
 fs::path ConfigurationReaderImpl::getYoloModelCfgPath() {
@@ -49,6 +71,13 @@ float ConfigurationReaderImpl::getObjectDetectionNmsThreshold() {
     return objectDetectionNmsThreshold;
 }
 
+std::string ConfigurationReaderImpl::getObjectDetectionImplementation() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return objectDetectionImplementation;
+}
+
 void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
 
@@ -70,6 +99,7 @@ void ConfigurationReaderImpl::loadConfiguration() {
 
     objectDetectionMinConfidence = propTree.get<float>("objectDetection.minConfidence");
     objectDetectionNmsThreshold = propTree.get<float>("objectDetection.nmsThreshold");
+    objectDetectionImplementation = propTree.get<float>("objectDetection.implementation");
 
     configurationLoaded = true;
 
@@ -79,4 +109,5 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tYOLO model weights path: " << yoloModelWeightsPath.string();
     LOG_INFO(logger) << "\tObject detection min confidence: " << objectDetectionMinConfidence;
     LOG_INFO(logger) << "\tObject detection NMS threshold: " << objectDetectionNmsThreshold;
+    LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
 }

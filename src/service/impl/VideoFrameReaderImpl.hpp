@@ -20,12 +20,7 @@ namespace service {
 
         public:
             VideoFrameReaderImpl(boost::filesystem::path videoPath) : videoPath(videoPath) {}
-            virtual ~VideoFrameReaderImpl() {
-                if (pVideoCapture != nullptr) {
-                    pVideoCapture->release();
-                    delete pVideoCapture;
-                } 
-            }
+            virtual ~VideoFrameReaderImpl();
 
             virtual cv::Mat getFrameAt(int frameIndex);
             virtual int getNbFrames();

@@ -19,6 +19,7 @@ namespace service {
 
             float objectDetectionMinConfidence;
             float objectDetectionNmsThreshold;
+            std::string objectDetectionImplementation;
 
         public:
             ConfigurationReaderImpl(boost::filesystem::path configurationPath) :
@@ -27,11 +28,13 @@ namespace service {
             virtual ~ConfigurationReaderImpl() {}
 
             virtual std::vector<std::string> getYoloModelClassNames();
+            virtual std::vector<model::DetectedObjectType> getYoloModelClassEnums();
             virtual boost::filesystem::path getYoloModelCfgPath();
             virtual boost::filesystem::path getYoloModelWeightsPath();
 
             virtual float getObjectDetectionMinConfidence();
             virtual float getObjectDetectionNmsThreshold();
+            virtual std::string getObjectDetectionImplementation();
         
         private:
             void loadConfiguration();

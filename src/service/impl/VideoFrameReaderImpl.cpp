@@ -10,6 +10,13 @@ using std::to_string;
 using std::out_of_range;
 using std::runtime_error;
 
+VideoFrameReaderImpl::~VideoFrameReaderImpl() {
+    if (pVideoCapture != nullptr) {
+        pVideoCapture->release();
+        delete pVideoCapture;
+    }
+}
+
 cv::Mat VideoFrameReaderImpl::getFrameAt(int frameIndex) {
     if (frameIndex == currentFrameIndex) {
         return currentFrame;

@@ -5,6 +5,7 @@
 #include "service/impl/ConfigurationReaderImpl.hpp"
 #include "service/impl/VideoFrameReaderImpl.hpp"
 #include "service/impl/ObjectDetectorDarknetImpl.hpp"
+#include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
 
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -51,7 +52,16 @@ int main(int argc, char* argv[]) {
     // Prepare services
     service::ConfigurationReaderImpl configurationReader(configurationPath);
     service::VideoFrameReaderImpl videoFrameReader(videoPath);
-    service::ObjectDetectorDarknetImpl objectDetector(&configurationReader, &videoFrameReader);
+
+    std::string detectionImpl = configurationReader.getObjectDetectionImplementation();
+    service::ObjectDetector* pObjectDetector = nullptr;
+    if (detectionImpl.compare("darknet") == 0) {
+        pObjectDetector = new service::ObjectDetectorDarknetImpl(
+            &configurationReader, &videoFrameReader);
+    } else if (detectionImpl.compare("opencvdnn") == 0) {
+        pObjectDetector = new service::ObjectDetectorOpenCvDnnImpl(
+            &configurationReader, &videoFrameReader);
+    }
 
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";
@@ -63,11 +73,14 @@ int main(int argc, char* argv[]) {
         auto frame = videoFrameReader.getFrameAt(frameIndex);
         LOG_INFO(logger) << "frame resolution: " << frame.size();
 
-        auto detectedObjects = objectDetector.detectObjectsAt(frameIndex);
+        auto detectedObjects = pObjectDetector->detectObjectsAt(frameIndex);
         LOG_INFO(logger) << "nb detected objects: " << detectedObjects.size();
     }
     // TODO
 
     LOG_INFO(logger) << "Application executed with success!";
+
+    delete pObjectDetector; // TODO use unique ptr
+
     return 0;
 }

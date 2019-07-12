@@ -1,9 +1,10 @@
-#ifndef SERVICE_OBJECT_DETECTOR_DARKNET_IMPL
-#define SERVICE_OBJECT_DETECTOR_DARKNET_IMPL
+#ifndef SERVICE_OBJECT_DETECTOR_OPENCV_DNN_IMPL
+#define SERVICE_OBJECT_DETECTOR_OPENCV_DNN_IMPL
 
 #include <map>
+#include <opencv2/dnn.hpp>
+#include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>
-#include <darknet.h>
 #include "../../utils/logging.hpp"
 #include "../ObjectDetector.hpp"
 #include "../ConfigurationReader.hpp"
@@ -13,35 +14,36 @@ namespace service {
 
     /**
      * Implementation of the {@link ObjectDetector} by using the YOLO v3 model running
-     * on top of Darknet (very fast with CUDA, slow without it).
+     * on top of OpenCV DNN (acceptable performance with CPUs, but cannot use GPUs).
      * 
      * @author Marc Plouhinec
      */
-    class ObjectDetectorDarknetImpl : public ObjectDetector {
+    class ObjectDetectorOpenCvDnnImpl : public ObjectDetector {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
             ConfigurationReader* pConfigurationReader;
             VideoFrameReader* pVideoFrameReader;
-            network* pNeuralNetwork = nullptr;
-            layer lastLayer;
+
+            bool neuralNetworkInitialized = false;
+            cv::dnn::Net neuralNetwork;
+            cv::Size blobSize;
+            cv::Scalar mean;
+            std::vector<std::string> outLayerNames;
             std::vector<model::DetectedObjectType> objectTypesByClassId;
 
         public:
-            ObjectDetectorDarknetImpl(
+            ObjectDetectorOpenCvDnnImpl(
                 ConfigurationReader* pConfigurationReader,
                 VideoFrameReader* pVideoFrameReader) : 
                     pConfigurationReader(pConfigurationReader),
                     pVideoFrameReader(pVideoFrameReader) {}
 
-            virtual ~ObjectDetectorDarknetImpl();
+            virtual ~ObjectDetectorOpenCvDnnImpl() {}
 
             virtual std::vector<model::DetectedObject> detectObjectsAt(int frameIndex);
-        
-        private:
-            image matToImage(cv::Mat& src);
     };
 
 }
 
-#endif // SERVICE_OBJECT_DETECTOR_DARKNET_IMPL
+#endif // SERVICE_OBJECT_DETECTOR_OPENCV_DNN_IMPL
