@@ -20,6 +20,7 @@ namespace service {
             virtual float getObjectDetectionMinConfidence() = 0;
             virtual float getObjectDetectionNmsThreshold() = 0;
             virtual std::string getObjectDetectionImplementation() = 0;
+            virtual boost::filesystem::path getObjectDetectionCacheFolderPath() = 0;
     };
 
 }

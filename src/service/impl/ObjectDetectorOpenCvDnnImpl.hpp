@@ -1,7 +1,6 @@
 #ifndef SERVICE_OBJECT_DETECTOR_OPENCV_DNN_IMPL
 #define SERVICE_OBJECT_DETECTOR_OPENCV_DNN_IMPL
 
-#include <map>
 #include <opencv2/dnn.hpp>
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>

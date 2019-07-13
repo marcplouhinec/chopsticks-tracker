@@ -17,6 +17,23 @@ cd boost_1_70_0
 ./b2 headers
 sudo ./b2 install
 
+# RapidJSON compilation and installation
+cd ~/projects
+git clone https://github.com/Tencent/rapidjson.git
+cd rapidjson
+mkdir -p build
+cd build
+cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D RAPIDJSON_BUILD_DOC=OFF \
+    -D RAPIDJSON_BUILD_EXAMPLES=OFF \
+    -D RAPIDJSON_BUILD_TESTS=OFF \
+    -D RAPIDJSON_BUILD_THIRDPARTY_GTEST=OFF \
+    -D RAPIDJSON_BUILD_CXX11=ON \
+    ..
+make
+sudo make install
+
 # FFMpeg compilation and installation
 brew install automake fdk-aac git lame libass libtool libvorbis libvpx \
     opus sdl shtool texi2html theora wget x264 x265 xvid nasm pkg-config

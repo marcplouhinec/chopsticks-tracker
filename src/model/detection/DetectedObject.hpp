@@ -4,6 +4,7 @@
 #include "DetectedObjectType.hpp"
 
 namespace model {
+
     class DetectedObject {
         public:
             int x = 0;
@@ -14,7 +15,9 @@ namespace model {
             float confidence = 0.0;
 
         public:
-            DetectedObject(
+            DetectedObject() {}
+
+            explicit DetectedObject(
                 int x, int y, int width, int height, DetectedObjectType objectType, float confidence) : 
                     x(x), y(y),
                     width(width), height(height),

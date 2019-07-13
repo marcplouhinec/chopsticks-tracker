@@ -78,6 +78,13 @@ std::string ConfigurationReaderImpl::getObjectDetectionImplementation() {
     return objectDetectionImplementation;
 }
 
+fs::path ConfigurationReaderImpl::getObjectDetectionCacheFolderPath() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return objectDetectionCacheFolderPath;
+}
+
 void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
 
@@ -100,6 +107,8 @@ void ConfigurationReaderImpl::loadConfiguration() {
     objectDetectionMinConfidence = propTree.get<float>("objectDetection.minConfidence");
     objectDetectionNmsThreshold = propTree.get<float>("objectDetection.nmsThreshold");
     objectDetectionImplementation = propTree.get<string>("objectDetection.implementation");
+    fs::path relativeCacheFolderPath(propTree.get<string>("objectDetection.cacheFolderPath"));
+    objectDetectionCacheFolderPath = fs::path(rootPath / relativeCacheFolderPath);
 
     configurationLoaded = true;
 
@@ -110,4 +119,5 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tObject detection min confidence: " << objectDetectionMinConfidence;
     LOG_INFO(logger) << "\tObject detection NMS threshold: " << objectDetectionNmsThreshold;
     LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
+    LOG_INFO(logger) << "\tObject detection cache folder path: " << objectDetectionCacheFolderPath.string();
 }

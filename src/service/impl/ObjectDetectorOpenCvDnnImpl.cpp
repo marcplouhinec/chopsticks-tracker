@@ -29,6 +29,7 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
 
         ifstream yoloModelCfgStream(yoloModelCfgPath);
         string yoloModelCfg((istreambuf_iterator<char>(yoloModelCfgStream)), istreambuf_iterator<char>());
+        yoloModelCfgStream.close();
         auto indexOfNet = yoloModelCfg.find("[net]");
         auto indexOfNextSection = yoloModelCfg.find("[", indexOfNet + 5);
         string cfgNetSection = yoloModelCfg.substr(indexOfNet, indexOfNextSection);
