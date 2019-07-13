@@ -26,17 +26,10 @@ vector<string> ConfigurationReaderImpl::getYoloModelClassNames() {
 vector<DetectedObjectType> ConfigurationReaderImpl::getYoloModelClassEnums() {
     vector<string> classNames = getYoloModelClassNames();
 
-    map<string, DetectedObjectType> objectTypeByName = {
-        {"ARM", DetectedObjectType::ARM},
-        {"CHOPSTICK", DetectedObjectType::CHOPSTICK},
-        {"BIG_TIP", DetectedObjectType::BIG_TIP},
-        {"SMALL_TIP", DetectedObjectType::SMALL_TIP}
-    };
-
     vector<DetectedObjectType> objectTypes;
     for (int i = 0; i < classNames.size(); i++) {
         auto className = classNames[i];
-        auto objectType = objectTypeByName[className];
+        auto objectType = DetectedObjectTypeHelper::stringToEnum(className);
         objectTypes.push_back(objectType);
     }
 
