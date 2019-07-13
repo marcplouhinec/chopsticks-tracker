@@ -11,9 +11,8 @@ using std::out_of_range;
 using std::runtime_error;
 
 VideoFrameReaderImpl::~VideoFrameReaderImpl() {
-    if (pVideoCapture != nullptr) {
+    if (pVideoCapture) {
         pVideoCapture->release();
-        delete pVideoCapture;
     }
 }
 
@@ -22,10 +21,12 @@ cv::Mat VideoFrameReaderImpl::getFrameAt(int frameIndex) {
         return currentFrame;
     }
 
+    initVideoCaptureIfNecessary();
+
     // Rewind if necessary
     if (frameIndex < currentFrameIndex) {
         currentFrameIndex = max(0, frameIndex - 20);
-        getVideoCapture()->set(cv::CAP_PROP_POS_FRAMES, currentFrameIndex);
+        pVideoCapture->set(cv::CAP_PROP_POS_FRAMES, currentFrameIndex);
         // Note: we cannot rewind to the exact position because FFMpeg (used by OpenCV)
         // has some trouble when the frameIndex doesn't point exactly to a key frame.
     }
@@ -34,12 +35,12 @@ cv::Mat VideoFrameReaderImpl::getFrameAt(int frameIndex) {
     while (currentFrameIndex < frameIndex) {
         currentFrameIndex++;
 
-        if (!getVideoCapture()->grab()) {
+        if (!pVideoCapture->grab()) {
             throw out_of_range("Unable to read the frame " + to_string(frameIndex) + ".");
         }
 
         if (currentFrameIndex == frameIndex) {
-            getVideoCapture()->retrieve(currentFrame);
+            pVideoCapture->retrieve(currentFrame);
         }
     }
 
@@ -48,39 +49,42 @@ cv::Mat VideoFrameReaderImpl::getFrameAt(int frameIndex) {
 
 int VideoFrameReaderImpl::getNbFrames() {
     if (nbFrames == -1) {
-        nbFrames = getVideoCapture()->get(cv::CAP_PROP_FRAME_COUNT);
+        initVideoCaptureIfNecessary();
+        nbFrames = pVideoCapture->get(cv::CAP_PROP_FRAME_COUNT);
     }
     return nbFrames;
 }
 
 int VideoFrameReaderImpl::getFps() {
     if (fps == -1) {
-        fps = getVideoCapture()->get(cv::CAP_PROP_FPS);
+        initVideoCaptureIfNecessary();
+        fps = pVideoCapture->get(cv::CAP_PROP_FPS);
     }
     return fps;
 }
 
 int VideoFrameReaderImpl::getFrameWidth() {
     if (frameWidth == -1) {
-        frameWidth = getVideoCapture()->get(cv::CAP_PROP_FRAME_WIDTH);
+        initVideoCaptureIfNecessary();
+        frameWidth = pVideoCapture->get(cv::CAP_PROP_FRAME_WIDTH);
     }
     return frameWidth;
 }
 
 int VideoFrameReaderImpl::getFrameHeight() {
     if (frameHeight == -1) {
-        frameHeight = getVideoCapture()->get(cv::CAP_PROP_FRAME_HEIGHT);
+        initVideoCaptureIfNecessary();
+        frameHeight = pVideoCapture->get(cv::CAP_PROP_FRAME_HEIGHT);
     }
     return frameHeight;
 }
 
-cv::VideoCapture* VideoFrameReaderImpl::getVideoCapture() {
-    if (pVideoCapture == nullptr) {
-        pVideoCapture = new cv::VideoCapture(videoPath.string());
+void VideoFrameReaderImpl::initVideoCaptureIfNecessary() {
+    if (!pVideoCapture) {
+        pVideoCapture = std::unique_ptr<cv::VideoCapture>(new cv::VideoCapture(videoPath.string()));
 
         if (!pVideoCapture->isOpened()) {
             throw runtime_error("Unable to open the video: " + videoPath.string());
         }
     }
-    return pVideoCapture;
 }

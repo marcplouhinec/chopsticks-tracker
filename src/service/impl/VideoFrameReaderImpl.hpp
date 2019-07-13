@@ -1,6 +1,7 @@
 #ifndef SERVICE_VIDEO_FRAME_READER_IMPL
 #define SERVICE_VIDEO_FRAME_READER_IMPL
 
+#include <memory>
 #include "../VideoFrameReader.hpp"
 
 namespace service {
@@ -16,7 +17,7 @@ namespace service {
 
             cv::Mat currentFrame;
             int currentFrameIndex = -1;
-            cv::VideoCapture* pVideoCapture = nullptr; // TODO use unique ptr
+            std::unique_ptr<cv::VideoCapture> pVideoCapture{};
 
         public:
             VideoFrameReaderImpl(boost::filesystem::path videoPath) : videoPath(videoPath) {}
@@ -29,7 +30,7 @@ namespace service {
             virtual int getFrameHeight();
         
         private:
-            cv::VideoCapture* getVideoCapture();
+            void initVideoCaptureIfNecessary();
     };
 
 }

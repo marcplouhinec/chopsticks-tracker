@@ -21,8 +21,8 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            ConfigurationReader* pConfigurationReader;
-            VideoFrameReader* pVideoFrameReader;
+            ConfigurationReader& configurationReader;
+            VideoFrameReader& videoFrameReader;
 
             bool neuralNetworkInitialized = false;
             cv::dnn::Net neuralNetwork;
@@ -33,10 +33,10 @@ namespace service {
 
         public:
             ObjectDetectorOpenCvDnnImpl(
-                ConfigurationReader* pConfigurationReader,
-                VideoFrameReader* pVideoFrameReader) : 
-                    pConfigurationReader(pConfigurationReader),
-                    pVideoFrameReader(pVideoFrameReader) {}
+                ConfigurationReader& configurationReader,
+                VideoFrameReader& videoFrameReader) : 
+                    configurationReader(configurationReader),
+                    videoFrameReader(videoFrameReader) {}
 
             virtual ~ObjectDetectorOpenCvDnnImpl() {}
 

@@ -9,27 +9,21 @@ using std::round;
 using std::string;
 using std::vector;
 
-ObjectDetectorDarknetImpl::~ObjectDetectorDarknetImpl() {
-    if (pNeuralNetwork != nullptr) {
-        delete pNeuralNetwork;
-    }
-}
-
 vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex) {
-    cv::Mat frame = pVideoFrameReader->getFrameAt(frameIndex);
-    int frameWidth = pVideoFrameReader->getFrameWidth();
-    int frameHeight = pVideoFrameReader->getFrameHeight();
+    cv::Mat frame = videoFrameReader.getFrameAt(frameIndex);
+    int frameWidth = videoFrameReader.getFrameWidth();
+    int frameHeight = videoFrameReader.getFrameHeight();
 
-    if (pNeuralNetwork == nullptr) {
+    if (!pNeuralNetwork) {
         LOG_INFO(logger) << "Loading the YOLO neural network model...";
-        pNeuralNetwork = load_network_custom(
-            (char*) pConfigurationReader->getYoloModelCfgPath().string().c_str(), 
-            (char*) pConfigurationReader->getYoloModelWeightsPath().string().c_str(), 
+        pNeuralNetwork = std::unique_ptr<network>(load_network_custom(
+            (char*) configurationReader.getYoloModelCfgPath().string().c_str(), 
+            (char*) configurationReader.getYoloModelWeightsPath().string().c_str(), 
             /*clear = */ 0,
-            /*batch = */ 1);
+            /*batch = */ 1));
         
         lastLayer = pNeuralNetwork->layers[pNeuralNetwork->n - 1];
-        objectTypesByClassId = pConfigurationReader->getYoloModelClassEnums();
+        objectTypesByClassId = configurationReader.getYoloModelClassEnums();
     }
 
     // Convert and resize the image for YOLO on Darknet
@@ -38,11 +32,11 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
     // TODO crop before resize (can be done with a VideoFrameReaderCropImpl)
 
     // Detect objects
-    network_predict_image(pNeuralNetwork, resizedImage);
-    float minConfidence = pConfigurationReader->getObjectDetectionMinConfidence();
+    network_predict_image(pNeuralNetwork.get(), resizedImage);
+    float minConfidence = configurationReader.getObjectDetectionMinConfidence();
     int nbDetections = 0;
     detection* detections = get_network_boxes(
-        pNeuralNetwork,
+        pNeuralNetwork.get(),
         pNeuralNetwork->w,
         pNeuralNetwork->h,
         minConfidence,
@@ -51,7 +45,7 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
         /* relative */1,
         &nbDetections,
         /* letter */0);
-    float nmsThreshold = pConfigurationReader->getObjectDetectionNmsThreshold();
+    float nmsThreshold = configurationReader.getObjectDetectionNmsThreshold();
     do_nms_sort(detections, nbDetections, lastLayer.classes, nmsThreshold);
     
     // Release image resources

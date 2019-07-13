@@ -1,7 +1,7 @@
 #ifndef SERVICE_OBJECT_DETECTOR_DARKNET_IMPL
 #define SERVICE_OBJECT_DETECTOR_DARKNET_IMPL
 
-#include <map>
+#include <memory>
 #include <boost/filesystem.hpp>
 #include <darknet.h>
 #include "../../utils/logging.hpp"
@@ -21,20 +21,20 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            ConfigurationReader* pConfigurationReader;
-            VideoFrameReader* pVideoFrameReader;
-            network* pNeuralNetwork = nullptr;
+            ConfigurationReader& configurationReader;
+            VideoFrameReader& videoFrameReader;
+            std::unique_ptr<network> pNeuralNetwork{};
             layer lastLayer;
             std::vector<model::DetectedObjectType> objectTypesByClassId;
 
         public:
             ObjectDetectorDarknetImpl(
-                ConfigurationReader* pConfigurationReader,
-                VideoFrameReader* pVideoFrameReader) : 
-                    pConfigurationReader(pConfigurationReader),
-                    pVideoFrameReader(pVideoFrameReader) {}
+                ConfigurationReader& configurationReader,
+                VideoFrameReader& videoFrameReader) : 
+                    configurationReader(configurationReader),
+                    videoFrameReader(videoFrameReader) {}
 
-            virtual ~ObjectDetectorDarknetImpl();
+            virtual ~ObjectDetectorDarknetImpl() {};
 
             virtual std::vector<model::DetectedObject> detectObjectsAt(int frameIndex);
         

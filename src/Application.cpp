@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include "utils/logging.hpp"
@@ -55,16 +56,17 @@ int main(int argc, char* argv[]) {
     service::VideoFrameReaderImpl videoFrameReader(videoPath);
 
     std::string detectionImpl = configurationReader.getObjectDetectionImplementation();
-    service::ObjectDetector* pInnerObjectDetector = nullptr;
+    std::unique_ptr<service::ObjectDetector> pInnerObjectDetector = nullptr;
     if (detectionImpl.compare("darknet") == 0) {
-        pInnerObjectDetector = new service::ObjectDetectorDarknetImpl(
-            &configurationReader, &videoFrameReader);
+        pInnerObjectDetector = std::unique_ptr<service::ObjectDetector>(
+            new service::ObjectDetectorDarknetImpl(configurationReader, videoFrameReader));
     } else if (detectionImpl.compare("opencvdnn") == 0) {
-        pInnerObjectDetector = new service::ObjectDetectorOpenCvDnnImpl(
-            &configurationReader, &videoFrameReader);
+        pInnerObjectDetector = std::unique_ptr<service::ObjectDetector>(
+            new service::ObjectDetectorOpenCvDnnImpl(configurationReader, videoFrameReader));
     }
+    service::ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     service::ObjectDetectorCacheImpl objectDetector(
-        &configurationReader, pInnerObjectDetector, videoPath);
+        configurationReader, innerObjectDetector, videoPath);
 
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";
@@ -82,8 +84,6 @@ int main(int argc, char* argv[]) {
     // TODO
 
     LOG_INFO(logger) << "Application executed with success!";
-
-    delete pInnerObjectDetector; // TODO use unique ptr
 
     return 0;
 }

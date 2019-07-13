@@ -16,7 +16,7 @@ using std::runtime_error;
 namespace fs = boost::filesystem;
 
 vector<DetectedObject> ObjectDetectorCacheImpl::detectObjectsAt(int frameIndex) {
-    fs::path rootCacheFolderPath = pConfigurationReader->getObjectDetectionCacheFolderPath();
+    fs::path rootCacheFolderPath = configurationReader.getObjectDetectionCacheFolderPath();
     fs::path cacheFolderPath(rootCacheFolderPath / videoPath.filename());
 
     // Create the cache folder if it doesn't exist
@@ -51,7 +51,7 @@ vector<DetectedObject> ObjectDetectorCacheImpl::detectObjectsAt(int frameIndex) 
         return convertFromJson(detectedObjectsJson);
     } else {
         // Use the wrapped object detector to get the objects and serialize it
-        vector<DetectedObject> detectedObjects = pWrappedObjectDetector->detectObjectsAt(frameIndex);
+        vector<DetectedObject> detectedObjects = wrappedObjectDetector.detectObjectsAt(frameIndex);
         
         ofstream objectsFile(objectsPath.string());
         objectsFile << convertToJson(detectedObjects);

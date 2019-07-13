@@ -22,18 +22,18 @@ namespace service {
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
             boost::filesystem::path videoPath;
-            ConfigurationReader* pConfigurationReader;
-            ObjectDetector* pWrappedObjectDetector;
+            ConfigurationReader& configurationReader;
+            ObjectDetector& wrappedObjectDetector;
 
             bool cacheFolderInitialized = false;
 
         public:
             ObjectDetectorCacheImpl(
-                ConfigurationReader* pConfigurationReader,
-                ObjectDetector* pWrappedObjectDetector,
+                ConfigurationReader& configurationReader,
+                ObjectDetector& wrappedObjectDetector,
                 boost::filesystem::path videoPath) : 
-                    pConfigurationReader(pConfigurationReader),
-                    pWrappedObjectDetector(pWrappedObjectDetector),
+                    configurationReader(configurationReader),
+                    wrappedObjectDetector(wrappedObjectDetector),
                     videoPath(videoPath) {}
 
             virtual ~ObjectDetectorCacheImpl() {}

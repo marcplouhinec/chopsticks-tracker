@@ -14,18 +14,18 @@ using std::vector;
 namespace pt = boost::property_tree;
 
 vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameIndex) {
-    cv::Mat frame = pVideoFrameReader->getFrameAt(frameIndex);
-    int frameWidth = pVideoFrameReader->getFrameWidth();
-    int frameHeight = pVideoFrameReader->getFrameHeight();
+    cv::Mat frame = videoFrameReader.getFrameAt(frameIndex);
+    int frameWidth = videoFrameReader.getFrameWidth();
+    int frameHeight = videoFrameReader.getFrameHeight();
 
     if (!neuralNetworkInitialized) {
         LOG_INFO(logger) << "Loading the YOLO neural network model...";
-        string yoloModelCfgPath = pConfigurationReader->getYoloModelCfgPath().string();
-        string yoloModelWeights = pConfigurationReader->getYoloModelWeightsPath().string();
+        string yoloModelCfgPath = configurationReader.getYoloModelCfgPath().string();
+        string yoloModelWeights = configurationReader.getYoloModelWeightsPath().string();
         neuralNetwork = cv::dnn::readNetFromDarknet(yoloModelCfgPath, yoloModelWeights);
         
         outLayerNames = neuralNetwork.getUnconnectedOutLayersNames();
-        objectTypesByClassId = pConfigurationReader->getYoloModelClassEnums();
+        objectTypesByClassId = configurationReader.getYoloModelClassEnums();
 
         ifstream yoloModelCfgStream(yoloModelCfgPath);
         string yoloModelCfg((istreambuf_iterator<char>(yoloModelCfgStream)), istreambuf_iterator<char>());
@@ -56,7 +56,7 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
     neuralNetwork.forward(layerOutputs, outLayerNames);
 
     // Extract objects
-    float minConfidence = pConfigurationReader->getObjectDetectionMinConfidence();
+    float minConfidence = configurationReader.getObjectDetectionMinConfidence();
     vector<DetectedObject> detectedObjects;
     for (cv::Mat layerOutput : layerOutputs) {
         for (int rowIndex = 0; rowIndex < layerOutput.rows; rowIndex++) {
