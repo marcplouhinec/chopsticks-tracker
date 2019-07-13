@@ -16,7 +16,7 @@ VideoFrameReaderImpl::~VideoFrameReaderImpl() {
     }
 }
 
-cv::Mat VideoFrameReaderImpl::getFrameAt(int frameIndex) {
+cv::Mat VideoFrameReaderImpl::readFrameAt(int frameIndex) {
     if (frameIndex == currentFrameIndex) {
         return currentFrame;
     }

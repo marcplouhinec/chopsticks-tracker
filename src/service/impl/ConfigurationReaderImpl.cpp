@@ -78,6 +78,13 @@ fs::path ConfigurationReaderImpl::getObjectDetectionCacheFolderPath() {
     return objectDetectionCacheFolderPath;
 }
 
+fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return renderingOutputPath;
+}
+
 void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
 
@@ -103,6 +110,9 @@ void ConfigurationReaderImpl::loadConfiguration() {
     fs::path relativeCacheFolderPath(propTree.get<string>("objectDetection.cacheFolderPath"));
     objectDetectionCacheFolderPath = fs::path(rootPath / relativeCacheFolderPath);
 
+    fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
+    renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
+
     configurationLoaded = true;
 
     LOG_INFO(logger) << "Configuration:";
@@ -113,4 +123,5 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tObject detection NMS threshold: " << objectDetectionNmsThreshold;
     LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
     LOG_INFO(logger) << "\tObject detection cache folder path: " << objectDetectionCacheFolderPath.string();
+    LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
 }

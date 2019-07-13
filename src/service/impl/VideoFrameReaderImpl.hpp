@@ -23,7 +23,7 @@ namespace service {
             VideoFrameReaderImpl(boost::filesystem::path videoPath) : videoPath(videoPath) {}
             virtual ~VideoFrameReaderImpl();
 
-            virtual cv::Mat getFrameAt(int frameIndex);
+            virtual cv::Mat readFrameAt(int frameIndex);
             virtual int getNbFrames();
             virtual int getFps();
             virtual int getFrameWidth();

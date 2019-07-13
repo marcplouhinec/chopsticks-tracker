@@ -22,6 +22,8 @@ namespace service {
             std::string objectDetectionImplementation;
             boost::filesystem::path objectDetectionCacheFolderPath;
 
+            boost::filesystem::path renderingOutputPath;
+
         public:
             ConfigurationReaderImpl(boost::filesystem::path configurationPath) :
                 configurationPath(configurationPath) {}
@@ -37,6 +39,8 @@ namespace service {
             virtual float getObjectDetectionNmsThreshold();
             virtual std::string getObjectDetectionImplementation();
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath();
+
+            virtual boost::filesystem::path getRenderingOutputPath();
         
         private:
             void loadConfiguration();

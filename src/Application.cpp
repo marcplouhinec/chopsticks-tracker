@@ -8,6 +8,7 @@
 #include "service/impl/ObjectDetectorDarknetImpl.hpp"
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
 #include "service/impl/ObjectDetectorCacheImpl.hpp"
+#include "service/impl/VideoFrameWriterMjpgImpl.hpp"
 
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -67,6 +68,13 @@ int main(int argc, char* argv[]) {
     service::ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     service::ObjectDetectorCacheImpl objectDetector(
         configurationReader, innerObjectDetector, videoPath);
+    
+    service::VideoFrameWriterMjpgImpl videoFrameWriter(
+        configurationReader,
+        videoPath,
+        videoFrameReader.getFps(),
+        videoFrameReader.getFrameWidth(),
+        videoFrameReader.getFrameHeight());
 
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";
@@ -75,11 +83,14 @@ int main(int argc, char* argv[]) {
     for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
         LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
 
-        auto frame = videoFrameReader.getFrameAt(frameIndex);
+        auto frame = videoFrameReader.readFrameAt(frameIndex);
         LOG_INFO(logger) << "frame resolution: " << frame.size();
 
         auto detectedObjects = objectDetector.detectObjectsAt(frameIndex);
         LOG_INFO(logger) << "nb detected objects: " << detectedObjects.size();
+
+        videoFrameWriter.writeFrameAt(frameIndex, frame);
+        LOG_INFO(logger) << "Frame written.";
     }
     // TODO
 

@@ -9,7 +9,7 @@ namespace service {
         public:
             virtual ~VideoFrameReader() {}
 
-            virtual cv::Mat getFrameAt(int frameIndex) = 0;
+            virtual cv::Mat readFrameAt(int frameIndex) = 0;
             virtual int getNbFrames() = 0;
             virtual int getFps() = 0;
             virtual int getFrameWidth() = 0;

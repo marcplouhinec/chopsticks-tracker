@@ -14,7 +14,7 @@ using std::vector;
 namespace pt = boost::property_tree;
 
 vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameIndex) {
-    cv::Mat frame = videoFrameReader.getFrameAt(frameIndex);
+    cv::Mat frame = videoFrameReader.readFrameAt(frameIndex);
     int frameWidth = videoFrameReader.getFrameWidth();
     int frameHeight = videoFrameReader.getFrameHeight();
 
