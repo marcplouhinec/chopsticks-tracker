@@ -18,6 +18,7 @@ namespace service {
             double fps;
             int frameWidth;
             int frameHeight;
+            int lastWrittenFrameIndex = -1;
 
             std::unique_ptr<cv::VideoWriter> pVideoWriter{};
 

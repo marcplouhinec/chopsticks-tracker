@@ -23,6 +23,7 @@ namespace service {
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath() = 0;
 
             virtual boost::filesystem::path getRenderingOutputPath() = 0;
+            virtual std::string getRenderingImplementation() = 0;
     };
 
 }

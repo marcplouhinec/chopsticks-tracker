@@ -9,6 +9,7 @@
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
 #include "service/impl/ObjectDetectorCacheImpl.hpp"
 #include "service/impl/VideoFrameWriterMjpgImpl.hpp"
+#include "service/impl/VideoFrameWriterMultiJpegImpl.hpp"
 
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]) {
     service::VideoFrameReaderImpl videoFrameReader(videoPath);
 
     std::string detectionImpl = configurationReader.getObjectDetectionImplementation();
-    std::unique_ptr<service::ObjectDetector> pInnerObjectDetector = nullptr;
+    std::unique_ptr<service::ObjectDetector> pInnerObjectDetector{};
     if (detectionImpl.compare("darknet") == 0) {
         pInnerObjectDetector = std::unique_ptr<service::ObjectDetector>(
             new service::ObjectDetectorDarknetImpl(configurationReader, videoFrameReader));
@@ -69,12 +70,21 @@ int main(int argc, char* argv[]) {
     service::ObjectDetectorCacheImpl objectDetector(
         configurationReader, innerObjectDetector, videoPath);
     
-    service::VideoFrameWriterMjpgImpl videoFrameWriter(
-        configurationReader,
-        videoPath,
-        videoFrameReader.getFps(),
-        videoFrameReader.getFrameWidth(),
-        videoFrameReader.getFrameHeight());
+    std::string renderingImpl = configurationReader.getRenderingImplementation();
+    std::unique_ptr<service::VideoFrameWriter> pVideoFrameWriter{};
+    if (renderingImpl.compare("mjpeg") == 0) {
+        pVideoFrameWriter = std::unique_ptr<service::VideoFrameWriter>(
+            new service::VideoFrameWriterMjpgImpl(
+                configurationReader,
+                videoPath,
+                videoFrameReader.getFps(),
+                videoFrameReader.getFrameWidth(),
+                videoFrameReader.getFrameHeight()));
+    } else if (renderingImpl.compare("multijpeg") == 0) {
+        pVideoFrameWriter = std::unique_ptr<service::VideoFrameWriter>(
+            new service::VideoFrameWriterMultiJpegImpl(configurationReader, videoPath));
+    }
+    service::VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";

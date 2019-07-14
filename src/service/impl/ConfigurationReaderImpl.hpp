@@ -23,6 +23,7 @@ namespace service {
             boost::filesystem::path objectDetectionCacheFolderPath;
 
             boost::filesystem::path renderingOutputPath;
+            std::string renderingImplementation;
 
         public:
             ConfigurationReaderImpl(boost::filesystem::path configurationPath) :
@@ -41,6 +42,7 @@ namespace service {
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath();
 
             virtual boost::filesystem::path getRenderingOutputPath();
+            virtual std::string getRenderingImplementation();
         
         private:
             void loadConfiguration();

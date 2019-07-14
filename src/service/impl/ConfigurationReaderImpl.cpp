@@ -85,6 +85,13 @@ fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     return renderingOutputPath;
 }
 
+std::string ConfigurationReaderImpl::getRenderingImplementation() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return renderingImplementation;
+}
+
 void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
 
@@ -112,6 +119,7 @@ void ConfigurationReaderImpl::loadConfiguration() {
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
+    renderingImplementation = propTree.get<string>("rendering.implementation");
 
     configurationLoaded = true;
 
@@ -124,4 +132,5 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
     LOG_INFO(logger) << "\tObject detection cache folder path: " << objectDetectionCacheFolderPath.string();
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
+    LOG_INFO(logger) << "\tRendering implementation: " << renderingImplementation;
 }

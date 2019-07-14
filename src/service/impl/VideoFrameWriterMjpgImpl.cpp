@@ -4,6 +4,7 @@
 using namespace service;
 using std::runtime_error;
 using std::string;
+using std::to_string;
 using std::unique_ptr;
 namespace fs = boost::filesystem;
 
@@ -14,6 +15,12 @@ VideoFrameWriterMjpgImpl::~VideoFrameWriterMjpgImpl() {
 }
 
 void VideoFrameWriterMjpgImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
+    int expectedFrameIndex = lastWrittenFrameIndex + 1;
+    if (expectedFrameIndex != frameIndex) {
+        throw runtime_error("Only sequential write is supported (expected frameIndex = "
+            + to_string(expectedFrameIndex) + ", actual = " + to_string(frameIndex) + ")");
+    }
+
     if (!pVideoWriter) {
         LOG_INFO(logger) << "Initialize the output video file...";
 
@@ -40,4 +47,5 @@ void VideoFrameWriterMjpgImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
     }
 
     pVideoWriter->write(frame);
+    lastWrittenFrameIndex = frameIndex;
 }
