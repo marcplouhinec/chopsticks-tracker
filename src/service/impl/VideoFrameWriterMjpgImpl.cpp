@@ -2,6 +2,7 @@
 #include "VideoFrameWriterMjpgImpl.hpp"
 
 using namespace service;
+using std::make_unique;
 using std::runtime_error;
 using std::string;
 using std::to_string;
@@ -38,7 +39,7 @@ void VideoFrameWriterMjpgImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
             fs::create_directories(parentPath);
         }
 
-        pVideoWriter = unique_ptr<cv::VideoWriter>(new cv::VideoWriter(
+        pVideoWriter = make_unique<cv::VideoWriter>(cv::VideoWriter(
             outputVideoPath.string(),
             cv::VideoWriter::fourcc('M','J','P','G'),
             fps,

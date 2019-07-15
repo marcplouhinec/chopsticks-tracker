@@ -62,11 +62,11 @@ int main(int argc, char* argv[]) {
     std::string detectionImpl = configurationReader.getObjectDetectionImplementation();
     std::unique_ptr<service::ObjectDetector> pInnerObjectDetector{};
     if (detectionImpl.compare("darknet") == 0) {
-        pInnerObjectDetector = std::unique_ptr<service::ObjectDetector>(
-            new service::ObjectDetectorDarknetImpl(configurationReader, videoFrameReader));
+        pInnerObjectDetector.reset(new service::ObjectDetectorDarknetImpl(
+            configurationReader, videoFrameReader));
     } else if (detectionImpl.compare("opencvdnn") == 0) {
-        pInnerObjectDetector = std::unique_ptr<service::ObjectDetector>(
-            new service::ObjectDetectorOpenCvDnnImpl(configurationReader, videoFrameReader));
+        pInnerObjectDetector.reset(new service::ObjectDetectorOpenCvDnnImpl(
+            configurationReader, videoFrameReader));
     }
     service::ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     service::ObjectDetectorCacheImpl objectDetector(
@@ -75,16 +75,15 @@ int main(int argc, char* argv[]) {
     std::string renderingImpl = configurationReader.getRenderingImplementation();
     std::unique_ptr<service::VideoFrameWriter> pVideoFrameWriter{};
     if (renderingImpl.compare("mjpeg") == 0) {
-        pVideoFrameWriter = std::unique_ptr<service::VideoFrameWriter>(
-            new service::VideoFrameWriterMjpgImpl(
-                configurationReader,
-                videoPath,
-                videoFrameReader.getFps(),
-                videoFrameReader.getFrameWidth(),
-                videoFrameReader.getFrameHeight()));
+        pVideoFrameWriter.reset(new service::VideoFrameWriterMjpgImpl(
+            configurationReader,
+            videoPath,
+            videoFrameReader.getFps(),
+            videoFrameReader.getFrameWidth(),
+            videoFrameReader.getFrameHeight()));
     } else if (renderingImpl.compare("multijpeg") == 0) {
-        pVideoFrameWriter = std::unique_ptr<service::VideoFrameWriter>(
-            new service::VideoFrameWriterMultiJpegImpl(configurationReader, videoPath));
+        pVideoFrameWriter.reset(new service::VideoFrameWriterMultiJpegImpl(
+            configurationReader, videoPath));
     }
     service::VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 

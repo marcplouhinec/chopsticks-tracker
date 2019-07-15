@@ -6,6 +6,7 @@
 
 using namespace service;
 using std::max;
+using std::make_unique;
 using std::to_string;
 using std::out_of_range;
 using std::runtime_error;
@@ -81,7 +82,7 @@ int VideoFrameReaderImpl::getFrameHeight() {
 
 void VideoFrameReaderImpl::initVideoCaptureIfNecessary() {
     if (!pVideoCapture) {
-        pVideoCapture = std::unique_ptr<cv::VideoCapture>(new cv::VideoCapture(videoPath.string()));
+        pVideoCapture = make_unique<cv::VideoCapture>(cv::VideoCapture(videoPath.string()));
 
         if (!pVideoCapture->isOpened()) {
             throw runtime_error("Unable to open the video: " + videoPath.string());
