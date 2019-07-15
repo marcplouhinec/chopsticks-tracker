@@ -22,6 +22,8 @@ namespace service {
             virtual std::string getObjectDetectionImplementation() = 0;
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath() = 0;
 
+            virtual int getTrackingNbPastFrameDetectionResultsToKeep() = 0;
+
             virtual boost::filesystem::path getRenderingOutputPath() = 0;
             virtual std::string getRenderingImplementation() = 0;
     };

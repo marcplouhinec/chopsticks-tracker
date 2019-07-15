@@ -22,6 +22,8 @@ namespace service {
             std::string objectDetectionImplementation;
             boost::filesystem::path objectDetectionCacheFolderPath;
 
+            int trackingNbPastFrameDetectionResultsToKeep;
+
             boost::filesystem::path renderingOutputPath;
             std::string renderingImplementation;
 
@@ -40,6 +42,8 @@ namespace service {
             virtual float getObjectDetectionNmsThreshold();
             virtual std::string getObjectDetectionImplementation();
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath();
+
+            virtual int getTrackingNbPastFrameDetectionResultsToKeep();
 
             virtual boost::filesystem::path getRenderingOutputPath();
             virtual std::string getRenderingImplementation();

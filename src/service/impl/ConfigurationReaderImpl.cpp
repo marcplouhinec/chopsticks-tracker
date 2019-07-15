@@ -78,6 +78,13 @@ fs::path ConfigurationReaderImpl::getObjectDetectionCacheFolderPath() {
     return objectDetectionCacheFolderPath;
 }
 
+int ConfigurationReaderImpl::getTrackingNbPastFrameDetectionResultsToKeep() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingNbPastFrameDetectionResultsToKeep;
+}
+
 fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     if (!configurationLoaded) {
         loadConfiguration();
@@ -117,6 +124,9 @@ void ConfigurationReaderImpl::loadConfiguration() {
     fs::path relativeCacheFolderPath(propTree.get<string>("objectDetection.cacheFolderPath"));
     objectDetectionCacheFolderPath = fs::path(rootPath / relativeCacheFolderPath);
 
+    trackingNbPastFrameDetectionResultsToKeep =
+        propTree.get<int>("tracking.nbPastFrameDetectionResultsToKeep");
+
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
     renderingImplementation = propTree.get<string>("rendering.implementation");
@@ -130,7 +140,10 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tObject detection min confidence: " << objectDetectionMinConfidence;
     LOG_INFO(logger) << "\tObject detection NMS threshold: " << objectDetectionNmsThreshold;
     LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
-    LOG_INFO(logger) << "\tObject detection cache folder path: " << objectDetectionCacheFolderPath.string();
+    LOG_INFO(logger) << "\tObject detection cache folder path: "
+        << objectDetectionCacheFolderPath.string();
+    LOG_INFO(logger) << "\tTracking nb frame detection results to keep: "
+        << trackingNbPastFrameDetectionResultsToKeep;
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
     LOG_INFO(logger) << "\tRendering implementation: " << renderingImplementation;
 }

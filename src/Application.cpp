@@ -1,7 +1,8 @@
 #include <iostream>
 #include <memory>
-#include <boost/program_options.hpp>
+#include <boost/circular_buffer.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 #include "utils/logging.hpp"
 #include "service/impl/ConfigurationReaderImpl.hpp"
 #include "service/impl/VideoFrameReaderImpl.hpp"
@@ -10,6 +11,7 @@
 #include "service/impl/ObjectDetectorCacheImpl.hpp"
 #include "service/impl/VideoFrameWriterMjpgImpl.hpp"
 #include "service/impl/VideoFrameWriterMultiJpegImpl.hpp"
+#include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
 
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -86,6 +88,12 @@ int main(int argc, char* argv[]) {
     }
     service::VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
+    int nbPastFrameDetectionResultsToKeep =
+        configurationReader.getTrackingNbPastFrameDetectionResultsToKeep();
+    boost::circular_buffer<model::FrameDetectionResult> frameDetectionResults(
+        nbPastFrameDetectionResultsToKeep);
+    service::VideoFramePainterDetectedObjectsImpl videoFramePainter(frameDetectionResults);
+
     // Detect objects in the video
     LOG_INFO(logger) << "Detect objects in video...";
     int nbFrames = videoFrameReader.getNbFrames();
@@ -97,7 +105,11 @@ int main(int argc, char* argv[]) {
         LOG_INFO(logger) << "frame resolution: " << frame.size();
 
         auto detectedObjects = objectDetector.detectObjectsAt(frameIndex);
+        frameDetectionResults.push_back(model::FrameDetectionResult(frameIndex, detectedObjects));
         LOG_INFO(logger) << "nb detected objects: " << detectedObjects.size();
+
+        videoFramePainter.paintOnFrame(frameIndex, frame);
+        LOG_INFO(logger) << "Frame painted.";
 
         videoFrameWriter.writeFrameAt(frameIndex, frame);
         LOG_INFO(logger) << "Frame written.";
