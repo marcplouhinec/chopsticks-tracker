@@ -1,3 +1,4 @@
+#include <math.h>
 #include <fstream>
 #include <streambuf>
 #include <boost/property_tree/ptree.hpp>
@@ -8,6 +9,7 @@ using namespace model;
 using namespace service;
 using std::ifstream;
 using std::istreambuf_iterator;
+using std::min;
 using std::stringstream;
 using std::string;
 using std::vector;
@@ -45,6 +47,11 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
         LOG_INFO(logger) << "YOLO model initialized: outLayerNames = " << "outLayerNames"
             << ", netWidth = " << netWidth << ", netHeight = " << netHeight;
         
+        minTipConfidence = configurationReader.getObjectDetectionMinTipConfidence();
+        minChopstickConfidence = configurationReader.getObjectDetectionMinChopstickConfidence();
+        minArmConfidence = configurationReader.getObjectDetectionMinArmConfidence();
+        minConfidence = min(minTipConfidence, min(minChopstickConfidence, minArmConfidence));
+
         neuralNetworkInitialized = true;
     }
 
@@ -56,7 +63,6 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
     neuralNetwork.forward(layerOutputs, outLayerNames);
 
     // Extract objects
-    float minConfidence = configurationReader.getObjectDetectionMinConfidence();
     vector<DetectedObject> detectedObjects;
     for (cv::Mat layerOutput : layerOutputs) {
         for (int rowIndex = 0; rowIndex < layerOutput.rows; rowIndex++) {
@@ -76,19 +82,38 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
 
             // If the confidence is high enough, 
             if (confidence >= minConfidence) {
-                float centerX = layerOutput.at<float>(rowIndex, 0) * frameWidth;
-                float centerY = layerOutput.at<float>(rowIndex, 1) * frameHeight;
-                float width = layerOutput.at<float>(rowIndex, 2) * frameWidth;
-                float height = layerOutput.at<float>(rowIndex, 3) * frameHeight;
-                float x = centerX - (width / 2);
-                float y = centerY - (height / 2);
+                DetectedObjectType objectType = objectTypesByClassId[classId];
+            
+                float minConfidenceForType = minConfidence;
+                switch (objectType) {
+                    case DetectedObjectType::SMALL_TIP:
+                    case DetectedObjectType::BIG_TIP:
+                        minConfidenceForType = minTipConfidence;
+                        break;
+                    case DetectedObjectType::ARM:
+                        minConfidenceForType = minArmConfidence;
+                        break;
+                    case DetectedObjectType::CHOPSTICK:
+                    default:
+                        minConfidenceForType = minChopstickConfidence;
+                        break;
+                }
 
-                DetectedObject detectedObject(
-                    round(x), round(y),
-                    round(width), round(height),
-                    objectTypesByClassId[classId], 
-                    confidence);
-                detectedObjects.push_back(detectedObject);
+                if (confidence >= minConfidenceForType) {
+                    float centerX = layerOutput.at<float>(rowIndex, 0) * frameWidth;
+                    float centerY = layerOutput.at<float>(rowIndex, 1) * frameHeight;
+                    float width = layerOutput.at<float>(rowIndex, 2) * frameWidth;
+                    float height = layerOutput.at<float>(rowIndex, 3) * frameHeight;
+                    float x = centerX - (width / 2);
+                    float y = centerY - (height / 2);
+
+                    DetectedObject detectedObject(
+                        round(x), round(y),
+                        round(width), round(height),
+                        objectTypesByClassId[classId], 
+                        confidence);
+                    detectedObjects.push_back(detectedObject);
+                }
             }
         }
     }

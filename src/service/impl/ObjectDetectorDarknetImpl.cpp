@@ -5,6 +5,7 @@
 using namespace model;
 using namespace service;
 using std::map;
+using std::min;
 using std::round;
 using std::string;
 using std::vector;
@@ -24,6 +25,11 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
         
         lastLayer = pNeuralNetwork->layers[pNeuralNetwork->n - 1];
         objectTypesByClassId = configurationReader.getYoloModelClassEnums();
+
+        minTipConfidence = configurationReader.getObjectDetectionMinTipConfidence();
+        minChopstickConfidence = configurationReader.getObjectDetectionMinChopstickConfidence();
+        minArmConfidence = configurationReader.getObjectDetectionMinArmConfidence();
+        minConfidence = min(minTipConfidence, min(minChopstickConfidence, minArmConfidence));
     }
 
     // Convert and resize the image for YOLO on Darknet
@@ -33,7 +39,6 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
 
     // Detect objects
     network_predict_image(pNeuralNetwork.get(), resizedImage);
-    float minConfidence = configurationReader.getObjectDetectionMinConfidence();
     int nbDetections = 0;
     detection* detections = get_network_boxes(
         pNeuralNetwork.get(),
@@ -67,21 +72,39 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
             }
         }
 
-        // If the confidence is high enough, 
         if (confidence >= minConfidence) {
-            float centerX = detection.bbox.x * frameWidth;
-            float centerY = detection.bbox.y * frameHeight;
-            float width = detection.bbox.w * frameWidth;
-            float height = detection.bbox.h * frameHeight;
-            float x = centerX - (width / 2);
-            float y = centerY - (height / 2);
+            DetectedObjectType objectType = objectTypesByClassId[classId];
+            
+            float minConfidenceForType = minConfidence;
+            switch (objectType) {
+                case DetectedObjectType::SMALL_TIP:
+                case DetectedObjectType::BIG_TIP:
+                    minConfidenceForType = minTipConfidence;
+                    break;
+                case DetectedObjectType::ARM:
+                    minConfidenceForType = minArmConfidence;
+                    break;
+                case DetectedObjectType::CHOPSTICK:
+                default:
+                    minConfidenceForType = minChopstickConfidence;
+                    break;
+            }
 
-            DetectedObject detectedObject(
-                round(x), round(y),
-                round(width), round(height),
-                objectTypesByClassId[classId], 
-                confidence);
-            detectedObjects.push_back(detectedObject);
+            if (confidence >= minConfidenceForType) {
+                float centerX = detection.bbox.x * frameWidth;
+                float centerY = detection.bbox.y * frameHeight;
+                float width = detection.bbox.w * frameWidth;
+                float height = detection.bbox.h * frameHeight;
+                float x = centerX - (width / 2);
+                float y = centerY - (height / 2);
+
+                DetectedObject detectedObject(
+                    round(x), round(y),
+                    round(width), round(height),
+                    objectType, 
+                    confidence);
+                detectedObjects.push_back(detectedObject);
+            }
         }
     }
 

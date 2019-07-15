@@ -17,7 +17,9 @@ namespace service {
             boost::filesystem::path yoloModelCfgPath;
             boost::filesystem::path yoloModelWeightsPath;
 
-            float objectDetectionMinConfidence;
+            float objectDetectionMinTipConfidence;
+            float objectDetectionMinChopstickConfidence;
+            float objectDetectionMinArmConfidence;
             float objectDetectionNmsThreshold;
             std::string objectDetectionImplementation;
             boost::filesystem::path objectDetectionCacheFolderPath;
@@ -38,7 +40,9 @@ namespace service {
             virtual boost::filesystem::path getYoloModelCfgPath();
             virtual boost::filesystem::path getYoloModelWeightsPath();
 
-            virtual float getObjectDetectionMinConfidence();
+            virtual float getObjectDetectionMinTipConfidence();
+            virtual float getObjectDetectionMinChopstickConfidence();
+            virtual float getObjectDetectionMinArmConfidence();
             virtual float getObjectDetectionNmsThreshold();
             virtual std::string getObjectDetectionImplementation();
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath();

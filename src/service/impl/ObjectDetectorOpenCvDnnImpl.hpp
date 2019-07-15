@@ -31,6 +31,11 @@ namespace service {
             std::vector<std::string> outLayerNames;
             std::vector<model::DetectedObjectType> objectTypesByClassId;
 
+            float minTipConfidence = 0;
+            float minChopstickConfidence = 0;
+            float minArmConfidence = 0;
+            float minConfidence = 0;
+
         public:
             ObjectDetectorOpenCvDnnImpl(
                 ConfigurationReader& configurationReader,

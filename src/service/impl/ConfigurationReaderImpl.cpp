@@ -50,11 +50,25 @@ fs::path ConfigurationReaderImpl::getYoloModelWeightsPath() {
     return yoloModelWeightsPath;
 }
 
-float ConfigurationReaderImpl::getObjectDetectionMinConfidence() {
+float ConfigurationReaderImpl::getObjectDetectionMinTipConfidence() {
     if (!configurationLoaded) {
         loadConfiguration();
     }
-    return objectDetectionMinConfidence;
+    return objectDetectionMinTipConfidence;
+}
+
+float ConfigurationReaderImpl::getObjectDetectionMinChopstickConfidence() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return objectDetectionMinChopstickConfidence;
+}
+
+float ConfigurationReaderImpl::getObjectDetectionMinArmConfidence() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return objectDetectionMinArmConfidence;
 }
 
 float ConfigurationReaderImpl::getObjectDetectionNmsThreshold() {
@@ -118,7 +132,10 @@ void ConfigurationReaderImpl::loadConfiguration() {
     yoloModelCfgPath = fs::canonical(fs::path(rootPath / relativeYoloCfgPath));
     yoloModelWeightsPath = fs::canonical(fs::path(rootPath / relativeYoloWeightsPath));
 
-    objectDetectionMinConfidence = propTree.get<float>("objectDetection.minConfidence");
+    objectDetectionMinTipConfidence = propTree.get<float>("objectDetection.minTipConfidence");
+    objectDetectionMinChopstickConfidence =
+        propTree.get<float>("objectDetection.minChopstickConfidence");
+    objectDetectionMinArmConfidence = propTree.get<float>("objectDetection.minArmConfidence");
     objectDetectionNmsThreshold = propTree.get<float>("objectDetection.nmsThreshold");
     objectDetectionImplementation = propTree.get<string>("objectDetection.implementation");
     fs::path relativeCacheFolderPath(propTree.get<string>("objectDetection.cacheFolderPath"));
@@ -137,7 +154,10 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tYOLO model class names: " << yoloClassNamesAsString;
     LOG_INFO(logger) << "\tYOLO model cfg path: " << yoloModelCfgPath.string();
     LOG_INFO(logger) << "\tYOLO model weights path: " << yoloModelWeightsPath.string();
-    LOG_INFO(logger) << "\tObject detection min confidence: " << objectDetectionMinConfidence;
+    LOG_INFO(logger) << "\tObject detection min tip confidence: " << objectDetectionMinTipConfidence;
+    LOG_INFO(logger) << "\tObject detection min chopstick confidence: "
+        << objectDetectionMinChopstickConfidence;
+    LOG_INFO(logger) << "\tObject detection min arm confidence: " << objectDetectionMinArmConfidence;
     LOG_INFO(logger) << "\tObject detection NMS threshold: " << objectDetectionNmsThreshold;
     LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
     LOG_INFO(logger) << "\tObject detection cache folder path: "
