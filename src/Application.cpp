@@ -71,6 +71,12 @@ int main(int argc, char* argv[]) {
     circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(nbPastFrameDetectionResultsToKeep);
     
     VideoFrameReaderImpl videoFrameReader(videoPath);
+    int nbFrames = videoFrameReader.getNbFrames();
+    int frameWidth = videoFrameReader.getFrameWidth();
+    int frameHeight = videoFrameReader.getFrameHeight();
+    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
+    const cv::Scalar blackColor(0, 0, 0);
+    cv::Mat outputFrame(frameHeight + 2 * frameMargin, frameWidth + 2 * frameMargin, CV_8UC3, blackColor);
 
     string detectionImpl = configurationReader.getObjectDetectionImplementation();
     unique_ptr<ObjectDetector> pInnerObjectDetector{};
@@ -91,8 +97,8 @@ int main(int argc, char* argv[]) {
             configurationReader,
             videoPath,
             videoFrameReader.getFps(),
-            videoFrameReader.getFrameWidth(),
-            videoFrameReader.getFrameHeight()));
+            outputFrame.cols,
+            outputFrame.rows));
     } else if (renderingImpl.compare("multijpeg") == 0) {
         pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configurationReader, videoPath));
     }
@@ -102,14 +108,8 @@ int main(int argc, char* argv[]) {
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";
-    int nbFrames = videoFrameReader.getNbFrames();
-    int frameWidth = videoFrameReader.getFrameWidth();
-    int frameHeight = videoFrameReader.getFrameHeight();
-    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
     int bestMargin = 0;
     FrameOffset accumulatedFrameOffset(0, 0);
-    const cv::Scalar blackColor(0, 0, 0);
-    cv::Mat outputFrame(frameHeight + 2 * frameMargin, frameWidth + 2 * frameMargin, CV_8UC3, blackColor);
 
     for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
         LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
@@ -122,32 +122,28 @@ int main(int argc, char* argv[]) {
         frameDetectionResults.push_back(frameDetectionResult);
         LOG_INFO(logger) << "Nb detected objects: " << detectedObjects.size();
 
+        // Find how much we need to compensate for camera motion
         auto nbDetectionResults = frameDetectionResults.size();
         if (nbDetectionResults >= 2) {
             auto& currFrameObjects = frameDetectionResult.detectedObjects;
             auto& prevFrameObjects = frameDetectionResults[nbDetectionResults - 2].detectedObjects;
-            auto frameOffset =
+
+            FrameOffset frameOffset =
                 tipTracker.computeOffsetToCompensateForCameraMotion(prevFrameObjects, currFrameObjects);
             accumulatedFrameOffset += frameOffset;
 
-            vector<DetectedObject> compensatedFrameObjects;
-            for (auto& currFrameObject : currFrameObjects) {
-                compensatedFrameObjects.push_back(DetectedObject(
-                    currFrameObject.x - accumulatedFrameOffset.dx,
-                    currFrameObject.y - accumulatedFrameOffset.dy,
-                    currFrameObject.width,
-                    currFrameObject.height,
-                    currFrameObject.objectType,
-                    currFrameObject.confidence));
-            }
-            compensatedFramesDetectionResults.push_back(
-                FrameDetectionResult(frameIndex, compensatedFrameObjects));
-
             LOG_INFO(logger) << "Camera motion compensated: dx = " << frameOffset.dx
                 << ", dy = " << frameOffset.dy;
-        } else {
-            compensatedFramesDetectionResults.push_back(frameDetectionResult);
         }
+
+        // Compensate for camera motion
+        vector<DetectedObject> compensatedObjects;
+        for (auto& o : frameDetectionResult.detectedObjects) {
+            compensatedObjects.push_back(DetectedObject(
+                o.x - accumulatedFrameOffset.dx, o.y - accumulatedFrameOffset.dy,
+                o.width, o.height, o.objectType, o.confidence));
+        }
+        compensatedFramesDetectionResults.push_back(FrameDetectionResult(frameIndex, compensatedObjects));
 
         // Copy the video frame into a bigger one in order compensate for camera motion
         outputFrame.setTo(blackColor);
