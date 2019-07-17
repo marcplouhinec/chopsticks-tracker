@@ -16,7 +16,7 @@ namespace service {
 
             virtual ~TipTrackerImpl() {}
 
-            virtual model::FrameOffset adjustObjectsToCompensateForCameraMotion(
+            virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
                 std::vector<model::DetectedObject>& prevFrameObjects,
                 std::vector<model::DetectedObject>& currFrameObjects);
 

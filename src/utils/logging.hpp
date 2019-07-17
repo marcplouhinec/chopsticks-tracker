@@ -27,6 +27,9 @@ static constexpr const char * const past_last_slash(const char * const str)  {
 #define LOG_INFO(logger) \
     BOOST_LOG_SEV(logger, boost::log::trivial::severity_level::info) << "(" << __SHORT_FILE__ << ", " << __func__ << ", " << __LINE__ << ") "
 
+#define LOG_WARN(logger) \
+    BOOST_LOG_SEV(logger, boost::log::trivial::severity_level::warning) << "(" << __SHORT_FILE__ << ", " << __func__ << ", " << __LINE__ << ") "
+
 #define LOG_ERROR(logger) \
     BOOST_LOG_SEV(logger, boost::log::trivial::severity_level::error) << "(" << __SHORT_FILE__ << ", " << __func__ << ", " << __LINE__ << ") "
 

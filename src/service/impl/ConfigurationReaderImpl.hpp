@@ -30,6 +30,7 @@ namespace service {
 
             boost::filesystem::path renderingOutputPath;
             std::string renderingImplementation;
+            int renderingVideoFrameMarginsInPixels;
 
         public:
             ConfigurationReaderImpl(boost::filesystem::path configurationPath) :
@@ -55,6 +56,7 @@ namespace service {
 
             virtual boost::filesystem::path getRenderingOutputPath();
             virtual std::string getRenderingImplementation();
+            virtual int getRenderingVideoFrameMarginsInPixels();
         
         private:
             void loadConfiguration();

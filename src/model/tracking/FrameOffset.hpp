@@ -5,13 +5,31 @@ namespace model {
 
     class FrameOffset {
         public:
-            int dx = 0;
-            int dy = 0;
+            double dx = 0;
+            double dy = 0;
 
         public:
             FrameOffset() {}
 
-            explicit FrameOffset(int dx, int dy) : dx(dx), dy(dy) {}
+            explicit FrameOffset(double dx, double dy) : dx(dx), dy(dy) {}
+
+            FrameOffset& operator+=(const FrameOffset& other) {
+                *this = *this + other;
+                return *this;
+            }
+
+            FrameOffset operator+(const FrameOffset& other) const {
+                return FrameOffset(dx + other.dx, dy + other.dy);
+            }
+
+            FrameOffset& operator-=(const FrameOffset& other) {
+                *this = *this + other;
+                return *this;
+            }
+
+            FrameOffset operator-(const FrameOffset& other) const {
+                return FrameOffset(dx - other.dx, dy - other.dy);
+            }
     };
 }
 

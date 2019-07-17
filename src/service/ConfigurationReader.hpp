@@ -30,6 +30,7 @@ namespace service {
 
             virtual boost::filesystem::path getRenderingOutputPath() = 0;
             virtual std::string getRenderingImplementation() = 0;
+            virtual int getRenderingVideoFrameMarginsInPixels() = 0;
     };
 
 }

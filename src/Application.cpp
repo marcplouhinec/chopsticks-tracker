@@ -5,18 +5,21 @@
 #include <boost/program_options.hpp>
 #include "utils/logging.hpp"
 #include "service/impl/ConfigurationReaderImpl.hpp"
-#include "service/impl/VideoFrameReaderImpl.hpp"
+#include "service/impl/ObjectDetectorCacheImpl.hpp"
 #include "service/impl/ObjectDetectorDarknetImpl.hpp"
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
-#include "service/impl/ObjectDetectorCacheImpl.hpp"
+#include "service/impl/TipTrackerImpl.hpp"
+#include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
+#include "service/impl/VideoFrameReaderImpl.hpp"
 #include "service/impl/VideoFrameWriterMjpgImpl.hpp"
 #include "service/impl/VideoFrameWriterMultiJpegImpl.hpp"
-#include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
 
 using namespace model;
 using namespace service;
+using std::abs;
 using std::string;
 using std::unique_ptr;
+using std::vector;
 using boost::circular_buffer;
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -62,6 +65,11 @@ int main(int argc, char* argv[]) {
 
     // Prepare services
     ConfigurationReaderImpl configurationReader(configurationPath);
+
+    int nbPastFrameDetectionResultsToKeep = configurationReader.getTrackingNbPastFrameDetectionResultsToKeep();
+    circular_buffer<FrameDetectionResult> frameDetectionResults(nbPastFrameDetectionResultsToKeep);
+    circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(nbPastFrameDetectionResultsToKeep);
+    
     VideoFrameReaderImpl videoFrameReader(videoPath);
 
     string detectionImpl = configurationReader.getObjectDetectionImplementation();
@@ -74,6 +82,8 @@ int main(int argc, char* argv[]) {
     ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     ObjectDetectorCacheImpl objectDetector(configurationReader, innerObjectDetector, videoPath);
     
+    TipTrackerImpl tipTracker(configurationReader);
+
     string renderingImpl = configurationReader.getRenderingImplementation();
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
     if (renderingImpl.compare("mjpeg") == 0) {
@@ -88,32 +98,78 @@ int main(int argc, char* argv[]) {
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
-    int nbPastFrameDetectionResultsToKeep = configurationReader.getTrackingNbPastFrameDetectionResultsToKeep();
-    circular_buffer<FrameDetectionResult> frameDetectionResults(nbPastFrameDetectionResultsToKeep);
-    VideoFramePainterDetectedObjectsImpl videoFramePainter(frameDetectionResults);
+    VideoFramePainterDetectedObjectsImpl videoFramePainter(configurationReader, compensatedFramesDetectionResults);
 
-    // Detect objects in the video
-    LOG_INFO(logger) << "Detect objects in video...";
+    // Detect and track objects in the video
+    LOG_INFO(logger) << "Detect and track objects in the video...";
     int nbFrames = videoFrameReader.getNbFrames();
+    int frameWidth = videoFrameReader.getFrameWidth();
+    int frameHeight = videoFrameReader.getFrameHeight();
+    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
+    int bestMargin = 0;
+    FrameOffset accumulatedFrameOffset(0, 0);
+    const cv::Scalar blackColor(0, 0, 0);
+    cv::Mat outputFrame(frameHeight + 2 * frameMargin, frameWidth + 2 * frameMargin, CV_8UC3, blackColor);
 
     for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
         LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
 
         auto frame = videoFrameReader.readFrameAt(frameIndex);
-        LOG_INFO(logger) << "frame resolution: " << frame.size();
+        LOG_INFO(logger) << "Frame resolution: " << frame.size();
 
         auto detectedObjects = objectDetector.detectObjectsAt(frameIndex);
-        frameDetectionResults.push_back(FrameDetectionResult(frameIndex, detectedObjects));
-        LOG_INFO(logger) << "nb detected objects: " << detectedObjects.size();
+        FrameDetectionResult frameDetectionResult(frameIndex, detectedObjects);
+        frameDetectionResults.push_back(frameDetectionResult);
+        LOG_INFO(logger) << "Nb detected objects: " << detectedObjects.size();
 
-        videoFramePainter.paintOnFrame(frameIndex, frame);
+        auto nbDetectionResults = frameDetectionResults.size();
+        if (nbDetectionResults >= 2) {
+            auto& currFrameObjects = frameDetectionResult.detectedObjects;
+            auto& prevFrameObjects = frameDetectionResults[nbDetectionResults - 2].detectedObjects;
+            auto frameOffset =
+                tipTracker.computeOffsetToCompensateForCameraMotion(prevFrameObjects, currFrameObjects);
+            accumulatedFrameOffset += frameOffset;
+
+            vector<DetectedObject> compensatedFrameObjects;
+            for (auto& currFrameObject : currFrameObjects) {
+                compensatedFrameObjects.push_back(DetectedObject(
+                    currFrameObject.x - accumulatedFrameOffset.dx,
+                    currFrameObject.y - accumulatedFrameOffset.dy,
+                    currFrameObject.width,
+                    currFrameObject.height,
+                    currFrameObject.objectType,
+                    currFrameObject.confidence));
+            }
+            compensatedFramesDetectionResults.push_back(
+                FrameDetectionResult(frameIndex, compensatedFrameObjects));
+
+            LOG_INFO(logger) << "Camera motion compensated: dx = " << frameOffset.dx
+                << ", dy = " << frameOffset.dy;
+        } else {
+            compensatedFramesDetectionResults.push_back(frameDetectionResult);
+        }
+
+        // Copy the video frame into a bigger one in order compensate for camera motion
+        outputFrame.setTo(blackColor);
+        int marginLeft = round(frameMargin - accumulatedFrameOffset.dx);
+        int marginTop = round(frameMargin - accumulatedFrameOffset.dy);
+        frame.copyTo(outputFrame(cv::Rect(marginLeft, marginTop, frame.cols, frame.rows)));
+
+        if (abs(accumulatedFrameOffset.dx) > bestMargin) {
+            bestMargin = abs(accumulatedFrameOffset.dx);
+        }
+        if (abs(accumulatedFrameOffset.dy) > bestMargin) {
+            bestMargin = abs(accumulatedFrameOffset.dy);
+        }
+
+        videoFramePainter.paintOnFrame(frameIndex, outputFrame);
         LOG_INFO(logger) << "Frame painted.";
 
-        videoFrameWriter.writeFrameAt(frameIndex, frame);
+        videoFrameWriter.writeFrameAt(frameIndex, outputFrame);
         LOG_INFO(logger) << "Frame written.";
     }
-    // TODO
 
+    LOG_INFO(logger) << "Best videoFrameMarginsInPixels: " << bestMargin;
     LOG_INFO(logger) << "Application executed with success!";
 
     return 0;

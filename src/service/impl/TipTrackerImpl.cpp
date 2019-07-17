@@ -11,7 +11,7 @@ using std::set;
 using std::unordered_set;
 using std::vector;
 
-FrameOffset TipTrackerImpl::adjustObjectsToCompensateForCameraMotion(
+FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
     vector<DetectedObject>& prevFrameObjects, vector<DetectedObject>& currFrameObjects) {
 
     // Focus exclusively on the detected tips
@@ -38,15 +38,8 @@ FrameOffset TipTrackerImpl::adjustObjectsToCompensateForCameraMotion(
     }
     dx = dx / nbBestMatchResults;
     dy = dy / nbBestMatchResults;
-    FrameOffset frameOffset(round(dx), round(dy));
 
-    // Adjust all the detected objects of the current frame
-    for (auto& currFrameObject : currFrameObjects) {
-        currFrameObject.x -= frameOffset.dx;
-        currFrameObject.y -= frameOffset.dy;
-    }
-
-    return frameOffset;
+    return FrameOffset(dx, dy);
 }
 
 vector<DetectedObject> TipTrackerImpl::extractDetectedTips(vector<DetectedObject>& detectedObjects) {

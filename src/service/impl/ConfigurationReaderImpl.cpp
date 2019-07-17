@@ -127,6 +127,13 @@ std::string ConfigurationReaderImpl::getRenderingImplementation() {
     return renderingImplementation;
 }
 
+int ConfigurationReaderImpl::getRenderingVideoFrameMarginsInPixels() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return renderingVideoFrameMarginsInPixels;
+}
+
 void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
 
@@ -165,6 +172,7 @@ void ConfigurationReaderImpl::loadConfiguration() {
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
     renderingImplementation = propTree.get<string>("rendering.implementation");
+    renderingVideoFrameMarginsInPixels = propTree.get<int>("rendering.videoFrameMarginsInPixels");
 
     configurationLoaded = true;
 
@@ -188,4 +196,5 @@ void ConfigurationReaderImpl::loadConfiguration() {
         << trackingNbTipsToUseToDetectCameraMotion;
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
     LOG_INFO(logger) << "\tRendering implementation: " << renderingImplementation;
+    LOG_INFO(logger) << "\tRendering video frame margins: " << renderingVideoFrameMarginsInPixels;
 }

@@ -9,6 +9,7 @@ using std::runtime_error;
 using std::to_string;
 
 void VideoFramePainterDetectedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat& frame) {
+    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
     FrameDetectionResult& frameDetectionResult = findFrameDetectionResultByFrameIndex(frameIndex);
 
     for (DetectedObject& detectedObject : frameDetectionResult.detectedObjects) {
@@ -31,7 +32,11 @@ void VideoFramePainterDetectedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat&
 
         cv::rectangle(
             frame,
-            cv::Rect(detectedObject.x, detectedObject.y, detectedObject.width, detectedObject.height),
+            cv::Rect(
+                detectedObject.x + frameMargin,
+                detectedObject.y + frameMargin,
+                detectedObject.width,
+                detectedObject.height),
             color);
     }
 }
