@@ -25,6 +25,8 @@ namespace service {
             boost::filesystem::path objectDetectionCacheFolderPath;
 
             int trackingNbPastFrameDetectionResultsToKeep;
+            int trackingMaxTipMatchingDistanceInPixels;
+            int trackingNbTipsToUseToDetectCameraMotion;
 
             boost::filesystem::path renderingOutputPath;
             std::string renderingImplementation;
@@ -48,6 +50,8 @@ namespace service {
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath();
 
             virtual int getTrackingNbPastFrameDetectionResultsToKeep();
+            virtual int getTrackingMaxTipMatchingDistanceInPixels();
+            virtual int getTrackingNbTipsToUseToDetectCameraMotion();
 
             virtual boost::filesystem::path getRenderingOutputPath();
             virtual std::string getRenderingImplementation();

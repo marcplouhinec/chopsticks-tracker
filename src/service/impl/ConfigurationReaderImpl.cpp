@@ -99,6 +99,20 @@ int ConfigurationReaderImpl::getTrackingNbPastFrameDetectionResultsToKeep() {
     return trackingNbPastFrameDetectionResultsToKeep;
 }
 
+int ConfigurationReaderImpl::getTrackingMaxTipMatchingDistanceInPixels() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingMaxTipMatchingDistanceInPixels;
+}
+
+int ConfigurationReaderImpl::getTrackingNbTipsToUseToDetectCameraMotion() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingNbTipsToUseToDetectCameraMotion;
+}
+
 fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     if (!configurationLoaded) {
         loadConfiguration();
@@ -143,6 +157,10 @@ void ConfigurationReaderImpl::loadConfiguration() {
 
     trackingNbPastFrameDetectionResultsToKeep =
         propTree.get<int>("tracking.nbPastFrameDetectionResultsToKeep");
+    trackingMaxTipMatchingDistanceInPixels =
+        propTree.get<int>("tracking.maxTipMatchingDistanceInPixels");
+    trackingNbTipsToUseToDetectCameraMotion =
+        propTree.get<int>("tracking.nbTipsToUseToDetectCameraMotion");
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
@@ -164,6 +182,10 @@ void ConfigurationReaderImpl::loadConfiguration() {
         << objectDetectionCacheFolderPath.string();
     LOG_INFO(logger) << "\tTracking nb frame detection results to keep: "
         << trackingNbPastFrameDetectionResultsToKeep;
+    LOG_INFO(logger) << "\tTracking maximum tip matching distance (in pixels): "
+        << trackingMaxTipMatchingDistanceInPixels;
+    LOG_INFO(logger) << "\tTracking nb tips to use to detect camera motion: "
+        << trackingNbTipsToUseToDetectCameraMotion;
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
     LOG_INFO(logger) << "\tRendering implementation: " << renderingImplementation;
 }
