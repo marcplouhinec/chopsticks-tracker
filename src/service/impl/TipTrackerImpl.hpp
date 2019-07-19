@@ -1,6 +1,8 @@
 #ifndef SERVICE_TIP_TRACKER_IMPL
 #define SERVICE_TIP_TRACKER_IMPL
 
+#include <functional>
+#include <unordered_set>
 #include "../TipTracker.hpp"
 #include "../ConfigurationReader.hpp"
 
@@ -17,13 +19,17 @@ namespace service {
             virtual ~TipTrackerImpl() {}
 
             virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
-                std::vector<model::DetectedObject>& prevFrameObjects,
-                std::vector<model::DetectedObject>& currFrameObjects);
+                model::FrameDetectionResult& prevDetectionResult,
+                model::FrameDetectionResult& currDetectionResult);
+
+            virtual void updateTipsWithNewDetectionResult(
+                std::vector<model::Tip>& tips,
+                model::FrameDetectionResult& detectionResult);
 
         private:
             struct ObjectMatchResult {
-                model::DetectedObject& prevFrameObject;
-                model::DetectedObject& currFrameObject;
+                model::Rectangle& prevFrameObject;
+                model::Rectangle& currFrameObject;
                 double matchingDistance;
 
                 bool operator< (const ObjectMatchResult& other) const {
@@ -32,8 +38,9 @@ namespace service {
             };
 
         private:
-            std::vector<model::DetectedObject> extractDetectedTips(
-                std::vector<model::DetectedObject>& detectedObjects);
+            std::vector<std::reference_wrapper<model::Rectangle>> extractObjectsOfTypes(
+                std::vector<model::DetectedObject>& detectedObjects,
+                const std::vector<model::DetectedObjectType>& objectTypes);
 
             /**
              * For each tip from the current frame, try to match it with another tip from the previous
@@ -41,10 +48,15 @@ namespace service {
              * (acending order).
              */
             std::vector<ObjectMatchResult> matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(
-                std::vector<model::DetectedObject>& prevFrameDetectedTips,
-                std::vector<model::DetectedObject>& currFrameDetectedTips);
+                std::vector<std::reference_wrapper<model::Rectangle>>& prevFrameDetectedTips,
+                std::vector<std::reference_wrapper<model::Rectangle>>& currFrameDetectedTips);
 
-            double computeMatchingDistance(model::DetectedObject& object1, model::DetectedObject& object2);
+            std::unordered_set<std::string> findTipIdsHiddenByAnArm(
+                std::vector<model::Tip>& tips, model::FrameDetectionResult& detectionResult);
+
+            model::Tip makeTip(model::DetectedObject& detectedObject, int frameIndex, int tipIndex);
+
+            double computeMatchingDistance(const model::Rectangle& object1, const model::Rectangle& object2);
 
             double distance(int x1, int y1, int x2, int y2);
     };

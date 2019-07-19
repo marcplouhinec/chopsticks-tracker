@@ -27,6 +27,11 @@ namespace service {
             int trackingNbPastFrameDetectionResultsToKeep;
             int trackingMaxTipMatchingDistanceInPixels;
             int trackingNbTipsToUseToDetectCameraMotion;
+            int trackingNbDetectionsToComputeAverageTipPositionAndSize;
+            int trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
+            int trackingMaxFramesAfterWhichATipIsConsideredLost;
+            int trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost;
+            int trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 
             boost::filesystem::path renderingOutputPath;
             std::string renderingImplementation;
@@ -53,6 +58,11 @@ namespace service {
             virtual int getTrackingNbPastFrameDetectionResultsToKeep();
             virtual int getTrackingMaxTipMatchingDistanceInPixels();
             virtual int getTrackingNbTipsToUseToDetectCameraMotion();
+            virtual int getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
+            virtual int getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm();
+            virtual int getTrackingMaxFramesAfterWhichATipIsConsideredLost();
+            virtual int getTrackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost();
+            virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
 
             virtual boost::filesystem::path getRenderingOutputPath();
             virtual std::string getRenderingImplementation();

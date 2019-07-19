@@ -113,6 +113,41 @@ int ConfigurationReaderImpl::getTrackingNbTipsToUseToDetectCameraMotion() {
     return trackingNbTipsToUseToDetectCameraMotion;
 }
 
+int ConfigurationReaderImpl::getTrackingNbDetectionsToComputeAverageTipPositionAndSize() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingNbDetectionsToComputeAverageTipPositionAndSize;
+}
+
+int ConfigurationReaderImpl::getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
+}
+
+int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichATipIsConsideredLost() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingMaxFramesAfterWhichATipIsConsideredLost;
+}
+
+int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost;
+}
+
+int ConfigurationReaderImpl::getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne() {
+    if (!configurationLoaded) {
+        loadConfiguration();
+    }
+    return trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
+}
+
 fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     if (!configurationLoaded) {
         loadConfiguration();
@@ -168,6 +203,16 @@ void ConfigurationReaderImpl::loadConfiguration() {
         propTree.get<int>("tracking.maxTipMatchingDistanceInPixels");
     trackingNbTipsToUseToDetectCameraMotion =
         propTree.get<int>("tracking.nbTipsToUseToDetectCameraMotion");
+    trackingNbDetectionsToComputeAverageTipPositionAndSize =
+        propTree.get<int>("tracking.nbDetectionsToComputeAverageTipPositionAndSize");
+    trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm =
+        propTree.get<int>("tracking.minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm");
+    trackingMaxFramesAfterWhichATipIsConsideredLost =
+        propTree.get<int>("tracking.maxFramesAfterWhichATipIsConsideredLost");
+    trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost =
+        propTree.get<int>("tracking.maxFramesAfterWhichATipHiddenByArmIsConsideredLost");
+    trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne =
+        propTree.get<int>("tracking.minDistanceToConsiderNewTipAsTheSameAsAnExistingOne");
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
@@ -194,6 +239,17 @@ void ConfigurationReaderImpl::loadConfiguration() {
         << trackingMaxTipMatchingDistanceInPixels;
     LOG_INFO(logger) << "\tTracking nb tips to use to detect camera motion: "
         << trackingNbTipsToUseToDetectCameraMotion;
+    LOG_INFO(logger) << "\tTracking nb detections to compute average tip position and size: "
+        << trackingNbDetectionsToComputeAverageTipPositionAndSize;
+    LOG_INFO(logger) << "\tTracking minimum matching distance with any object to consider tip not hidden by arm: "
+        << trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
+    LOG_INFO(logger) << "\tTracking maximum frames after which a tip is considered as lost: "
+        << trackingMaxFramesAfterWhichATipIsConsideredLost;
+    LOG_INFO(logger) << "\tTracking maximum frames after which a tip (hidden by arm) is considered as lost: "
+        << trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost;
+    LOG_INFO(logger) << "\tTracking minimum distance to consider new tip as the same as existing one: "
+        << trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
+
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
     LOG_INFO(logger) << "\tRendering implementation: " << renderingImplementation;
     LOG_INFO(logger) << "\tRendering video frame margins: " << renderingVideoFrameMarginsInPixels;

@@ -66,10 +66,12 @@ int main(int argc, char* argv[]) {
     // Prepare services
     ConfigurationReaderImpl configurationReader(configurationPath);
 
+    // TODO nbPastFrameDetectionResultsToKeep might not be necessary, may be set to 2
     int nbPastFrameDetectionResultsToKeep = configurationReader.getTrackingNbPastFrameDetectionResultsToKeep();
     circular_buffer<FrameDetectionResult> frameDetectionResults(nbPastFrameDetectionResultsToKeep);
     circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(nbPastFrameDetectionResultsToKeep);
-    
+    vector<Tip> tips;
+
     VideoFrameReaderImpl videoFrameReader(videoPath);
     int nbFrames = videoFrameReader.getNbFrames();
     int frameWidth = videoFrameReader.getFrameWidth();
@@ -125,11 +127,10 @@ int main(int argc, char* argv[]) {
         // Find how much we need to compensate for camera motion
         auto nbDetectionResults = frameDetectionResults.size();
         if (nbDetectionResults >= 2) {
-            auto& currFrameObjects = frameDetectionResult.detectedObjects;
-            auto& prevFrameObjects = frameDetectionResults[nbDetectionResults - 2].detectedObjects;
+            auto& prevDetectionResult = frameDetectionResults[nbDetectionResults - 2];
 
-            FrameOffset frameOffset =
-                tipTracker.computeOffsetToCompensateForCameraMotion(prevFrameObjects, currFrameObjects);
+            FrameOffset frameOffset = tipTracker.computeOffsetToCompensateForCameraMotion(
+                prevDetectionResult, frameDetectionResult);
             accumulatedFrameOffset += frameOffset;
 
             LOG_INFO(logger) << "Camera motion compensated: dx = " << frameOffset.dx
@@ -143,7 +144,12 @@ int main(int argc, char* argv[]) {
                 o.x - accumulatedFrameOffset.dx, o.y - accumulatedFrameOffset.dy,
                 o.width, o.height, o.objectType, o.confidence));
         }
-        compensatedFramesDetectionResults.push_back(FrameDetectionResult(frameIndex, compensatedObjects));
+        FrameDetectionResult compensatedFramesDetectionResult(frameIndex, compensatedObjects);
+        compensatedFramesDetectionResults.push_back(compensatedFramesDetectionResult);
+
+        // Update the tracked tips
+        tipTracker.updateTipsWithNewDetectionResult(tips, compensatedFramesDetectionResult);
+        LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
 
         // Copy the video frame into a bigger one in order compensate for camera motion
         outputFrame.setTo(blackColor);

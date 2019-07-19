@@ -50,6 +50,11 @@ namespace model {
                 enumValues.push_back(DetectedObjectType::SMALL_TIP);
                 return enumValues;
             }
+
+            static bool isTip(DetectedObjectType objectType) {
+                return objectType == DetectedObjectType::BIG_TIP
+                    || objectType == DetectedObjectType::SMALL_TIP;
+            }
     };
 }
 
