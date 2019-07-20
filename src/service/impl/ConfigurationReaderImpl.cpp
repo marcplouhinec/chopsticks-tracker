@@ -92,13 +92,6 @@ fs::path ConfigurationReaderImpl::getObjectDetectionCacheFolderPath() {
     return objectDetectionCacheFolderPath;
 }
 
-int ConfigurationReaderImpl::getTrackingNbPastFrameDetectionResultsToKeep() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
-    return trackingNbPastFrameDetectionResultsToKeep;
-}
-
 int ConfigurationReaderImpl::getTrackingMaxTipMatchingDistanceInPixels() {
     if (!configurationLoaded) {
         loadConfiguration();
@@ -132,13 +125,6 @@ int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichATipIsConsideredLost(
         loadConfiguration();
     }
     return trackingMaxFramesAfterWhichATipIsConsideredLost;
-}
-
-int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
-    return trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost;
 }
 
 int ConfigurationReaderImpl::getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne() {
@@ -197,8 +183,6 @@ void ConfigurationReaderImpl::loadConfiguration() {
     fs::path relativeCacheFolderPath(propTree.get<string>("objectDetection.cacheFolderPath"));
     objectDetectionCacheFolderPath = fs::path(rootPath / relativeCacheFolderPath);
 
-    trackingNbPastFrameDetectionResultsToKeep =
-        propTree.get<int>("tracking.nbPastFrameDetectionResultsToKeep");
     trackingMaxTipMatchingDistanceInPixels =
         propTree.get<int>("tracking.maxTipMatchingDistanceInPixels");
     trackingNbTipsToUseToDetectCameraMotion =
@@ -209,8 +193,6 @@ void ConfigurationReaderImpl::loadConfiguration() {
         propTree.get<int>("tracking.minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm");
     trackingMaxFramesAfterWhichATipIsConsideredLost =
         propTree.get<int>("tracking.maxFramesAfterWhichATipIsConsideredLost");
-    trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost =
-        propTree.get<int>("tracking.maxFramesAfterWhichATipHiddenByArmIsConsideredLost");
     trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne =
         propTree.get<int>("tracking.minDistanceToConsiderNewTipAsTheSameAsAnExistingOne");
 
@@ -233,8 +215,6 @@ void ConfigurationReaderImpl::loadConfiguration() {
     LOG_INFO(logger) << "\tObject detection implementation: " << objectDetectionImplementation;
     LOG_INFO(logger) << "\tObject detection cache folder path: "
         << objectDetectionCacheFolderPath.string();
-    LOG_INFO(logger) << "\tTracking nb frame detection results to keep: "
-        << trackingNbPastFrameDetectionResultsToKeep;
     LOG_INFO(logger) << "\tTracking maximum tip matching distance (in pixels): "
         << trackingMaxTipMatchingDistanceInPixels;
     LOG_INFO(logger) << "\tTracking nb tips to use to detect camera motion: "
@@ -245,8 +225,6 @@ void ConfigurationReaderImpl::loadConfiguration() {
         << trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
     LOG_INFO(logger) << "\tTracking maximum frames after which a tip is considered as lost: "
         << trackingMaxFramesAfterWhichATipIsConsideredLost;
-    LOG_INFO(logger) << "\tTracking maximum frames after which a tip (hidden by arm) is considered as lost: "
-        << trackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost;
     LOG_INFO(logger) << "\tTracking minimum distance to consider new tip as the same as existing one: "
         << trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 

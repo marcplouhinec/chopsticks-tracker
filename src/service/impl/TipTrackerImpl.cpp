@@ -63,8 +63,6 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
         configurationReader.getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
     int maxFramesAfterWhichATipIsConsideredLost =
         configurationReader.getTrackingMaxFramesAfterWhichATipIsConsideredLost();
-    int maxFramesAfterWhichATipHiddenByArmIsConsideredLost =
-        configurationReader.getTrackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost();
     int minDistanceToConsiderNewTipAsTheSameAsAnExistingOne =
         configurationReader.getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
 
@@ -316,17 +314,13 @@ Tip TipTrackerImpl::makeTip(DetectedObject& detectedObject, int frameIndex, int 
         configurationReader.getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
     int maxFramesAfterWhichATipIsConsideredLost =
         configurationReader.getTrackingMaxFramesAfterWhichATipIsConsideredLost();
-    int maxFramesAfterWhichATipHiddenByArmIsConsideredLost =
-        configurationReader.getTrackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost();
-    int trackingStatusesSize =
-        max(maxFramesAfterWhichATipIsConsideredLost, maxFramesAfterWhichATipHiddenByArmIsConsideredLost);
 
     string tipId = "T" + to_string(frameIndex) + "_" + to_string(tipIndex);
 
     circular_buffer<Rectangle> recentShapes(nbDetectionsToComputeAverageTipPositionAndSize);
     recentShapes.push_back(detectedObject);
 
-    circular_buffer<TrackingStatus> recentTrackingStatuses(trackingStatusesSize);
+    circular_buffer<TrackingStatus> recentTrackingStatuses(maxFramesAfterWhichATipIsConsideredLost);
     recentTrackingStatuses.push_back(TrackingStatus::DETECTED_ONCE);
 
     return Tip(

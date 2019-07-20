@@ -24,13 +24,11 @@ namespace service {
             virtual std::string getObjectDetectionImplementation() = 0;
             virtual boost::filesystem::path getObjectDetectionCacheFolderPath() = 0;
 
-            virtual int getTrackingNbPastFrameDetectionResultsToKeep() = 0;
             virtual int getTrackingMaxTipMatchingDistanceInPixels() = 0;
             virtual int getTrackingNbTipsToUseToDetectCameraMotion() = 0;
             virtual int getTrackingNbDetectionsToComputeAverageTipPositionAndSize() = 0;
             virtual int getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm() = 0;
             virtual int getTrackingMaxFramesAfterWhichATipIsConsideredLost() = 0;
-            virtual int getTrackingMaxFramesAfterWhichATipHiddenByArmIsConsideredLost() = 0;
             virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne() = 0;
 
             virtual boost::filesystem::path getRenderingOutputPath() = 0;

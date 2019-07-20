@@ -66,10 +66,8 @@ int main(int argc, char* argv[]) {
     // Prepare services
     ConfigurationReaderImpl configurationReader(configurationPath);
 
-    // TODO nbPastFrameDetectionResultsToKeep might not be necessary, may be set to 2
-    int nbPastFrameDetectionResultsToKeep = configurationReader.getTrackingNbPastFrameDetectionResultsToKeep();
-    circular_buffer<FrameDetectionResult> frameDetectionResults(nbPastFrameDetectionResultsToKeep);
-    circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(nbPastFrameDetectionResultsToKeep);
+    circular_buffer<FrameDetectionResult> frameDetectionResults(2);
+    circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(2);
     vector<Tip> tips;
 
     VideoFrameReaderImpl videoFrameReader(videoPath);
