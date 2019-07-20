@@ -17,9 +17,7 @@ namespace pt = boost::property_tree;
 lg::sources::severity_logger<lg::trivial::severity_level> logger;
 
 vector<string> ConfigurationReaderImpl::getYoloModelClassNames() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return yoloModelClassNames;
 }
 
@@ -37,125 +35,95 @@ vector<DetectedObjectType> ConfigurationReaderImpl::getYoloModelClassEnums() {
 }
 
 fs::path ConfigurationReaderImpl::getYoloModelCfgPath() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return yoloModelCfgPath;
 }
 
 fs::path ConfigurationReaderImpl::getYoloModelWeightsPath() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return yoloModelWeightsPath;
 }
 
 float ConfigurationReaderImpl::getObjectDetectionMinTipConfidence() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return objectDetectionMinTipConfidence;
 }
 
 float ConfigurationReaderImpl::getObjectDetectionMinChopstickConfidence() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return objectDetectionMinChopstickConfidence;
 }
 
 float ConfigurationReaderImpl::getObjectDetectionMinArmConfidence() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return objectDetectionMinArmConfidence;
 }
 
 float ConfigurationReaderImpl::getObjectDetectionNmsThreshold() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return objectDetectionNmsThreshold;
 }
 
 std::string ConfigurationReaderImpl::getObjectDetectionImplementation() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return objectDetectionImplementation;
 }
 
 fs::path ConfigurationReaderImpl::getObjectDetectionCacheFolderPath() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return objectDetectionCacheFolderPath;
 }
 
 int ConfigurationReaderImpl::getTrackingMaxTipMatchingDistanceInPixels() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return trackingMaxTipMatchingDistanceInPixels;
 }
 
 int ConfigurationReaderImpl::getTrackingNbTipsToUseToDetectCameraMotion() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return trackingNbTipsToUseToDetectCameraMotion;
 }
 
 int ConfigurationReaderImpl::getTrackingNbDetectionsToComputeAverageTipPositionAndSize() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return trackingNbDetectionsToComputeAverageTipPositionAndSize;
 }
 
 int ConfigurationReaderImpl::getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
 }
 
 int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichATipIsConsideredLost() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return trackingMaxFramesAfterWhichATipIsConsideredLost;
 }
 
 int ConfigurationReaderImpl::getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 }
 
 fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return renderingOutputPath;
 }
 
 std::string ConfigurationReaderImpl::getRenderingImplementation() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return renderingImplementation;
 }
 
 int ConfigurationReaderImpl::getRenderingVideoFrameMarginsInPixels() {
-    if (!configurationLoaded) {
-        loadConfiguration();
-    }
+    loadConfigurationIfNecessary();
     return renderingVideoFrameMarginsInPixels;
 }
 
-void ConfigurationReaderImpl::loadConfiguration() {
+void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
+    if (configurationLoaded) {
+        return;
+    }
+
     LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
 
     pt::ptree propTree;

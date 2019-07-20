@@ -65,7 +65,7 @@ namespace service {
             virtual int getRenderingVideoFrameMarginsInPixels();
         
         private:
-            void loadConfiguration();
+            void loadConfigurationIfNecessary();
     };
 
 }
