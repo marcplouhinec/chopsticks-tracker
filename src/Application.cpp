@@ -10,6 +10,7 @@
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
 #include "service/impl/TipTrackerImpl.hpp"
 #include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
+#include "service/impl/VideoFramePainterTrackedObjectsImpl.hpp"
 #include "service/impl/VideoFrameReaderImpl.hpp"
 #include "service/impl/VideoFrameWriterMjpgImpl.hpp"
 #include "service/impl/VideoFrameWriterMultiJpegImpl.hpp"
@@ -90,21 +91,29 @@ int main(int argc, char* argv[]) {
     
     TipTrackerImpl tipTracker(configurationReader);
 
-    string renderingImpl = configurationReader.getRenderingImplementation();
+    string renderingWriterImplementation = configurationReader.getRenderingWriterImplementation();
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
-    if (renderingImpl.compare("mjpeg") == 0) {
+    if (renderingWriterImplementation.compare("mjpeg") == 0) {
         pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(
             configurationReader,
             videoPath,
             videoFrameReader.getFps(),
             outputFrame.cols,
             outputFrame.rows));
-    } else if (renderingImpl.compare("multijpeg") == 0) {
+    } else if (renderingWriterImplementation.compare("multijpeg") == 0) {
         pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configurationReader, videoPath));
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
-    VideoFramePainterDetectedObjectsImpl videoFramePainter(configurationReader, compensatedFramesDetectionResults);
+    string renderingPainterImplementation = configurationReader.getRenderingPainterImplementation();
+    unique_ptr<VideoFramePainter> pVideoFramePainter{};
+    if (renderingPainterImplementation.compare("detectedobjects") == 0) {
+        pVideoFramePainter.reset(new VideoFramePainterDetectedObjectsImpl(
+            configurationReader, compensatedFramesDetectionResults));
+    } else if (renderingPainterImplementation.compare("trackedobjects") == 0) {
+        pVideoFramePainter.reset(new VideoFramePainterTrackedObjectsImpl(configurationReader, tips));
+    }
+    VideoFramePainter& videoFramePainter = *pVideoFramePainter;
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";

@@ -32,7 +32,8 @@ namespace service {
             virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne() = 0;
 
             virtual boost::filesystem::path getRenderingOutputPath() = 0;
-            virtual std::string getRenderingImplementation() = 0;
+            virtual std::string getRenderingPainterImplementation() = 0;
+            virtual std::string getRenderingWriterImplementation() = 0;
             virtual int getRenderingVideoFrameMarginsInPixels() = 0;
     };
 

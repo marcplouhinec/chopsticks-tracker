@@ -32,7 +32,8 @@ namespace service {
             int trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 
             boost::filesystem::path renderingOutputPath;
-            std::string renderingImplementation;
+            std::string renderingPainterImplementation;
+            std::string renderingWriterImplementation;
             int renderingVideoFrameMarginsInPixels;
 
         public:
@@ -61,7 +62,8 @@ namespace service {
             virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
 
             virtual boost::filesystem::path getRenderingOutputPath();
-            virtual std::string getRenderingImplementation();
+            virtual std::string getRenderingPainterImplementation();
+            virtual std::string getRenderingWriterImplementation();
             virtual int getRenderingVideoFrameMarginsInPixels();
         
         private:

@@ -109,9 +109,14 @@ fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     return renderingOutputPath;
 }
 
-std::string ConfigurationReaderImpl::getRenderingImplementation() {
+std::string ConfigurationReaderImpl::getRenderingPainterImplementation() {
     loadConfigurationIfNecessary();
-    return renderingImplementation;
+    return renderingPainterImplementation;
+}
+
+std::string ConfigurationReaderImpl::getRenderingWriterImplementation() {
+    loadConfigurationIfNecessary();
+    return renderingWriterImplementation;
 }
 
 int ConfigurationReaderImpl::getRenderingVideoFrameMarginsInPixels() {
@@ -166,7 +171,8 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
-    renderingImplementation = propTree.get<string>("rendering.implementation");
+    renderingPainterImplementation = propTree.get<string>("rendering.painterImplementation");
+    renderingWriterImplementation = propTree.get<string>("rendering.writerImplementation");
     renderingVideoFrameMarginsInPixels = propTree.get<int>("rendering.videoFrameMarginsInPixels");
 
     configurationLoaded = true;
@@ -197,6 +203,7 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
         << trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
-    LOG_INFO(logger) << "\tRendering implementation: " << renderingImplementation;
+    LOG_INFO(logger) << "\tRendering painter implementation: " << renderingPainterImplementation;
+    LOG_INFO(logger) << "\tRendering writer implementation: " << renderingWriterImplementation;
     LOG_INFO(logger) << "\tRendering video frame margins: " << renderingVideoFrameMarginsInPixels;
 }
