@@ -9,6 +9,7 @@
 #include "service/impl/ObjectDetectorDarknetImpl.hpp"
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
 #include "service/impl/TipTrackerImpl.hpp"
+#include "service/impl/ChopstickTrackerImpl.hpp"
 #include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
 #include "service/impl/VideoFramePainterTrackedObjectsImpl.hpp"
 #include "service/impl/VideoFrameReaderImpl.hpp"
@@ -18,6 +19,7 @@
 using namespace model;
 using namespace service;
 using std::abs;
+using std::list;
 using std::string;
 using std::unique_ptr;
 using std::vector;
@@ -69,7 +71,8 @@ int main(int argc, char* argv[]) {
 
     circular_buffer<FrameDetectionResult> frameDetectionResults(2);
     circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(2);
-    vector<Tip> tips;
+    list<Tip> tips;
+    list<Chopstick> chopsticks;
 
     VideoFrameReaderImpl videoFrameReader(videoPath);
     int nbFrames = videoFrameReader.getNbFrames();
@@ -90,6 +93,7 @@ int main(int argc, char* argv[]) {
     ObjectDetectorCacheImpl objectDetector(configurationReader, innerObjectDetector, videoPath);
     
     TipTrackerImpl tipTracker(configurationReader);
+    ChopstickTrackerImpl chopstickTracker(configurationReader);
 
     string renderingWriterImplementation = configurationReader.getRenderingWriterImplementation();
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
@@ -154,9 +158,13 @@ int main(int argc, char* argv[]) {
         FrameDetectionResult compensatedFramesDetectionResult(frameIndex, compensatedObjects);
         compensatedFramesDetectionResults.push_back(compensatedFramesDetectionResult);
 
-        // Update the tracked tips
+        // Update the tracked tips anc chopsticks
         tipTracker.updateTipsWithNewDetectionResult(tips, compensatedFramesDetectionResult);
         LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
+
+        chopstickTracker.updateChopsticksWithNewDetectionResult(
+            chopsticks, tips, compensatedFramesDetectionResult);
+        LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 
         // Copy the video frame into a bigger one in order compensate for camera motion
         outputFrame.setTo(blackColor);

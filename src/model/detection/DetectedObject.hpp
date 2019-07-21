@@ -29,6 +29,14 @@ namespace model {
                     && objectType == other.objectType;
             }
 
+            bool operator!= (const DetectedObject& other) const {
+                return x != other.x
+                    || y != other.y
+                    || width != other.width
+                    || height != other.height
+                    || objectType != other.objectType;
+            }
+
             struct Hasher
             {
                 std::size_t operator()(const DetectedObject& o) const

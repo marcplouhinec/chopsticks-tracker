@@ -2,12 +2,12 @@
 #include <math.h>
 #include <map>
 #include <set>
-#include <boost/range/algorithm_ext/erase.hpp>
 #include "TipTrackerImpl.hpp"
 
 using namespace model;
 using namespace service;
 using std::find;
+using std::list;
 using std::make_pair;
 using std::map;
 using std::max;
@@ -21,7 +21,6 @@ using std::to_string;
 using std::unordered_set;
 using std::vector;
 using boost::circular_buffer;
-using boost::remove_erase_if;
 
 FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
     FrameDetectionResult& prevDetectionResult, FrameDetectionResult& currDetectionResult) {
@@ -56,15 +55,11 @@ FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
 }
 
 void TipTrackerImpl::updateTipsWithNewDetectionResult(
-    vector<Tip>& tips, FrameDetectionResult& detectionResult) {
+    list<Tip>& tips, FrameDetectionResult& detectionResult) {
 
     // Load configuration
     int nbDetectionsToComputeAverageTipPositionAndSize =
         configurationReader.getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
-    int maxFramesAfterWhichATipIsConsideredLost =
-        configurationReader.getTrackingMaxFramesAfterWhichATipIsConsideredLost();
-    int minDistanceToConsiderNewTipAsTheSameAsAnExistingOne =
-        configurationReader.getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
 
     // If there is no existing tip, transform all the detected ones in the frame
     if (tips.size() == 0) {
@@ -149,10 +144,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
 
         // Check if the tip is lost
         bool tipLost = true;
-        int nbStatusesToCheck = min(
-            (int) tip.recentTrackingStatuses.size(), maxFramesAfterWhichATipIsConsideredLost);
-        for (int s = nbStatusesToCheck - 1; s >= 0; s--) {
-            auto& status = tip.recentTrackingStatuses[s];
+        for (TrackingStatus status : tip.recentTrackingStatuses) {
             if (status == TrackingStatus::DETECTED || status == TrackingStatus::HIDDEN_BY_ARM) {
                 tipLost = false;
                 break;
@@ -168,7 +160,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     }
 
     // Remove tips that are lost
-    remove_erase_if(tips, [](const Tip& tip) {
+    tips.remove_if([](const Tip& tip) {
         auto& status = tip.recentTrackingStatuses.back();
         return status == TrackingStatus::LOST;
     });
@@ -179,7 +171,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
         DetectedObject& detectedTip = (DetectedObject&) matchResult.currFrameObject;
         matchedDetectedTips.insert(detectedTip);
     }
-    vector<reference_wrapper<DetectedObject>> newDetectedTips;
+    list<reference_wrapper<DetectedObject>> newDetectedTips;
     for (Rectangle& detectedTipAsRectangle : detectedTips) {
         DetectedObject& detectedTip = (DetectedObject&) detectedTipAsRectangle;
         if (matchedDetectedTips.find(detectedTip) == matchedDetectedTips.end()) {
@@ -189,24 +181,16 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
 
     // Before adding the newly detected tips, filter the ones that are too close to
     // existing tips in the same frame
-    int minDistance = minDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
-    remove_erase_if(newDetectedTips, [this, tips, minDistance](const DetectedObject& newDetectedTip) {
-        bool isTooClose = false;
-        for (auto& tip : tips) {
-            double matchingDistance = computeMatchingDistance(tip, newDetectedTip);
-            if (matchingDistance <= minDistance) {
-                isTooClose = true;
-                break;
-            }
-        }
-        return isTooClose;
+    newDetectedTips.remove_if([this, tips](const DetectedObject& newDetectedTip) {
+        return isDetectedTipTooCloseToExistingTips(newDetectedTip, tips);
     });
 
     // Add new tips
-    for (int tipIndex = 0; tipIndex < newDetectedTips.size(); tipIndex++) {
-        DetectedObject& newDetectedTip = newDetectedTips[tipIndex];
+    int tipIndex = 0;
+    for (DetectedObject& newDetectedTip : newDetectedTips) {
         Tip tip = makeTip(newDetectedTip, detectionResult.frameIndex, tipIndex);
         tips.push_back(tip);
+        tipIndex++;
     }
 }
 
@@ -260,53 +244,69 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
 }
 
 unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
-    vector<Tip>& tips, FrameDetectionResult& detectionResult) {
+    list<Tip>& tips, FrameDetectionResult& detectionResult) {
 
     int minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm =
         configurationReader.getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm();
 
-    auto detectedArms = extractObjectsOfTypes(detectionResult.detectedObjects, {DetectedObjectType::ARM});
     unordered_set<string> hiddenTipIds;
-    if (!detectedArms.empty()) {
-        for (Tip& tip : tips) {
-            // Ignore tips that are lost of only detected once
-            TrackingStatus status = tip.recentTrackingStatuses.back();
-            if (status == TrackingStatus::LOST || status == TrackingStatus::DETECTED_ONCE) {
-                continue;
-            }
 
-            // Detect if the tip is overlapping with an arm
-            bool isOverlappingWithArm = false;
-            for (Rectangle& arm : detectedArms) {
-                if (arm.isOverlappingWith(tip)) {
-                    isOverlappingWithArm = true;
-                    break;
-                }
-            }
-            if (!isOverlappingWithArm) {
-                continue;
-            }
-
-            // Check that there is no detected object near the tip, so we can make sure that
-            // the tip is indeed hidden
-            bool hiddenByArm = true;
-            for (auto& object : detectionResult.detectedObjects) {
-                double matchingDistance = computeMatchingDistance(tip, object);
-                if (matchingDistance <= minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm) {
-                    hiddenByArm = false;
-                    break;
-                }
-            }
-            if (!hiddenByArm) {
-                continue;
-            }
-            
-            // Mark the tip as hidden by an arm
-            hiddenTipIds.insert(tip.id);
+    auto detectedArms = extractObjectsOfTypes(detectionResult.detectedObjects, {DetectedObjectType::ARM});
+    if (detectedArms.empty()) {
+        return hiddenTipIds;
+    }
+    
+    for (Tip& tip : tips) {
+        // Ignore tips that are lost of only detected once
+        TrackingStatus status = tip.recentTrackingStatuses.back();
+        if (status == TrackingStatus::LOST || status == TrackingStatus::DETECTED_ONCE) {
+            continue;
         }
+
+        // Detect if the tip is overlapping with an arm
+        bool isOverlappingWithArm = false;
+        for (Rectangle& arm : detectedArms) {
+            if (arm.isOverlappingWith(tip)) {
+                isOverlappingWithArm = true;
+                break;
+            }
+        }
+        if (!isOverlappingWithArm) {
+            continue;
+        }
+
+        // Check that there is no detected object near the tip, so we can make sure that
+        // the tip is indeed hidden
+        bool hiddenByArm = true;
+        for (auto& object : detectionResult.detectedObjects) {
+            double matchingDistance = computeMatchingDistance(tip, object);
+            if (matchingDistance <= minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm) {
+                hiddenByArm = false;
+                break;
+            }
+        }
+        if (!hiddenByArm) {
+            continue;
+        }
+        
+        // Mark the tip as hidden by an arm
+        hiddenTipIds.insert(tip.id);
     }
 
     return hiddenTipIds;
+}
+
+bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(const DetectedObject& detectedTip, const list<Tip>& tips) {
+    int minDistance = configurationReader.getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
+
+    for (auto& tip : tips) {
+        double matchingDistance = computeMatchingDistance(tip, detectedTip);
+        if (matchingDistance <= minDistance) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 Tip TipTrackerImpl::makeTip(DetectedObject& detectedObject, int frameIndex, int tipIndex) {
@@ -336,14 +336,8 @@ Tip TipTrackerImpl::makeTip(DetectedObject& detectedObject, int frameIndex, int 
 }
 
 double TipTrackerImpl::computeMatchingDistance(const Rectangle& left, const Rectangle& right) {
-    double matchingDistance = distance(right.x, right.y, left.x, left.y);
+    double matchingDistance = Rectangle::distanceBetweenTopLeftPoints(right, left);
     matchingDistance += abs(right.width - left.width);
     matchingDistance += abs(right.height - left.height);
     return matchingDistance;
-}
-
-double TipTrackerImpl::distance(int x1, int y1, int x2, int y2) {
-    double dx = x1 - x2;
-    double dy = y1 - y2;
-    return sqrt(pow(dx, 2.0) + pow(dy, 2.0));
 }

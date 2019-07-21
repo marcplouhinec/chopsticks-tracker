@@ -13,7 +13,7 @@ namespace model {
             int height;
 
         public:
-            static Rectangle getBoundingBox(Rectangle& rect1, Rectangle& rect2) {
+            static Rectangle getBoundingBox(const Rectangle& rect1, const Rectangle& rect2) {
                 int x1 = std::min(rect1.x, rect2.x);
                 int y1 = std::min(rect1.y, rect2.y);
                 int x2 = std::max(rect1.x + rect1.width, rect2.x + rect2.width);
@@ -21,7 +21,7 @@ namespace model {
                 return Rectangle(x1, y1, x2 - x1, y2 - y1);
             }
 
-            static Rectangle getIntersection(Rectangle& rect1, Rectangle& rect2) {
+            static Rectangle getIntersection(const Rectangle& rect1, const Rectangle& rect2) {
                 int x1 = std::max(rect1.x, rect2.x);
                 int y1 = std::max(rect1.y, rect2.y);
                 int x2 = std::min(rect1.x + rect1.width, rect2.x + rect2.width);
@@ -32,6 +32,12 @@ namespace model {
                 } else {
                     return Rectangle(0, 0, 0, 0);
                 }
+            }
+
+            static double distanceBetweenTopLeftPoints(const Rectangle& rect1, const Rectangle& rect2) {
+                double dx = rect1.x - rect2.x;
+                double dy = rect1.y - rect2.y;
+                return sqrt(pow(dx, 2.0) + pow(dy, 2.0));
             }
 
         public:

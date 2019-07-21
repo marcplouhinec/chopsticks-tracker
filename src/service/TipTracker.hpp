@@ -1,7 +1,7 @@
 #ifndef SERVICE_TIP_TRACKER
 #define SERVICE_TIP_TRACKER
 
-#include <vector>
+#include <list>
 #include "../model/detection/FrameDetectionResult.hpp"
 #include "../model/tracking/FrameOffset.hpp"
 #include "../model/tracking/Tip.hpp"
@@ -17,7 +17,7 @@ namespace service {
                 model::FrameDetectionResult& currDetectionResult) = 0;
 
             virtual void updateTipsWithNewDetectionResult(
-                std::vector<model::Tip>& tips,
+                std::list<model::Tip>& tips,
                 model::FrameDetectionResult& detectionResult) = 0;
     };
 

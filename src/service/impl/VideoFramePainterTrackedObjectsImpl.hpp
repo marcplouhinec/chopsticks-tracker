@@ -1,7 +1,7 @@
 #ifndef SERVICE_VIDEO_FRAME_PAINTER_TRACKED_OBJECTS_IMPL
 #define SERVICE_VIDEO_FRAME_PAINTER_TRACKED_OBJECTS_IMPL
 
-#include <vector>
+#include <list>
 #include "../ConfigurationReader.hpp"
 #include "../VideoFramePainter.hpp"
 #include "../../model/tracking/Tip.hpp"
@@ -18,12 +18,12 @@ namespace service {
 
         private:
             ConfigurationReader& configurationReader;
-            std::vector<model::Tip>& tips;
+            std::list<model::Tip>& tips;
 
         public:
             VideoFramePainterTrackedObjectsImpl(
                 ConfigurationReader& configurationReader,
-                std::vector<model::Tip>& tips) :
+                std::list<model::Tip>& tips) :
                     configurationReader(configurationReader),
                     tips(tips) {}
 

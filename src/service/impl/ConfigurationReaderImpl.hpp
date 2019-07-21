@@ -30,6 +30,10 @@ namespace service {
             int trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
             int trackingMaxFramesAfterWhichATipIsConsideredLost;
             int trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
+            int trackingMinChopstickLengthInPixels;
+            int trackingMaxChopstickLengthInPixels;
+            double trackingMaxIOUToConsiderTwoTipsAsAChopstick;
+            int trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
             boost::filesystem::path renderingOutputPath;
             std::string renderingPainterImplementation;
@@ -60,6 +64,10 @@ namespace service {
             virtual int getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm();
             virtual int getTrackingMaxFramesAfterWhichATipIsConsideredLost();
             virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
+            virtual int getTrackingMinChopstickLengthInPixels();
+            virtual int getTrackingMaxChopstickLengthInPixels();
+            virtual double getTrackingMaxIOUToConsiderTwoTipsAsAChopstick();
+            virtual int getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost();
 
             virtual boost::filesystem::path getRenderingOutputPath();
             virtual std::string getRenderingPainterImplementation();

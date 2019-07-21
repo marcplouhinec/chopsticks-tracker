@@ -5,7 +5,6 @@
 #include <utility>
 #include <boost/circular_buffer.hpp>
 #include "../Rectangle.hpp"
-#include "../detection/DetectedObject.hpp"
 #include "TrackingStatus.hpp"
 
 namespace model {
@@ -42,6 +41,10 @@ namespace model {
 
             bool operator== (const Tip& other) const {
                 return id.compare(other.id) == 0;
+            }
+
+            bool operator!= (const Tip& other) const {
+                return id.compare(other.id) != 0;
             }
 
             struct Hasher

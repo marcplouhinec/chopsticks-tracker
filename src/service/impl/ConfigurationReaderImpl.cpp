@@ -104,6 +104,26 @@ int ConfigurationReaderImpl::getTrackingMinDistanceToConsiderNewTipAsTheSameAsAn
     return trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 }
 
+int ConfigurationReaderImpl::getTrackingMinChopstickLengthInPixels() {
+    loadConfigurationIfNecessary();
+    return trackingMinChopstickLengthInPixels;
+}
+
+int ConfigurationReaderImpl::getTrackingMaxChopstickLengthInPixels() {
+    loadConfigurationIfNecessary();
+    return trackingMaxChopstickLengthInPixels;
+}
+
+double ConfigurationReaderImpl::getTrackingMaxIOUToConsiderTwoTipsAsAChopstick() {
+    loadConfigurationIfNecessary();
+    return trackingMaxIOUToConsiderTwoTipsAsAChopstick;
+}
+
+int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost() {
+    loadConfigurationIfNecessary();
+    return trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
+}
+
 fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     loadConfigurationIfNecessary();
     return renderingOutputPath;
@@ -168,6 +188,14 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
         propTree.get<int>("tracking.maxFramesAfterWhichATipIsConsideredLost");
     trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne =
         propTree.get<int>("tracking.minDistanceToConsiderNewTipAsTheSameAsAnExistingOne");
+    trackingMinChopstickLengthInPixels =
+        propTree.get<int>("tracking.minChopstickLengthInPixels");
+    trackingMaxChopstickLengthInPixels =
+        propTree.get<int>("tracking.maxChopstickLengthInPixels");
+    trackingMaxIOUToConsiderTwoTipsAsAChopstick =
+        propTree.get<double>("tracking.maxIOUToConsiderTwoTipsAsAChopstick");
+    trackingMaxFramesAfterWhichAChopstickIsConsideredLost =
+        propTree.get<int>("tracking.maxFramesAfterWhichAChopstickIsConsideredLost");
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
@@ -201,6 +229,14 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
         << trackingMaxFramesAfterWhichATipIsConsideredLost;
     LOG_INFO(logger) << "\tTracking minimum distance to consider new tip as the same as existing one: "
         << trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
+    LOG_INFO(logger) << "\tTracking minimum chopstick length (in pixels): "
+        << trackingMinChopstickLengthInPixels;
+    LOG_INFO(logger) << "\tTracking maximum chopstick length (in pixels): "
+        << trackingMaxChopstickLengthInPixels;
+    LOG_INFO(logger) << "\tTracking maximum IoU to consider two tips as a chopstick: "
+        << trackingMaxIOUToConsiderTwoTipsAsAChopstick;
+    LOG_INFO(logger) << "\tTracking maximum frames after which a chopstick is considered as lost: "
+        << trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
     LOG_INFO(logger) << "\tRendering painter implementation: " << renderingPainterImplementation;

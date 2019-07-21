@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <unordered_set>
+#include <vector>
 #include "../TipTracker.hpp"
 #include "../ConfigurationReader.hpp"
 
@@ -23,7 +24,7 @@ namespace service {
                 model::FrameDetectionResult& currDetectionResult);
 
             virtual void updateTipsWithNewDetectionResult(
-                std::vector<model::Tip>& tips,
+                std::list<model::Tip>& tips,
                 model::FrameDetectionResult& detectionResult);
 
         private:
@@ -52,13 +53,15 @@ namespace service {
                 std::vector<std::reference_wrapper<model::Rectangle>>& currFrameDetectedTips);
 
             std::unordered_set<std::string> findTipIdsHiddenByAnArm(
-                std::vector<model::Tip>& tips, model::FrameDetectionResult& detectionResult);
+                std::list<model::Tip>& tips, model::FrameDetectionResult& detectionResult);
+
+            bool isDetectedTipTooCloseToExistingTips(
+                const model::DetectedObject& detectedTip,
+                const std::list<model::Tip>& tips);
 
             model::Tip makeTip(model::DetectedObject& detectedObject, int frameIndex, int tipIndex);
 
             double computeMatchingDistance(const model::Rectangle& object1, const model::Rectangle& object2);
-
-            double distance(int x1, int y1, int x2, int y2);
     };
 
 }
