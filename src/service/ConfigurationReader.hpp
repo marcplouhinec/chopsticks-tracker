@@ -32,7 +32,7 @@ namespace service {
             virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne() = 0;
             virtual int getTrackingMinChopstickLengthInPixels() = 0;
             virtual int getTrackingMaxChopstickLengthInPixels() = 0;
-            virtual double getTrackingMaxIOUToConsiderTwoTipsAsAChopstick() = 0;
+            virtual double getTrackingMinIOUToConsiderTwoTipsAsAChopstick() = 0;
             virtual int getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost() = 0;
 
             virtual boost::filesystem::path getRenderingOutputPath() = 0;

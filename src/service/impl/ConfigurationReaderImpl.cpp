@@ -114,9 +114,9 @@ int ConfigurationReaderImpl::getTrackingMaxChopstickLengthInPixels() {
     return trackingMaxChopstickLengthInPixels;
 }
 
-double ConfigurationReaderImpl::getTrackingMaxIOUToConsiderTwoTipsAsAChopstick() {
+double ConfigurationReaderImpl::getTrackingMinIOUToConsiderTwoTipsAsAChopstick() {
     loadConfigurationIfNecessary();
-    return trackingMaxIOUToConsiderTwoTipsAsAChopstick;
+    return trackingMinIOUToConsiderTwoTipsAsAChopstick;
 }
 
 int ConfigurationReaderImpl::getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost() {
@@ -192,8 +192,8 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
         propTree.get<int>("tracking.minChopstickLengthInPixels");
     trackingMaxChopstickLengthInPixels =
         propTree.get<int>("tracking.maxChopstickLengthInPixels");
-    trackingMaxIOUToConsiderTwoTipsAsAChopstick =
-        propTree.get<double>("tracking.maxIOUToConsiderTwoTipsAsAChopstick");
+    trackingMinIOUToConsiderTwoTipsAsAChopstick =
+        propTree.get<double>("tracking.minIOUToConsiderTwoTipsAsAChopstick");
     trackingMaxFramesAfterWhichAChopstickIsConsideredLost =
         propTree.get<int>("tracking.maxFramesAfterWhichAChopstickIsConsideredLost");
 
@@ -233,8 +233,8 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
         << trackingMinChopstickLengthInPixels;
     LOG_INFO(logger) << "\tTracking maximum chopstick length (in pixels): "
         << trackingMaxChopstickLengthInPixels;
-    LOG_INFO(logger) << "\tTracking maximum IoU to consider two tips as a chopstick: "
-        << trackingMaxIOUToConsiderTwoTipsAsAChopstick;
+    LOG_INFO(logger) << "\tTracking minimum IoU to consider two tips as a chopstick: "
+        << trackingMinIOUToConsiderTwoTipsAsAChopstick;
     LOG_INFO(logger) << "\tTracking maximum frames after which a chopstick is considered as lost: "
         << trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 

@@ -119,7 +119,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
         }
         iouAvg /= chopstick.recentIous.size();
 
-        chopsticksAndIous.insert({chopstick, iouAvg});
+        chopsticksAndIous.insert({chopstick, iouAvg}); // TODO avg or sum?
     }
 
     // Find chopsticks to accept and reject
@@ -175,8 +175,8 @@ set<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsW
 
     int minChopstickLength = configurationReader.getTrackingMinChopstickLengthInPixels();
     int maxChopstickLength = configurationReader.getTrackingMaxChopstickLengthInPixels();
-    double maxIOUToConsiderTwoTipsAsAChopstick =
-        configurationReader.getTrackingMaxIOUToConsiderTwoTipsAsAChopstick();
+    double minIOUToConsiderTwoTipsAsAChopstick =
+        configurationReader.getTrackingMinIOUToConsiderTwoTipsAsAChopstick();
 
     set<ChopstickTrackerImpl::ChopstickMatchResult> matchResults; // Automatically sort by IoU desc
     for (const Tip& tip1 : tips) {
@@ -204,7 +204,7 @@ set<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsW
                 int unionArea = boundingBoxArea + detectedChopstick.area() - intersectionArea;
                 double iou = ((double) intersectionArea) / ((double) unionArea);
 
-                if (iou <= maxIOUToConsiderTwoTipsAsAChopstick) {
+                if (iou >= minIOUToConsiderTwoTipsAsAChopstick) {
                     ChopstickTrackerImpl::ChopstickMatchResult matchResult = {
                         tip1, tip2, detectedChopstick, iou
                     };

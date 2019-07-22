@@ -32,7 +32,7 @@ namespace service {
             int trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
             int trackingMinChopstickLengthInPixels;
             int trackingMaxChopstickLengthInPixels;
-            double trackingMaxIOUToConsiderTwoTipsAsAChopstick;
+            double trackingMinIOUToConsiderTwoTipsAsAChopstick;
             int trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
             boost::filesystem::path renderingOutputPath;
@@ -66,7 +66,7 @@ namespace service {
             virtual int getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
             virtual int getTrackingMinChopstickLengthInPixels();
             virtual int getTrackingMaxChopstickLengthInPixels();
-            virtual double getTrackingMaxIOUToConsiderTwoTipsAsAChopstick();
+            virtual double getTrackingMinIOUToConsiderTwoTipsAsAChopstick();
             virtual int getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost();
 
             virtual boost::filesystem::path getRenderingOutputPath();
