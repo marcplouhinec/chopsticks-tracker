@@ -6,6 +6,32 @@ using namespace service;
 void VideoFramePainterTrackedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat& frame) {
     int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
 
+    for (Chopstick& chopstick : chopsticks) {
+        TrackingStatus status = chopstick.recentTrackingStatuses.back();
+        cv::Scalar color;
+        switch (status) {
+            case TrackingStatus::DETECTED_ONCE:
+                color = greenColor;
+                break;
+            case TrackingStatus::NOT_DETECTED:
+                color = orangeColor;
+                break;
+            case TrackingStatus::HIDDEN_BY_ARM:
+                color = magentaColor;
+                break;
+            case TrackingStatus::DETECTED:
+            default:
+                color = whiteColor;
+                break;
+        }
+
+        int thickness = chopstick.isRejectedBecauseOfConflict ? 1 : 2;
+        
+        cv::Point point1(chopstick.tip1.centerX() + frameMargin, chopstick.tip1.centerY() + frameMargin);
+        cv::Point point2(chopstick.tip2.centerX() + frameMargin, chopstick.tip2.centerY() + frameMargin);
+        cv::line(frame, point1, point2, color, thickness);
+    }
+
     for (Tip& tip : tips) {
         TrackingStatus status = tip.recentTrackingStatuses.back();
         cv::Scalar color;

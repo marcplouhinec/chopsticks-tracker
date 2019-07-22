@@ -46,8 +46,16 @@ namespace model {
             explicit Rectangle(int x, int y, int width, int height) :
                 x(x), y(y), width(width), height(height) {}
 
-            int area() {
+            int area() const {
                 return width * height;
+            }
+
+            int centerX() const {
+                return x + std::round(((double) width) / 2.0);
+            }
+
+            int centerY() const {
+                return y + std::round(((double) height) / 2.0);
             }
 
             bool isOverlappingWith(Rectangle& other) {
@@ -62,6 +70,26 @@ namespace model {
                     && y == other.y
                     && width == other.width
                     && height == other.height;
+            }
+
+            bool operator!= (const Rectangle& other) const {
+                return x != other.x
+                    || y != other.y
+                    || width != other.width
+                    || height != other.height;
+            }
+
+            bool operator< (const Rectangle& other) const {
+                if (width != other.width) {
+                    return width < other.width;
+                }
+                if (height != other.height) {
+                    return height < other.height;
+                }
+                if (x != other.x) {
+                    return x < other.x;
+                }
+                return y < other.y;
             }
 
             struct Hasher

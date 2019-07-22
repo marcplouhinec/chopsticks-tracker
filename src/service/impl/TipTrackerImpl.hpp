@@ -32,10 +32,6 @@ namespace service {
                 model::Rectangle& prevFrameObject;
                 model::Rectangle& currFrameObject;
                 double matchingDistance;
-
-                bool operator< (const ObjectMatchResult& other) const {
-                    return matchingDistance < other.matchingDistance;
-                }
             };
 
         private:

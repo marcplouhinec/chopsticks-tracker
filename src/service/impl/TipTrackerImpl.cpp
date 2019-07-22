@@ -214,8 +214,18 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
     int maxMatchingDistance = configurationReader.getTrackingMaxTipMatchingDistanceInPixels();
 
     // Match each tip from the current frame with all tips from the previous frame
-    set<TipTrackerImpl::ObjectMatchResult> matchResults; // Automatically sort by matching distance
-
+    struct MatchingDistanceComparator {
+        bool operator() (const ObjectMatchResult& r1, const ObjectMatchResult& r2) const {
+            if (r1.matchingDistance != r2.matchingDistance) {
+                return r1.matchingDistance < r2.matchingDistance;
+            }
+            if (r1.prevFrameObject != r2.prevFrameObject) {
+                return r1.prevFrameObject < r2.prevFrameObject;
+            }
+            return r1.currFrameObject < r2.currFrameObject;
+        }
+    };
+    set<TipTrackerImpl::ObjectMatchResult, MatchingDistanceComparator> matchResults;
     for (auto& currFrameTip : currFrameDetectedTips) {
         for (auto& prevFrameTip : prevFrameDetectedTips) {
             double matchingDistance = computeMatchingDistance(prevFrameTip, currFrameTip);

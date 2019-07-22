@@ -4,6 +4,7 @@
 #include <list>
 #include "../ConfigurationReader.hpp"
 #include "../VideoFramePainter.hpp"
+#include "../../model/tracking/Chopstick.hpp"
 #include "../../model/tracking/Tip.hpp"
 
 namespace service {
@@ -19,13 +20,16 @@ namespace service {
         private:
             ConfigurationReader& configurationReader;
             std::list<model::Tip>& tips;
+            std::list<model::Chopstick>& chopsticks;
 
         public:
             VideoFramePainterTrackedObjectsImpl(
                 ConfigurationReader& configurationReader,
-                std::list<model::Tip>& tips) :
+                std::list<model::Tip>& tips,
+                std::list<model::Chopstick>& chopsticks) :
                     configurationReader(configurationReader),
-                    tips(tips) {}
+                    tips(tips),
+                    chopsticks(chopsticks) {}
 
             virtual ~VideoFramePainterTrackedObjectsImpl() {};
 

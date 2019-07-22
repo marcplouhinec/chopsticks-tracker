@@ -115,7 +115,8 @@ int main(int argc, char* argv[]) {
         pVideoFramePainter.reset(new VideoFramePainterDetectedObjectsImpl(
             configurationReader, compensatedFramesDetectionResults));
     } else if (renderingPainterImplementation.compare("trackedobjects") == 0) {
-        pVideoFramePainter.reset(new VideoFramePainterTrackedObjectsImpl(configurationReader, tips));
+        pVideoFramePainter.reset(new VideoFramePainterTrackedObjectsImpl(
+            configurationReader, tips, chopsticks));
     }
     VideoFramePainter& videoFramePainter = *pVideoFramePainter;
 
