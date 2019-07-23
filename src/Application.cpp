@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 
     string renderingWriterImplementation = configurationReader.getRenderingWriterImplementation();
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
-    if (renderingWriterImplementation == "mjpeg" == 0) {
+    if (renderingWriterImplementation == "mjpeg") {
         pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(
             configurationReader,
             videoPath,
