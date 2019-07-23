@@ -84,9 +84,9 @@ int main(int argc, char* argv[]) {
 
     string detectionImpl = configurationReader.getObjectDetectionImplementation();
     unique_ptr<ObjectDetector> pInnerObjectDetector{};
-    if (detectionImpl.compare("darknet") == 0) {
+    if (detectionImpl == "darknet") {
         pInnerObjectDetector.reset(new ObjectDetectorDarknetImpl(configurationReader, videoFrameReader));
-    } else if (detectionImpl.compare("opencvdnn") == 0) {
+    } else if (detectionImpl == "opencvdnn") {
         pInnerObjectDetector.reset(new ObjectDetectorOpenCvDnnImpl(configurationReader, videoFrameReader));
     }
     ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
@@ -97,24 +97,24 @@ int main(int argc, char* argv[]) {
 
     string renderingWriterImplementation = configurationReader.getRenderingWriterImplementation();
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
-    if (renderingWriterImplementation.compare("mjpeg") == 0) {
+    if (renderingWriterImplementation == "mjpeg" == 0) {
         pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(
             configurationReader,
             videoPath,
             videoFrameReader.getFps(),
             outputFrame.cols,
             outputFrame.rows));
-    } else if (renderingWriterImplementation.compare("multijpeg") == 0) {
+    } else if (renderingWriterImplementation == "multijpeg") {
         pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configurationReader, videoPath));
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
     string renderingPainterImplementation = configurationReader.getRenderingPainterImplementation();
     unique_ptr<VideoFramePainter> pVideoFramePainter{};
-    if (renderingPainterImplementation.compare("detectedobjects") == 0) {
+    if (renderingPainterImplementation == "detectedobjects") {
         pVideoFramePainter.reset(new VideoFramePainterDetectedObjectsImpl(
             configurationReader, compensatedFramesDetectionResults));
-    } else if (renderingPainterImplementation.compare("trackedobjects") == 0) {
+    } else if (renderingPainterImplementation == "trackedobjects") {
         pVideoFramePainter.reset(new VideoFramePainterTrackedObjectsImpl(
             configurationReader, tips, chopsticks));
     }

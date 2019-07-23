@@ -40,11 +40,11 @@ namespace model {
             }
 
             bool operator== (const Tip& other) const {
-                return id.compare(other.id) == 0;
+                return id == other.id;
             }
 
             bool operator!= (const Tip& other) const {
-                return id.compare(other.id) != 0;
+                return id != other.id;
             }
 
             struct Hasher

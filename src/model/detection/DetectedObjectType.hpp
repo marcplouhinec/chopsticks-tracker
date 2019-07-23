@@ -27,16 +27,16 @@ namespace model {
             }
 
             static DetectedObjectType stringToEnum(std::string stringValue) {
-                if (stringValue.compare("ARM") == 0) {
+                if (stringValue == "ARM") {
                     return DetectedObjectType::ARM;
                 }
-                if (stringValue.compare("CHOPSTICK") == 0) {
+                if (stringValue == "CHOPSTICK") {
                     return DetectedObjectType::CHOPSTICK;
                 }
-                if (stringValue.compare("BIG_TIP") == 0) {
+                if (stringValue == "BIG_TIP") {
                     return DetectedObjectType::BIG_TIP;
                 }
-                if (stringValue.compare("SMALL_TIP") == 0) {
+                if (stringValue == "SMALL_TIP") {
                     return DetectedObjectType::SMALL_TIP;
                 }
                 return DetectedObjectType::SMALL_TIP;
