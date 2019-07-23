@@ -33,10 +33,10 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     auto conflictingResults = compareAndExtractConflictingResults(
         bestMatchResults, bestMatchResultsInCurrentFrameOnly);
 
-    // Make a set of tip IDs in order to find them faster
-    unordered_set<string> tipIds;
-    for (const Tip tip : tips) {
-        tipIds.insert(tip.id);
+    // Index tips by their IDs
+    map<string, Tip> tipById;
+    for (const Tip& tip : tips) {
+        tipById.emplace(tip.id, tip);
     }
 
     // Update the existing chopsticks
@@ -45,13 +45,15 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
         ChopstickTrackerImpl::ChopstickMatchResult::Hasher> processedMatchResults;
     for (Chopstick& chopstick : chopsticks) {
         // Check if the chopstick is lost because one of its tips doesn't exist anymore
-        if (tipIds.find(chopstick.tip1.id) == tipIds.end() || tipIds.find(chopstick.tip2.id) == tipIds.end()) {
+        if (tipById.find(chopstick.tip1Id) == tipById.end() || tipById.find(chopstick.tip2Id) == tipById.end()) {
             chopstick.recentTrackingStatuses.push_back(TrackingStatus::LOST);
             continue;
         }
+        const Tip& tip1 = tipById[chopstick.tip1Id];
+        const Tip& tip2 = tipById[chopstick.tip2Id];
 
         // Check if the chopstick was matched in this frame
-        auto matchResultOptional = findMatchResultByTips(bestMatchResults, chopstick.tip1, chopstick.tip2);
+        auto matchResultOptional = findMatchResultByTips(bestMatchResults, chopstick.tip1Id, chopstick.tip2Id);
         if (matchResultOptional.has_value()) {
             auto matchResult = matchResultOptional.value();
             processedMatchResults.insert(matchResult);
@@ -63,7 +65,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
         }
 
         // Check if the chopstick would have been matched without considering history (= conflicts with previous detections)
-        auto conflictingMatchResultOptional = findMatchResultByTips(conflictingResults, chopstick.tip1, chopstick.tip2);
+        auto conflictingMatchResultOptional = findMatchResultByTips(conflictingResults, chopstick.tip1Id, chopstick.tip2Id);
         if (conflictingMatchResultOptional.has_value()) {
             auto matchResult = conflictingMatchResultOptional.value();
             processedMatchResults.insert(matchResult);
@@ -75,8 +77,8 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
         }
 
         // Check if the chopstick is hidden by an arm
-        TrackingStatus tip1Status = chopstick.tip1.recentTrackingStatuses.back();
-        TrackingStatus tip2Status = chopstick.tip2.recentTrackingStatuses.back();
+        TrackingStatus tip1Status = tip1.recentTrackingStatuses.back();
+        TrackingStatus tip2Status = tip2.recentTrackingStatuses.back();
         if (tip1Status == TrackingStatus::HIDDEN_BY_ARM || tip2Status == TrackingStatus::HIDDEN_BY_ARM) {
             chopstick.recentTrackingStatuses.push_back(TrackingStatus::HIDDEN_BY_ARM);
             continue;
@@ -127,13 +129,12 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
 
     set<ChopstickTrackerImpl::ChopstickAndIou, IouDescComparator> chopsticksAndIous;
     for (const Chopstick& chopstick : chopsticks) {
-        double iouAvg = 0;
+        double iouSum = 0;
         for (const double iou : chopstick.recentIous) {
-            iouAvg += iou;
+            iouSum += iou;
         }
-        iouAvg /= chopstick.recentIous.size();
 
-        chopsticksAndIous.insert({chopstick, iouAvg}); // TODO avg or sum?
+        chopsticksAndIous.insert({chopstick, iouSum}); // TODO avg or sum?
     }
 
     // Find chopsticks to accept and reject
@@ -152,10 +153,10 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
             if (chopstick.id == chopstickId) {
                 continue;
             }
-            if (chopstickAndIou.chopstick.tip1 == chopstick.tip1 ||
-                chopstickAndIou.chopstick.tip1 == chopstick.tip2 ||
-                chopstickAndIou.chopstick.tip2 == chopstick.tip1 ||
-                chopstickAndIou.chopstick.tip2 == chopstick.tip2) {
+            if (chopstickAndIou.chopstick.tip1Id == chopstick.tip1Id ||
+                chopstickAndIou.chopstick.tip1Id == chopstick.tip2Id ||
+                chopstickAndIou.chopstick.tip2Id == chopstick.tip1Id ||
+                chopstickAndIou.chopstick.tip2Id == chopstick.tip2Id) {
                 rejectedChopstickIds.insert(chopstick.id);
             }
         }
@@ -275,14 +276,14 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::filterM
             }
 
             // Check if the chopstick shares at least one tip with this match result
-            if (chopstick.tip1 != matchResult.tip1 && chopstick.tip1 != matchResult.tip2 &&
-                chopstick.tip2 != matchResult.tip1 && chopstick.tip2 != matchResult.tip2) {
+            if (chopstick.tip1Id != matchResult.tip1.id && chopstick.tip1Id != matchResult.tip2.id &&
+                chopstick.tip2Id != matchResult.tip1.id && chopstick.tip2Id != matchResult.tip2.id) {
                 continue;
             }
 
             // Check if the chopstick and the match result are not identical
-            if ((chopstick.tip1 == matchResult.tip1 && chopstick.tip2 == matchResult.tip2) ||
-                (chopstick.tip2 == matchResult.tip1 && chopstick.tip1 == matchResult.tip2)) {
+            if ((chopstick.tip1Id == matchResult.tip1.id && chopstick.tip2Id == matchResult.tip2.id) ||
+                (chopstick.tip2Id == matchResult.tip1.id && chopstick.tip1Id == matchResult.tip2.id)) {
                 continue;
             }
 
@@ -336,14 +337,14 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::compare
 
 optional<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::findMatchResultByTips(
     const vector<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
-    const Tip& tip1,
-    const Tip& tip2) {
+    const std::string& tip1Id,
+    const std::string& tip2Id) {
     
     for (auto& matchResult : matchResults) {
         Tip& mrTip1 = (Tip&) matchResult.tip1;
         Tip& mrTip2 = (Tip&) matchResult.tip2;
 
-        if ((mrTip1 == tip1 && mrTip2 == tip2) || (mrTip1 == tip2 && mrTip2 == tip1)) {
+        if ((mrTip1.id == tip1Id && mrTip2.id == tip2Id) || (mrTip1.id == tip2Id && mrTip2.id == tip1Id)) {
             return std::optional<ChopstickTrackerImpl::ChopstickMatchResult>{ matchResult };
         }
     }
@@ -366,8 +367,8 @@ Chopstick ChopstickTrackerImpl::makeChopstick(
     
     return Chopstick(
         "C_" + matchResult.tip1.id + "_" + matchResult.tip2.id,
-        matchResult.tip1,
-        matchResult.tip2,
+        matchResult.tip1.id,
+        matchResult.tip2.id,
         recentTrackingStatuses,
         recentIous,
         isRejectedBecauseOfConflict);

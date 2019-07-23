@@ -4,31 +4,30 @@
 #include <string>
 #include <boost/circular_buffer.hpp>
 #include "../Rectangle.hpp"
-#include "Tip.hpp"
 #include "TrackingStatus.hpp"
 
 namespace model {
 
-    class Chopstick { // TODO orientation (tip1 to ti2 or reverse)
+    class Chopstick { // TODO orientation (tip1 to tip2 or reverse)
         public:
-            std::string id;
-            const Tip& tip1;
-            const Tip& tip2;
+            const std::string id;
+            const std::string tip1Id;
+            const std::string tip2Id;
             boost::circular_buffer<TrackingStatus> recentTrackingStatuses;
             boost::circular_buffer<double> recentIous;
             bool isRejectedBecauseOfConflict;
 
         public:
             Chopstick(
-                std::string id,
-                const Tip& tip1,
-                const Tip& tip2,
+                const std::string id,
+                const std::string tip1Id,
+                const std::string tip2Id,
                 boost::circular_buffer<TrackingStatus> recentTrackingStatuses,
                 boost::circular_buffer<double> recentIous,
                 bool isRejectedBecauseOfConflict) :
                     id(id),
-                    tip1(tip1),
-                    tip2(tip2),
+                    tip1Id(tip1Id),
+                    tip2Id(tip2Id),
                     recentTrackingStatuses(recentTrackingStatuses),
                     recentIous(recentIous),
                     isRejectedBecauseOfConflict(isRejectedBecauseOfConflict) {}

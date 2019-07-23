@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <vector>
+#include "../../model/tracking/Tip.hpp"
 #include "../ConfigurationReader.hpp"
 #include "../ChopstickTracker.hpp"
 
@@ -87,8 +88,8 @@ namespace service {
             
             std::optional<ChopstickMatchResult> findMatchResultByTips(
                 const std::vector<ChopstickMatchResult>& matchResults,
-                const model::Tip& tip1,
-                const model::Tip& tip2);
+                const std::string& tip1Id,
+                const std::string& tip2Id);
 
             model::Chopstick makeChopstick(
                 const ChopstickMatchResult& matchResult,
