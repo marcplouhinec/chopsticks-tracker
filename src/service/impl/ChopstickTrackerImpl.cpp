@@ -1,3 +1,4 @@
+#include <set>
 #include <unordered_set>
 #include "ChopstickTrackerImpl.hpp"
 
@@ -39,7 +40,9 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     }
 
     // Update the existing chopsticks
-    set<ChopstickTrackerImpl::ChopstickMatchResult> processedMatchResults;
+    unordered_set<
+        ChopstickTrackerImpl::ChopstickMatchResult,
+        ChopstickTrackerImpl::ChopstickMatchResult::Hasher> processedMatchResults;
     for (Chopstick& chopstick : chopsticks) {
         // Check if the chopstick is lost because one of its tips doesn't exist anymore
         if (tipIds.find(chopstick.tip1.id) == tipIds.end() || tipIds.find(chopstick.tip2.id) == tipIds.end()) {
@@ -111,7 +114,18 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     }
 
     // Find chopsticks in conflicts and switch their "rejected" status by comparing their detections
-    set<ChopstickTrackerImpl::ChopstickAndIou> chopsticksAndIous; // Sorted by iou desc
+    struct IouDescComparator {
+        bool operator() (const ChopstickAndIou& c1, const ChopstickAndIou& c2) const {
+            if (c1.iou != c2.iou) {
+                return c1.iou > c2.iou;
+            }
+
+            // Avoid different ChopstickAndIous with the same IoU to be considered as equal
+            return c1.chopstick.id.compare(c2.chopstick.id) < 0;
+        }
+    };
+
+    set<ChopstickTrackerImpl::ChopstickAndIou, IouDescComparator> chopsticksAndIous;
     for (const Chopstick& chopstick : chopsticks) {
         double iouAvg = 0;
         for (const double iou : chopstick.recentIous) {
@@ -170,7 +184,7 @@ vector<reference_wrapper<DetectedObject>> ChopstickTrackerImpl::extractChopstick
     return filteredObjects;
 }
 
-set<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsWithDetectedChopsticks(
+vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsWithDetectedChopsticks(
     const list<Tip>& tips, const vector<reference_wrapper<DetectedObject>>& detectedChopsticks) {
 
     int minChopstickLength = configurationReader.getTrackingMinChopstickLengthInPixels();
@@ -178,7 +192,24 @@ set<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsW
     double minIOUToConsiderTwoTipsAsAChopstick =
         configurationReader.getTrackingMinIOUToConsiderTwoTipsAsAChopstick();
 
-    set<ChopstickTrackerImpl::ChopstickMatchResult> matchResults; // Automatically sort by IoU desc
+    struct IouDescComparator {
+        bool operator() (const ChopstickMatchResult& r1, const ChopstickMatchResult& r2) const {
+            if (r1.iou != r2.iou) {
+                return r1.iou > r2.iou;
+            }
+
+            // Avoid different ChopstickMatchResults with the same IoU to be considered as equal
+            if (r1.tip1.id != r2.tip1.id) {
+                return r1.tip1.id.compare(r2.tip1.id) < 0;
+            }
+            if (r1.tip2.id != r2.tip2.id) {
+                return r1.tip2.id.compare(r2.tip2.id) < 0;
+            }
+            return ((Rectangle) r1.detectedChopstick) < ((Rectangle) r2.detectedChopstick);
+        }
+    };
+
+    set<ChopstickTrackerImpl::ChopstickMatchResult, IouDescComparator> matchResults;
     for (const Tip& tip1 : tips) {
         for (const Tip& tip2 : tips) {
             if (tip1 == tip2) {
@@ -214,11 +245,15 @@ set<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsW
         }
     }
 
-    return matchResults;
+    vector<ChopstickTrackerImpl::ChopstickMatchResult> matchResultsAsVector;
+    for (auto& matchResult : matchResults) {
+        matchResultsAsVector.push_back(matchResult);
+    }
+    return matchResultsAsVector;
 }
 
 vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::filterMatchResultsByRemovingConflictingOnes(
-    const set<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
+    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
     const list<Chopstick>& existingChopsticks) {
     
     vector<ChopstickTrackerImpl::ChopstickMatchResult> filteredMatchResults;

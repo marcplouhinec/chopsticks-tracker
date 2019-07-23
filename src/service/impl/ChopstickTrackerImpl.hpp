@@ -2,7 +2,6 @@
 #define SERVICE_CHOPSTICK_TRACKER_IMPL
 
 #include <optional>
-#include <set>
 #include <vector>
 #include "../ConfigurationReader.hpp"
 #include "../ChopstickTracker.hpp"
@@ -31,29 +30,37 @@ namespace service {
                 const model::DetectedObject& detectedChopstick;
                 const double iou;
 
-                bool operator< (const ChopstickMatchResult& other) const {
-                    return iou > other.iou; // Inverted
-                }
-
                 bool operator== (const ChopstickMatchResult& other) const {
                     return tip1 == other.tip1 && tip2 == other.tip2 &&
                         detectedChopstick == other.detectedChopstick;
                 }
+
+                struct Hasher
+                {
+                    model::Tip::Hasher tipHasher;
+                    model::DetectedObject::Hasher detectedObjectHasher;
+
+                    std::size_t operator()(const ChopstickMatchResult& r) const
+                    {
+                        std::size_t res = 17;
+                        res = res * 31 + tipHasher(r.tip1);
+                        res = res * 31 + tipHasher(r.tip2);
+                        res = res * 31 + detectedObjectHasher(r.detectedChopstick);
+                        res = res * 31 + std::hash<double>()( r.iou );
+                        return res;
+                    }
+                };
             };
             struct ChopstickAndIou {
                 const model::Chopstick& chopstick;
                 const double iou;
-
-                bool operator< (const ChopstickAndIou& other) const {
-                    return iou > other.iou; // Inverted
-                }
             };
 
         private:
             std::vector<std::reference_wrapper<model::DetectedObject>> extractChopstickObjects(
                 std::vector<model::DetectedObject>& detectedObjects);
             
-            std::set<ChopstickMatchResult> matchTipsWithDetectedChopsticks(
+            std::vector<ChopstickMatchResult> matchTipsWithDetectedChopsticks(
                 const std::list<model::Tip>& tips,
                 const std::vector<std::reference_wrapper<model::DetectedObject>>& detectedChopsticks);
 
@@ -71,7 +78,7 @@ namespace service {
              *     Filtered matchResults with the best matches without conflicts.
              */
             std::vector<ChopstickMatchResult> filterMatchResultsByRemovingConflictingOnes(
-                const std::set<ChopstickMatchResult>& matchResults,
+                const std::vector<ChopstickMatchResult>& matchResults,
                 const std::list<model::Chopstick>& existingChopsticks);
 
             std::vector<ChopstickMatchResult> compareAndExtractConflictingResults(

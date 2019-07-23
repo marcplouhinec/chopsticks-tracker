@@ -219,6 +219,8 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
             if (r1.matchingDistance != r2.matchingDistance) {
                 return r1.matchingDistance < r2.matchingDistance;
             }
+
+            // Avoid different ObjectMatchResults with the same matchingDistance to be considered as equal
             if (r1.prevFrameObject != r2.prevFrameObject) {
                 return r1.prevFrameObject < r2.prevFrameObject;
             }
