@@ -163,13 +163,6 @@ int main(int argc, char* argv[]) {
         int marginTop = round(frameMargin - accumulatedFrameOffset.dy);
         frame.copyTo(outputFrame(cv::Rect(marginLeft, marginTop, frame.cols, frame.rows)));
 
-        if (abs(accumulatedFrameOffset.dx) > bestMargin) {
-            bestMargin = abs(accumulatedFrameOffset.dx);
-        }
-        if (abs(accumulatedFrameOffset.dy) > bestMargin) {
-            bestMargin = abs(accumulatedFrameOffset.dy);
-        }
-
         for (auto& pPainter : pVideoFramePainters) {
             pPainter->paintOnFrame(frameIndex, outputFrame, accumulatedFrameOffset);
         }
@@ -179,7 +172,6 @@ int main(int argc, char* argv[]) {
         LOG_INFO(logger) << "Frame written.";
     }
 
-    LOG_INFO(logger) << "Best videoFrameMarginsInPixels: " << bestMargin;
     LOG_INFO(logger) << "Application executed with success!";
 
     return 0;
