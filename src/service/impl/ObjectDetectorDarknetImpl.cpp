@@ -17,17 +17,17 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
     if (!pNeuralNetwork) {
         LOG_INFO(logger) << "Loading the YOLO neural network model...";
         pNeuralNetwork = std::unique_ptr<network>(load_network_custom(
-            (char*) configurationReader.getYoloModelCfgPath().string().c_str(), 
-            (char*) configurationReader.getYoloModelWeightsPath().string().c_str(), 
+            (char*) configuration.yoloModelCfgPath.string().c_str(), 
+            (char*) configuration.yoloModelWeightsPath.string().c_str(), 
             /*clear = */ 0,
             /*batch = */ 1));
         
         lastLayer = pNeuralNetwork->layers[pNeuralNetwork->n - 1];
-        objectTypesByClassId = configurationReader.getYoloModelClassEnums();
+        objectTypesByClassId = DetectedObjectTypeHelper::stringsToEnums(configuration.yoloModelClassNames);
 
-        minTipConfidence = configurationReader.getObjectDetectionMinTipConfidence();
-        minChopstickConfidence = configurationReader.getObjectDetectionMinChopstickConfidence();
-        minArmConfidence = configurationReader.getObjectDetectionMinArmConfidence();
+        minTipConfidence = configuration.objectDetectionMinTipConfidence;
+        minChopstickConfidence = configuration.objectDetectionMinChopstickConfidence;
+        minArmConfidence = configuration.objectDetectionMinArmConfidence;
         minConfidence = min(minTipConfidence, min(minChopstickConfidence, minArmConfidence));
     }
 
@@ -49,7 +49,7 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
         /* relative */1,
         &nbDetections,
         /* letter */0);
-    float nmsThreshold = configurationReader.getObjectDetectionNmsThreshold();
+    float nmsThreshold = configuration.objectDetectionNmsThreshold;
     do_nms_sort(detections, nbDetections, lastLayer.classes, nmsThreshold);
     
     // Release image resources

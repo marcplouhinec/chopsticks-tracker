@@ -2,10 +2,10 @@
 #define SERVICE_VIDEO_FRAME_PAINTER_TRACKED_OBJECTS_IMPL
 
 #include <list>
-#include "../ConfigurationReader.hpp"
-#include "../VideoFramePainter.hpp"
+#include "../../model/Configuration.hpp"
 #include "../../model/tracking/Chopstick.hpp"
 #include "../../model/tracking/Tip.hpp"
+#include "../VideoFramePainter.hpp"
 
 namespace service {
 
@@ -18,16 +18,16 @@ namespace service {
             const cv::Scalar whiteColor{255.0, 255.0, 255.0};
 
         private:
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
             std::list<model::Tip>& tips;
             std::list<model::Chopstick>& chopsticks;
 
         public:
             VideoFramePainterTrackedObjectsImpl(
-                ConfigurationReader& configurationReader,
+                model::Configuration& configuration,
                 std::list<model::Tip>& tips,
                 std::list<model::Chopstick>& chopsticks) :
-                    configurationReader(configurationReader),
+                    configuration(configuration),
                     tips(tips),
                     chopsticks(chopsticks) {}
 

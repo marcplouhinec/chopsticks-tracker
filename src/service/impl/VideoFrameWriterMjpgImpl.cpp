@@ -25,9 +25,8 @@ void VideoFrameWriterMjpgImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
     if (!pVideoWriter) {
         LOG_INFO(logger) << "Initialize the output video file...";
 
-        fs::path rootOutputPath = configurationReader.getRenderingOutputPath();
         string outputVideoFilename = inputVideoPath.stem().string() + ".avi";
-        fs::path outputVideoPath(rootOutputPath / outputVideoFilename);
+        fs::path outputVideoPath(configuration.renderingOutputPath / outputVideoFilename);
 
         if (fs::is_directory(outputVideoPath) || fs::exists(outputVideoPath)) {
             if (!fs::remove(outputVideoPath)) {

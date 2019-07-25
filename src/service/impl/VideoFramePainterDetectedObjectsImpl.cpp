@@ -13,10 +13,10 @@ using std::round;
 void VideoFramePainterDetectedObjectsImpl::paintOnFrame(
     int frameIndex, cv::Mat& frame, FrameOffset accumulatedFrameOffset) {
 
-    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
-    bool showTips = configurationReader.getRenderingDetectedObjectsPainterShowTips();
-    bool showChopsticks = configurationReader.getRenderingDetectedObjectsPainterShowChopsticks();
-    bool showArms = configurationReader.getRenderingDetectedObjectsPainterShowArms();
+    int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
+    bool showTips = configuration.renderingDetectedObjectsPainterShowTips;
+    bool showChopsticks = configuration.renderingDetectedObjectsPainterShowChopsticks;
+    bool showArms = configuration.renderingDetectedObjectsPainterShowArms;
 
     FrameDetectionResult& frameDetectionResult = findFrameDetectionResultByFrameIndex(frameIndex);
 

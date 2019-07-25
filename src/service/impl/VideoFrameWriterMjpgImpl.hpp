@@ -3,9 +3,9 @@
 
 #include <memory>
 #include <boost/filesystem.hpp>
+#include "../../model/Configuration.hpp"
 #include "../../utils/logging.hpp"
 #include "../VideoFrameWriter.hpp"
-#include "../ConfigurationReader.hpp"
 
 namespace service {
 
@@ -13,7 +13,7 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
             boost::filesystem::path inputVideoPath;
             double fps;
             int frameWidth;
@@ -24,12 +24,12 @@ namespace service {
 
         public:
             VideoFrameWriterMjpgImpl(
-                ConfigurationReader& configurationReader,
+                model::Configuration& configuration,
                 boost::filesystem::path inputVideoPath,
                 double fps,
                 int frameWidth,
                 int frameHeight) :
-                    configurationReader(configurationReader),
+                    configuration(configuration),
                     inputVideoPath(inputVideoPath),
                     fps(fps),
                     frameWidth(frameWidth),

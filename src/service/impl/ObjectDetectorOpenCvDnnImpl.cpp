@@ -22,12 +22,12 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
 
     if (!neuralNetworkInitialized) {
         LOG_INFO(logger) << "Loading the YOLO neural network model...";
-        string yoloModelCfgPath = configurationReader.getYoloModelCfgPath().string();
-        string yoloModelWeights = configurationReader.getYoloModelWeightsPath().string();
+        string yoloModelCfgPath = configuration.yoloModelCfgPath.string();
+        string yoloModelWeights = configuration.yoloModelWeightsPath.string();
         neuralNetwork = cv::dnn::readNetFromDarknet(yoloModelCfgPath, yoloModelWeights);
         
         outLayerNames = neuralNetwork.getUnconnectedOutLayersNames();
-        objectTypesByClassId = configurationReader.getYoloModelClassEnums();
+        objectTypesByClassId = DetectedObjectTypeHelper::stringsToEnums(configuration.yoloModelClassNames);
 
         ifstream yoloModelCfgStream(yoloModelCfgPath);
         string yoloModelCfg((istreambuf_iterator<char>(yoloModelCfgStream)), istreambuf_iterator<char>());
@@ -47,9 +47,9 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
         LOG_INFO(logger) << "YOLO model initialized: outLayerNames = " << "outLayerNames"
             << ", netWidth = " << netWidth << ", netHeight = " << netHeight;
         
-        minTipConfidence = configurationReader.getObjectDetectionMinTipConfidence();
-        minChopstickConfidence = configurationReader.getObjectDetectionMinChopstickConfidence();
-        minArmConfidence = configurationReader.getObjectDetectionMinArmConfidence();
+        minTipConfidence = configuration.objectDetectionMinTipConfidence;
+        minChopstickConfidence = configuration.objectDetectionMinChopstickConfidence;
+        minArmConfidence = configuration.objectDetectionMinArmConfidence;
         minConfidence = min(minTipConfidence, min(minChopstickConfidence, minArmConfidence));
 
         neuralNetworkInitialized = true;

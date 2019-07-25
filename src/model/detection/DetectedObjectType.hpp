@@ -42,6 +42,16 @@ namespace model {
                 return DetectedObjectType::SMALL_TIP;
             }
 
+            static std::vector<DetectedObjectType> stringsToEnums(const std::vector<std::string> stringValues) {
+                std::vector<DetectedObjectType> enums;
+
+                for (const std::string& stringValue : stringValues) {
+                    enums.push_back(stringToEnum(stringValue));
+                }
+
+                return enums;
+            }
+
             static std::vector<DetectedObjectType> enumerate() {
                 std::vector<DetectedObjectType> enumValues;
                 enumValues.push_back(DetectedObjectType::ARM);

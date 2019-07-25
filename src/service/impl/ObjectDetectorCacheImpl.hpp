@@ -3,9 +3,9 @@
 
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>
+#include "../../model/Configuration.hpp"
 #include "../../utils/logging.hpp"
 #include "../ObjectDetector.hpp"
-#include "../ConfigurationReader.hpp"
 #include "../VideoFrameReader.hpp"
 
 namespace service {
@@ -22,17 +22,17 @@ namespace service {
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
             boost::filesystem::path videoPath;
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
             ObjectDetector& wrappedObjectDetector;
 
             bool cacheFolderInitialized = false;
 
         public:
             ObjectDetectorCacheImpl(
-                ConfigurationReader& configurationReader,
+                model::Configuration& configuration,
                 ObjectDetector& wrappedObjectDetector,
                 boost::filesystem::path videoPath) : 
-                    configurationReader(configurationReader),
+                    configuration(configuration),
                     wrappedObjectDetector(wrappedObjectDetector),
                     videoPath(videoPath) {}
 

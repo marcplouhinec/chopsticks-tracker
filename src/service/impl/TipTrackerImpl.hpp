@@ -4,18 +4,17 @@
 #include <functional>
 #include <unordered_set>
 #include <vector>
+#include "../../model/Configuration.hpp"
 #include "../TipTracker.hpp"
-#include "../ConfigurationReader.hpp"
 
 namespace service {
 
     class TipTrackerImpl : public TipTracker {
         private:
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
 
         public:
-            TipTrackerImpl(ConfigurationReader& configurationReader) :
-                configurationReader(configurationReader) {}
+            TipTrackerImpl(model::Configuration& configuration) : configuration(configuration) {}
 
             virtual ~TipTrackerImpl() {}
 

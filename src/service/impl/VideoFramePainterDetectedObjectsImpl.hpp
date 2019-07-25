@@ -2,9 +2,9 @@
 #define SERVICE_VIDEO_FRAME_PAINTER_DETECTED_OBJECTS_IMPL
 
 #include <boost/circular_buffer.hpp>
-#include "../ConfigurationReader.hpp"
-#include "../VideoFramePainter.hpp"
+#include "../../model/Configuration.hpp"
 #include "../../model/detection/FrameDetectionResult.hpp"
+#include "../VideoFramePainter.hpp"
 
 namespace service {
 
@@ -16,14 +16,14 @@ namespace service {
             const cv::Scalar magentaColor{255.0, 0.0, 255.0};
 
         private:
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
             boost::circular_buffer<model::FrameDetectionResult>& frameDetectionResults;
 
         public:
             VideoFramePainterDetectedObjectsImpl(
-                ConfigurationReader& configurationReader,
+                model::Configuration& configuration,
                 boost::circular_buffer<model::FrameDetectionResult>& frameDetectionResults) :
-                    configurationReader(configurationReader),
+                    configuration(configuration),
                     frameDetectionResults(frameDetectionResults) {}
             virtual ~VideoFramePainterDetectedObjectsImpl() {};
 

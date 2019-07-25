@@ -34,7 +34,7 @@ FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
         matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(prevFrameTips, currFrameTips);
 
     // Only select the best match results
-    int nbTipsToUseToDetectCameraMotion = configurationReader.getTrackingNbTipsToUseToDetectCameraMotion();
+    int nbTipsToUseToDetectCameraMotion = configuration.trackingNbTipsToUseToDetectCameraMotion;
     int nbBestMatchResults = min((int) matchResults.size(), nbTipsToUseToDetectCameraMotion);
 
     // Compute the average distance between the tips from the current frame and their
@@ -61,7 +61,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
 
     // Load configuration
     int nbDetectionsToComputeAverageTipPositionAndSize =
-        configurationReader.getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
+        configuration.trackingNbDetectionsToComputeAverageTipPositionAndSize;
     
     // Extract the tips and translate them according to the frame offset
     auto untranslatedDetectedTips = extractObjectsOfTypes(
@@ -241,7 +241,7 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
     vector<reference_wrapper<Rectangle>>& prevFrameDetectedTips,
     vector<reference_wrapper<Rectangle>>& currFrameDetectedTips) {
 
-    int maxMatchingDistance = configurationReader.getTrackingMaxTipMatchingDistanceInPixels();
+    int maxMatchingDistance = configuration.trackingMaxTipMatchingDistanceInPixels;
 
     // Match each tip from the current frame with all tips from the previous frame
     struct MatchingDistanceComparator {
@@ -289,7 +289,7 @@ unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
     list<Tip>& tips, FrameDetectionResult& detectionResult, FrameOffset& accumulatedFrameOffset) {
 
     int minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm =
-        configurationReader.getTrackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm();
+        configuration.trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
 
     unordered_set<string> hiddenTipIds;
 
@@ -342,7 +342,7 @@ unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
 }
 
 bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(const DetectedObject& detectedTip, const list<Tip>& tips) {
-    int minDistance = configurationReader.getTrackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne();
+    int minDistance = configuration.trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 
     for (auto& tip : tips) {
         double matchingDistance = computeMatchingDistance(tip, detectedTip);
@@ -356,9 +356,9 @@ bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(const DetectedObject& d
 
 Tip TipTrackerImpl::makeTip(DetectedObject& detectedObject, int frameIndex, int tipIndex) {
     int nbDetectionsToComputeAverageTipPositionAndSize =
-        configurationReader.getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
+        configuration.trackingNbDetectionsToComputeAverageTipPositionAndSize;
     int maxFramesAfterWhichATipIsConsideredLost =
-        configurationReader.getTrackingMaxFramesAfterWhichATipIsConsideredLost();
+        configuration.trackingMaxFramesAfterWhichATipIsConsideredLost;
 
     string tipId = "T" + to_string(frameIndex) + "_" + to_string(tipIndex);
 

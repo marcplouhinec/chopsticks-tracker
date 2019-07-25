@@ -3,19 +3,18 @@
 
 #include <optional>
 #include <vector>
+#include "../../model/Configuration.hpp"
 #include "../../model/tracking/Tip.hpp"
-#include "../ConfigurationReader.hpp"
 #include "../ChopstickTracker.hpp"
 
 namespace service {
 
     class ChopstickTrackerImpl : public ChopstickTracker {
         private:
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
 
         public:
-            ChopstickTrackerImpl(ConfigurationReader& configurationReader) :
-                configurationReader(configurationReader) {}
+            ChopstickTrackerImpl(model::Configuration& configuration) : configuration(configuration) {}
 
             virtual ~ChopstickTrackerImpl() {}
 

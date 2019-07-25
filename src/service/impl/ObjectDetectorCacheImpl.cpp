@@ -16,7 +16,7 @@ using std::runtime_error;
 namespace fs = boost::filesystem;
 
 vector<DetectedObject> ObjectDetectorCacheImpl::detectObjectsAt(int frameIndex) {
-    fs::path rootCacheFolderPath = configurationReader.getObjectDetectionCacheFolderPath();
+    fs::path rootCacheFolderPath = configuration.objectDetectionCacheFolderPath;
     fs::path cacheFolderPath(rootCacheFolderPath / videoPath.filename());
 
     // Create the cache folder if it doesn't exist

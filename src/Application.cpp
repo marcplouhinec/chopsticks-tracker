@@ -66,8 +66,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Prepare services
-    ConfigurationReaderImpl configurationReader(configurationPath); // TODO create a Configuration object and pass it to other services instead of passing the ConfigurationReader
+    // Initialize services
+    ConfigurationReaderImpl configurationReader;
+    Configuration configuration = configurationReader.read(configurationPath);
 
     circular_buffer<FrameDetectionResult> frameDetectionResults(2);
     list<Tip> tips;
@@ -77,46 +78,43 @@ int main(int argc, char* argv[]) {
     int nbFrames = videoFrameReader.getNbFrames();
     int frameWidth = videoFrameReader.getFrameWidth();
     int frameHeight = videoFrameReader.getFrameHeight();
-    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
+    int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
     const cv::Scalar blackColor(0, 0, 0);
     cv::Mat outputFrame(frameHeight + 2 * frameMargin, frameWidth + 2 * frameMargin, CV_8UC3, blackColor);
 
-    string detectionImpl = configurationReader.getObjectDetectionImplementation();
     unique_ptr<ObjectDetector> pInnerObjectDetector{};
-    if (detectionImpl == "darknet") {
-        pInnerObjectDetector.reset(new ObjectDetectorDarknetImpl(configurationReader, videoFrameReader));
-    } else if (detectionImpl == "opencvdnn") {
-        pInnerObjectDetector.reset(new ObjectDetectorOpenCvDnnImpl(configurationReader, videoFrameReader));
+    if (configuration.objectDetectionImplementation == "darknet") {
+        pInnerObjectDetector.reset(new ObjectDetectorDarknetImpl(configuration, videoFrameReader));
+    } else if (configuration.objectDetectionImplementation == "opencvdnn") {
+        pInnerObjectDetector.reset(new ObjectDetectorOpenCvDnnImpl(configuration, videoFrameReader));
     }
     ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
-    ObjectDetectorCacheImpl objectDetector(configurationReader, innerObjectDetector, videoPath);
+    ObjectDetectorCacheImpl objectDetector(configuration, innerObjectDetector, videoPath);
     
-    TipTrackerImpl tipTracker(configurationReader);
-    ChopstickTrackerImpl chopstickTracker(configurationReader);
+    TipTrackerImpl tipTracker(configuration);
+    ChopstickTrackerImpl chopstickTracker(configuration);
 
-    string renderingWriterImplementation = configurationReader.getRenderingWriterImplementation();
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
-    if (renderingWriterImplementation == "mjpeg") {
+    if (configuration.renderingWriterImplementation == "mjpeg") {
         pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(
-            configurationReader,
+            configuration,
             videoPath,
             videoFrameReader.getFps(),
             outputFrame.cols,
             outputFrame.rows));
-    } else if (renderingWriterImplementation == "multijpeg") {
-        pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configurationReader, videoPath));
+    } else if (configuration.renderingWriterImplementation == "multijpeg") {
+        pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configuration, videoPath));
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
-    vector<string> renderingPainterImplementations = configurationReader.getRenderingPainterImplementations();
     vector<unique_ptr<VideoFramePainter>> pVideoFramePainters;
-    for (string& renderingPainterImplementation : renderingPainterImplementations) {
+    for (string& renderingPainterImplementation : configuration.renderingPainterImplementations) {
         if (renderingPainterImplementation == "detectedobjects") {
             pVideoFramePainters.push_back(unique_ptr<VideoFramePainter>(
-                new VideoFramePainterDetectedObjectsImpl(configurationReader, frameDetectionResults)));
+                new VideoFramePainterDetectedObjectsImpl(configuration, frameDetectionResults)));
         } else if (renderingPainterImplementation == "trackedobjects") {
             pVideoFramePainters.push_back(unique_ptr<VideoFramePainter>(
-                new VideoFramePainterTrackedObjectsImpl(configurationReader, tips, chopsticks)));
+                new VideoFramePainterTrackedObjectsImpl(configuration, tips, chopsticks)));
         }
     }
 

@@ -15,7 +15,7 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
         tipById.emplace(tip.id, tip);
     }
 
-    int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
+    int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
 
     for (Chopstick& chopstick : chopsticks) {
         const Tip& tip1 = tipById[chopstick.tip1Id];

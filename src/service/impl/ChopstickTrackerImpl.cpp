@@ -200,10 +200,9 @@ vector<reference_wrapper<DetectedObject>> ChopstickTrackerImpl::extractChopstick
 vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsWithDetectedChopsticks(
     const list<Tip>& tips, const vector<DetectedObject>& detectedChopsticks) {
 
-    int minChopstickLength = configurationReader.getTrackingMinChopstickLengthInPixels();
-    int maxChopstickLength = configurationReader.getTrackingMaxChopstickLengthInPixels();
-    double minIOUToConsiderTwoTipsAsAChopstick =
-        configurationReader.getTrackingMinIOUToConsiderTwoTipsAsAChopstick();
+    int minChopstickLength = configuration.trackingMinChopstickLengthInPixels;
+    int maxChopstickLength = configuration.trackingMaxChopstickLengthInPixels;
+    double minIOUToConsiderTwoTipsAsAChopstick = configuration.trackingMinIOUToConsiderTwoTipsAsAChopstick;
 
     struct IouDescComparator {
         bool operator() (const ChopstickMatchResult& r1, const ChopstickMatchResult& r2) const {
@@ -369,7 +368,7 @@ Chopstick ChopstickTrackerImpl::makeChopstick(
     const bool isRejectedBecauseOfConflict) {
 
     int maxFramesAfterWhichAChopstickIsConsideredLost = 
-        configurationReader.getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost();
+        configuration.trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
     circular_buffer<TrackingStatus> recentTrackingStatuses(maxFramesAfterWhichAChopstickIsConsideredLost);
     recentTrackingStatuses.push_back(TrackingStatus::DETECTED_ONCE);

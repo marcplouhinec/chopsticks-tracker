@@ -2,9 +2,9 @@
 #define SERVICE_VIDEO_FRAME_WRITER_MULTI_JPEG_IMPL
 
 #include <boost/filesystem.hpp>
+#include "../../model/Configuration.hpp"
 #include "../../utils/logging.hpp"
 #include "../VideoFrameWriter.hpp"
-#include "../ConfigurationReader.hpp"
 
 namespace service {
 
@@ -12,7 +12,7 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            ConfigurationReader& configurationReader;
+            model::Configuration& configuration;
             boost::filesystem::path inputVideoPath;
 
             boost::filesystem::path outputFolderPath;
@@ -21,9 +21,9 @@ namespace service {
 
         public:
             VideoFrameWriterMultiJpegImpl(
-                ConfigurationReader& configurationReader,
+                model::Configuration& configuration,
                 boost::filesystem::path inputVideoPath) :
-                    configurationReader(configurationReader),
+                    configuration(configuration),
                     inputVideoPath(inputVideoPath) {}
 
             virtual ~VideoFrameWriterMultiJpegImpl() {};

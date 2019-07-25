@@ -11,9 +11,8 @@ void VideoFrameWriterMultiJpegImpl::writeFrameAt(int frameIndex, cv::Mat& frame)
     if (!folderInitialized) {
         LOG_INFO(logger) << "Initialize the output folder...";
 
-        fs::path rootOutputPath = configurationReader.getRenderingOutputPath();
         string outputFolderName = inputVideoPath.stem().string();
-        outputFolderPath = fs::path(rootOutputPath / outputFolderName);
+        outputFolderPath = fs::path(configuration.renderingOutputPath / outputFolderName);
 
         if (fs::is_directory(outputFolderPath) || fs::exists(outputFolderPath)) {
             if (!fs::remove_all(outputFolderPath)) {
