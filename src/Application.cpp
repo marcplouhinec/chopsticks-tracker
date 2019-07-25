@@ -120,7 +120,6 @@ int main(int argc, char* argv[]) {
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";
-    int bestMargin = 0;
     FrameOffset accumulatedFrameOffset(0, 0);
 
     for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
