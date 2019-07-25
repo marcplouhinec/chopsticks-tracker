@@ -16,37 +16,41 @@ namespace model {
             DetectedObject() : Rectangle() {}
 
             explicit DetectedObject(
-                int x, int y, int width, int height, DetectedObjectType objectType, float confidence) : 
+                double x,
+                double y,
+                double width,
+                double height,
+                DetectedObjectType objectType,
+                float confidence) : 
                     Rectangle(x, y, width, height),
                     objectType(objectType),
                     confidence(confidence) {}
 
+            DetectedObject copyAndTranslate(double dx, double dy) {
+                return DetectedObject(x + dx, y + dy, width, height, objectType, confidence);
+            }
+
             bool operator== (const DetectedObject& other) const {
-                return x == other.x
-                    && y == other.y
-                    && width == other.width
-                    && height == other.height
+                return std::abs(x - other.x) < std::numeric_limits<double>::epsilon()
+                    && std::abs(y - other.y) < std::numeric_limits<double>::epsilon()
+                    && std::abs(width - other.width) < std::numeric_limits<double>::epsilon()
+                    && std::abs(height - other.height) < std::numeric_limits<double>::epsilon()
                     && objectType == other.objectType;
             }
 
             bool operator!= (const DetectedObject& other) const {
-                return x != other.x
-                    || y != other.y
-                    || width != other.width
-                    || height != other.height
-                    || objectType != other.objectType;
+                return !(*this == other);
             }
 
             struct Hasher
             {
+                Rectangle::Hasher rectangleHasher;
+
                 std::size_t operator()(const DetectedObject& o) const
                 {
                     std::size_t res = 17;
-                    res = res * 31 + std::hash<int>()( o.x );
-                    res = res * 31 + std::hash<int>()( o.y );
-                    res = res * 31 + std::hash<int>()( o.width );
-                    res = res * 31 + std::hash<int>()( o.height );
-                    res = res * 31 + std::hash<DetectedObjectType>()( o.objectType );
+                    res = res * 31 + rectangleHasher(o);
+                    res = res * 31 + std::hash<DetectedObjectType>()(o.objectType);
                     return res;
                 }
             };

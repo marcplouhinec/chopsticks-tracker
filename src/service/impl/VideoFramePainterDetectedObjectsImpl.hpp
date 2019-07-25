@@ -27,7 +27,8 @@ namespace service {
                     frameDetectionResults(frameDetectionResults) {}
             virtual ~VideoFramePainterDetectedObjectsImpl() {};
 
-            virtual void paintOnFrame(int frameIndex, cv::Mat& frame);
+            virtual void paintOnFrame(
+                int frameIndex, cv::Mat& frame, model::FrameOffset accumulatedFrameOffset);
 
         private:
             model::FrameDetectionResult& findFrameDetectionResultByFrameIndex(int frameIndex);

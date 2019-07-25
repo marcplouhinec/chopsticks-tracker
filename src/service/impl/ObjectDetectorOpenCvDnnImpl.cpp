@@ -108,8 +108,8 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
                     float y = centerY - (height / 2);
 
                     DetectedObject detectedObject(
-                        round(x), round(y),
-                        round(width), round(height),
+                        x, y,
+                        width, height,
                         objectTypesByClassId[classId], 
                         confidence);
                     detectedObjects.push_back(detectedObject);

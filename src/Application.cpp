@@ -67,10 +67,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Prepare services
-    ConfigurationReaderImpl configurationReader(configurationPath);
+    ConfigurationReaderImpl configurationReader(configurationPath); // TODO create a Configuration object and pass it to other services instead of passing the ConfigurationReader
 
     circular_buffer<FrameDetectionResult> frameDetectionResults(2);
-    circular_buffer<FrameDetectionResult> compensatedFramesDetectionResults(2);
     list<Tip> tips;
     list<Chopstick> chopsticks;
 
@@ -109,16 +108,17 @@ int main(int argc, char* argv[]) {
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
-    string renderingPainterImplementation = configurationReader.getRenderingPainterImplementation();
-    unique_ptr<VideoFramePainter> pVideoFramePainter{};
-    if (renderingPainterImplementation == "detectedobjects") {
-        pVideoFramePainter.reset(new VideoFramePainterDetectedObjectsImpl(
-            configurationReader, compensatedFramesDetectionResults));
-    } else if (renderingPainterImplementation == "trackedobjects") {
-        pVideoFramePainter.reset(new VideoFramePainterTrackedObjectsImpl(
-            configurationReader, tips, chopsticks));
+    vector<string> renderingPainterImplementations = configurationReader.getRenderingPainterImplementations();
+    vector<unique_ptr<VideoFramePainter>> pVideoFramePainters;
+    for (string& renderingPainterImplementation : renderingPainterImplementations) {
+        if (renderingPainterImplementation == "detectedobjects") {
+            pVideoFramePainters.push_back(unique_ptr<VideoFramePainter>(
+                new VideoFramePainterDetectedObjectsImpl(configurationReader, frameDetectionResults)));
+        } else if (renderingPainterImplementation == "trackedobjects") {
+            pVideoFramePainters.push_back(unique_ptr<VideoFramePainter>(
+                new VideoFramePainterTrackedObjectsImpl(configurationReader, tips, chopsticks)));
+        }
     }
-    VideoFramePainter& videoFramePainter = *pVideoFramePainter;
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";
@@ -138,10 +138,11 @@ int main(int argc, char* argv[]) {
 
         // Find how much we need to compensate for camera motion
         auto nbDetectionResults = frameDetectionResults.size();
+        FrameOffset frameOffset(0, 0);
         if (nbDetectionResults >= 2) {
             auto& prevDetectionResult = frameDetectionResults[nbDetectionResults - 2];
 
-            FrameOffset frameOffset = tipTracker.computeOffsetToCompensateForCameraMotion(
+            frameOffset = tipTracker.computeOffsetToCompensateForCameraMotion(
                 prevDetectionResult, frameDetectionResult);
             accumulatedFrameOffset += frameOffset;
 
@@ -149,22 +150,13 @@ int main(int argc, char* argv[]) {
                 << ", dy = " << frameOffset.dy;
         }
 
-        // Compensate for camera motion
-        vector<DetectedObject> compensatedObjects;
-        for (auto& o : frameDetectionResult.detectedObjects) {
-            compensatedObjects.push_back(DetectedObject(
-                o.x - accumulatedFrameOffset.dx, o.y - accumulatedFrameOffset.dy,
-                o.width, o.height, o.objectType, o.confidence));
-        }
-        FrameDetectionResult compensatedFramesDetectionResult(frameIndex, compensatedObjects);
-        compensatedFramesDetectionResults.push_back(compensatedFramesDetectionResult);
-
         // Update the tracked tips anc chopsticks
-        tipTracker.updateTipsWithNewDetectionResult(tips, compensatedFramesDetectionResult);
+        tipTracker.updateTipsWithNewDetectionResult(
+            tips, frameDetectionResult, frameOffset, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
 
         chopstickTracker.updateChopsticksWithNewDetectionResult(
-            chopsticks, tips, compensatedFramesDetectionResult);
+            chopsticks, tips, frameDetectionResult, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 
         // Copy the video frame into a bigger one in order compensate for camera motion
@@ -180,7 +172,9 @@ int main(int argc, char* argv[]) {
             bestMargin = abs(accumulatedFrameOffset.dy);
         }
 
-        videoFramePainter.paintOnFrame(frameIndex, outputFrame);
+        for (auto& pPainter : pVideoFramePainters) {
+            pPainter->paintOnFrame(frameIndex, outputFrame, accumulatedFrameOffset);
+        }
         LOG_INFO(logger) << "Frame painted.";
 
         videoFrameWriter.writeFrameAt(frameIndex, outputFrame);

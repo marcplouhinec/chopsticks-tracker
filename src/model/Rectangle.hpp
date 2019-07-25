@@ -1,31 +1,32 @@
 #ifndef MODEL_RECTANGLE
 #define MODEL_RECTANGLE
 
+#include <limits>
 #include <math.h>
 
 namespace model {
 
     class Rectangle {
         public:
-            int x;
-            int y;
-            int width;
-            int height;
+            double x;
+            double y;
+            double width;
+            double height;
 
         public:
             static Rectangle getBoundingBox(const Rectangle& rect1, const Rectangle& rect2) {
-                int x1 = std::min(rect1.x, rect2.x);
-                int y1 = std::min(rect1.y, rect2.y);
-                int x2 = std::max(rect1.x + rect1.width, rect2.x + rect2.width);
-                int y2 = std::max(rect1.y + rect1.height, rect2.y + rect2.height);
+                double x1 = std::min(rect1.x, rect2.x);
+                double y1 = std::min(rect1.y, rect2.y);
+                double x2 = std::max(rect1.x + rect1.width, rect2.x + rect2.width);
+                double y2 = std::max(rect1.y + rect1.height, rect2.y + rect2.height);
                 return Rectangle(x1, y1, x2 - x1, y2 - y1);
             }
 
             static Rectangle getIntersection(const Rectangle& rect1, const Rectangle& rect2) {
-                int x1 = std::max(rect1.x, rect2.x);
-                int y1 = std::max(rect1.y, rect2.y);
-                int x2 = std::min(rect1.x + rect1.width, rect2.x + rect2.width);
-                int y2 = std::min(rect1.y + rect1.height, rect2.y + rect2.height);
+                double x1 = std::max(rect1.x, rect2.x);
+                double y1 = std::max(rect1.y, rect2.y);
+                double x2 = std::min(rect1.x + rect1.width, rect2.x + rect2.width);
+                double y2 = std::min(rect1.y + rect1.height, rect2.y + rect2.height);
 
                 if (x1 < x2 && y1 < y2) {
                     return Rectangle(x1, y1, x2 - x1, y2 - y1);
@@ -43,22 +44,22 @@ namespace model {
         public:
             Rectangle() {}
             
-            explicit Rectangle(int x, int y, int width, int height) :
+            explicit Rectangle(double x, double y, double width, double height) :
                 x(x), y(y), width(width), height(height) {}
 
-            int area() const {
+            double area() const {
                 return width * height;
             }
 
-            int centerX() const {
-                return x + std::round(((double) width) / 2.0);
+            double centerX() const {
+                return x + width / 2.0;
             }
 
-            int centerY() const {
-                return y + std::round(((double) height) / 2.0);
+            double centerY() const {
+                return y + height / 2.0;
             }
 
-            bool isOverlappingWith(Rectangle& other) {
+            bool isOverlappingWith(const Rectangle& other) const {
                 return x < other.x + other.width
                     && x + width > other.x
                     && y < other.y + other.height
@@ -66,17 +67,14 @@ namespace model {
             }
 
             bool operator== (const Rectangle& other) const {
-                return x == other.x
-                    && y == other.y
-                    && width == other.width
-                    && height == other.height;
+                return std::abs(x - other.x) < std::numeric_limits<double>::epsilon()
+                    && std::abs(y - other.y) < std::numeric_limits<double>::epsilon()
+                    && std::abs(width - other.width) < std::numeric_limits<double>::epsilon()
+                    && std::abs(height - other.height) < std::numeric_limits<double>::epsilon();
             }
 
             bool operator!= (const Rectangle& other) const {
-                return x != other.x
-                    || y != other.y
-                    || width != other.width
-                    || height != other.height;
+                return !(*this == other);
             }
 
             bool operator< (const Rectangle& other) const {
@@ -97,10 +95,10 @@ namespace model {
                 std::size_t operator()(const Rectangle& o) const
                 {
                     std::size_t res = 17;
-                    res = res * 31 + std::hash<int>()( o.x );
-                    res = res * 31 + std::hash<int>()( o.y );
-                    res = res * 31 + std::hash<int>()( o.width );
-                    res = res * 31 + std::hash<int>()( o.height );
+                    res = res * 31 + std::hash<double>()( o.x );
+                    res = res * 31 + std::hash<double>()( o.y );
+                    res = res * 31 + std::hash<double>()( o.width );
+                    res = res * 31 + std::hash<double>()( o.height );
                     return res;
                 }
             };

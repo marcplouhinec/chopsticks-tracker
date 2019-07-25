@@ -129,9 +129,24 @@ fs::path ConfigurationReaderImpl::getRenderingOutputPath() {
     return renderingOutputPath;
 }
 
-std::string ConfigurationReaderImpl::getRenderingPainterImplementation() {
+std::vector<std::string> ConfigurationReaderImpl::getRenderingPainterImplementations() {
     loadConfigurationIfNecessary();
-    return renderingPainterImplementation;
+    return renderingPainterImplementations;
+}
+
+bool ConfigurationReaderImpl::getRenderingDetectedObjectsPainterShowTips() {
+    loadConfigurationIfNecessary();
+    return renderingDetectedObjectsPainterShowTips;
+}
+
+bool ConfigurationReaderImpl::getRenderingDetectedObjectsPainterShowChopsticks() {
+    loadConfigurationIfNecessary();
+    return renderingDetectedObjectsPainterShowChopsticks;
+}
+
+bool ConfigurationReaderImpl::getRenderingDetectedObjectsPainterShowArms() {
+    loadConfigurationIfNecessary();
+    return renderingDetectedObjectsPainterShowArms;
 }
 
 std::string ConfigurationReaderImpl::getRenderingWriterImplementation() {
@@ -199,7 +214,19 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
-    renderingPainterImplementation = propTree.get<string>("rendering.painterImplementation");
+    string renderingPainterImplementationsAsString =
+        propTree.get<string>("rendering.painterImplementations");
+    boost::split(
+        renderingPainterImplementations,
+        renderingPainterImplementationsAsString,
+        boost::is_any_of(","),
+        boost::token_compress_on);
+    renderingDetectedObjectsPainterShowTips =
+        propTree.get<bool>("rendering.detectedobjectsPainter_showTips");
+    renderingDetectedObjectsPainterShowChopsticks =
+        propTree.get<bool>("rendering.detectedobjectsPainter_showChopsticks");
+    renderingDetectedObjectsPainterShowArms =
+        propTree.get<bool>("rendering.detectedobjectsPainter_showArms");
     renderingWriterImplementation = propTree.get<string>("rendering.writerImplementation");
     renderingVideoFrameMarginsInPixels = propTree.get<int>("rendering.videoFrameMarginsInPixels");
 
@@ -239,7 +266,13 @@ void ConfigurationReaderImpl::loadConfigurationIfNecessary() {
         << trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
     LOG_INFO(logger) << "\tRendering output path: " << renderingOutputPath.string();
-    LOG_INFO(logger) << "\tRendering painter implementation: " << renderingPainterImplementation;
+    LOG_INFO(logger) << "\tRendering painter implementations: " << renderingPainterImplementationsAsString;
+    LOG_INFO(logger) << "\tRendering detected object painter - show tips: "
+        << renderingDetectedObjectsPainterShowTips;
+    LOG_INFO(logger) << "\tRendering detected object painter - show chopsticks: "
+        << renderingDetectedObjectsPainterShowChopsticks;
+    LOG_INFO(logger) << "\tRendering detected object painter - show arms: "
+        << renderingDetectedObjectsPainterShowArms;
     LOG_INFO(logger) << "\tRendering writer implementation: " << renderingWriterImplementation;
     LOG_INFO(logger) << "\tRendering video frame margins: " << renderingVideoFrameMarginsInPixels;
 }

@@ -6,7 +6,6 @@ using namespace model;
 using namespace service;
 using std::map;
 using std::min;
-using std::round;
 using std::string;
 using std::vector;
 
@@ -99,8 +98,8 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
                 float y = centerY - (height / 2);
 
                 DetectedObject detectedObject(
-                    round(x), round(y),
-                    round(width), round(height),
+                    x, y,
+                    width, height,
                     objectType, 
                     confidence);
                 detectedObjects.push_back(detectedObject);

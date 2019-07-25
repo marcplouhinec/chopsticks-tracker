@@ -17,10 +17,22 @@ using std::vector;
 using boost::circular_buffer;
 
 void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
-    list<Chopstick>& chopsticks, const list<Tip>& tips, FrameDetectionResult& detectionResult) {
+    list<Chopstick>& chopsticks,
+    const list<Tip>& tips,
+    FrameDetectionResult& detectionResult,
+    FrameOffset accumulatedFrameOffset) {
+    
+    // Extract the detected chopsticks and translate them according to the frame offset
+    auto untranslatedDetectedChopsticks = extractChopstickObjects(detectionResult.detectedObjects);
+
+    vector<DetectedObject> detectedChopsticks;
+    for (const Rectangle& untranslatedDetectedChopstick : untranslatedDetectedChopsticks) {
+        DetectedObject& untranslatedDetectedObject = (DetectedObject&) untranslatedDetectedChopstick;
+        detectedChopsticks.push_back(untranslatedDetectedObject.copyAndTranslate(
+            -accumulatedFrameOffset.dx, -accumulatedFrameOffset.dy));
+    }
 
     // Try to match tips with each others by using detected chopsticks
-    auto detectedChopsticks = extractChopstickObjects(detectionResult.detectedObjects);
     auto matchResults = matchTipsWithDetectedChopsticks(tips, detectedChopsticks);
     
     // Find the conflict-less results independently from existing chopsticks
@@ -134,7 +146,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
             iouSum += iou;
         }
 
-        chopsticksAndIous.insert({chopstick, iouSum}); // TODO avg or sum?
+        chopsticksAndIous.insert({chopstick, iouSum});
     }
 
     // Find chopsticks to accept and reject
@@ -186,7 +198,7 @@ vector<reference_wrapper<DetectedObject>> ChopstickTrackerImpl::extractChopstick
 }
 
 vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsWithDetectedChopsticks(
-    const list<Tip>& tips, const vector<reference_wrapper<DetectedObject>>& detectedChopsticks) {
+    const list<Tip>& tips, const vector<DetectedObject>& detectedChopsticks) {
 
     int minChopstickLength = configurationReader.getTrackingMinChopstickLengthInPixels();
     int maxChopstickLength = configurationReader.getTrackingMaxChopstickLengthInPixels();
@@ -226,7 +238,7 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTi
             // Try to match the two tips with a detected chopstick
             Rectangle tipsBoundingBox = Rectangle::getBoundingBox(tip1, tip2);
             int boundingBoxArea = tipsBoundingBox.area();
-            for (DetectedObject& detectedChopstick : detectedChopsticks) {
+            for (const DetectedObject& detectedChopstick : detectedChopsticks) {
                 if (!tipsBoundingBox.isOverlappingWith(detectedChopstick)) {
                     continue;
                 }

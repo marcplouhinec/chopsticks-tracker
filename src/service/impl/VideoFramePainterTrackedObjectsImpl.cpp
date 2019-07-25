@@ -4,9 +4,11 @@
 using namespace model;
 using namespace service;
 using std::map;
+using std::round;
 using std::string;
 
-void VideoFramePainterTrackedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat& frame) {
+void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
+    int frameIndex, cv::Mat& frame, FrameOffset accumulatedFrameOffset) {
     // Index tips by their IDs
     map<string, Tip> tipById;
     for (const Tip& tip : tips) {
@@ -39,8 +41,8 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat& 
 
         int thickness = chopstick.isRejectedBecauseOfConflict ? 1 : 2;
         
-        cv::Point point1(tip1.centerX() + frameMargin, tip1.centerY() + frameMargin);
-        cv::Point point2(tip2.centerX() + frameMargin, tip2.centerY() + frameMargin);
+        cv::Point point1(round(tip1.centerX() + frameMargin), round(tip1.centerY() + frameMargin));
+        cv::Point point2(round(tip2.centerX() + frameMargin), round(tip2.centerY() + frameMargin));
         cv::line(frame, point1, point2, color, thickness);
     }
 
@@ -63,7 +65,11 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat& 
                 break;
         }
 
-        cv::Rect rect(tip.x + frameMargin, tip.y + frameMargin, tip.width, tip.height);
+        cv::Rect rect(
+            round(tip.x + frameMargin),
+            round(tip.y + frameMargin),
+            round(tip.width),
+            round(tip.height));
         cv::rectangle(frame, rect, color);
         cv::putText(frame, tip.id, cv::Point(rect.x, rect.y + 16.0), cv::FONT_HERSHEY_SIMPLEX, 0.5, color);
     }

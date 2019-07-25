@@ -26,8 +26,8 @@ namespace model {
                 boost::circular_buffer<TrackingStatus> recentTrackingStatuses,
                 int nbDetectionsAsBigTip,
                 int nbDetectionsAsSmallTip,
-                int x, int y,
-                int width, int height) :
+                double x, double y,
+                double width, double height) :
                     id(id),
                     recentShapes(recentShapes),
                     recentTrackingStatuses(recentTrackingStatuses),

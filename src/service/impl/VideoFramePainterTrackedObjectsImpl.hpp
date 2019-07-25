@@ -33,7 +33,8 @@ namespace service {
 
             virtual ~VideoFramePainterTrackedObjectsImpl() {};
 
-            virtual void paintOnFrame(int frameIndex, cv::Mat& frame);
+            virtual void paintOnFrame(
+                int frameIndex, cv::Mat& frame, model::FrameOffset accumulatedFrameOffset);
     };
 
 }

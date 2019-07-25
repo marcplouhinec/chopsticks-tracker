@@ -22,7 +22,8 @@ namespace service {
             virtual void updateChopsticksWithNewDetectionResult(
                 std::list<model::Chopstick>& chopsticks,
                 const std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult);
+                model::FrameDetectionResult& detectionResult,
+                model::FrameOffset accumulatedFrameOffset);
         
         private:
             struct ChopstickMatchResult {
@@ -63,7 +64,7 @@ namespace service {
             
             std::vector<ChopstickMatchResult> matchTipsWithDetectedChopsticks(
                 const std::list<model::Tip>& tips,
-                const std::vector<std::reference_wrapper<model::DetectedObject>>& detectedChopsticks);
+                const std::vector<model::DetectedObject>& detectedChopsticks);
 
             /**
              * The matchResults input parameter contains many potential good matches between tips

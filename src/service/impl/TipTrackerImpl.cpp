@@ -14,7 +14,6 @@ using std::max;
 using std::min;
 using std::pair;
 using std::reference_wrapper;
-using std::round;
 using std::set;
 using std::string;
 using std::to_string;
@@ -55,21 +54,33 @@ FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
 }
 
 void TipTrackerImpl::updateTipsWithNewDetectionResult(
-    list<Tip>& tips, FrameDetectionResult& detectionResult) {
+    list<Tip>& tips,
+    FrameDetectionResult& detectionResult,
+    FrameOffset frameOffset,
+    FrameOffset accumulatedFrameOffset) {
 
     // Load configuration
     int nbDetectionsToComputeAverageTipPositionAndSize =
         configurationReader.getTrackingNbDetectionsToComputeAverageTipPositionAndSize();
+    
+    // Extract the tips and translate them according to the frame offset
+    auto untranslatedDetectedTips = extractObjectsOfTypes(
+        detectionResult.detectedObjects, { DetectedObjectType::SMALL_TIP, DetectedObjectType::BIG_TIP });
+    
+    vector<DetectedObject> detectedTips;
+    for (const Rectangle& untranslatedDetectedTip : untranslatedDetectedTips) {
+        DetectedObject& untranslatedDetectedObject = (DetectedObject&) untranslatedDetectedTip;
+        detectedTips.push_back(untranslatedDetectedObject.copyAndTranslate(
+            -accumulatedFrameOffset.dx, -accumulatedFrameOffset.dy));
+    }
 
     // If there is no existing tip, transform all the detected ones in the frame
     if (tips.size() == 0) {
         int tipIndex = 0;
-        for (auto& detectedObject : detectionResult.detectedObjects) {
-            if (DetectedObjectTypeHelper::isTip(detectedObject.objectType)) {
-                Tip tip = makeTip(detectedObject, detectionResult.frameIndex, tipIndex);
-                tipIndex++;
-                tips.push_back(tip);
-            }
+        for (auto& detectedTip : detectedTips) {
+            Tip tip = makeTip(detectedTip, detectionResult.frameIndex, tipIndex);
+            tipIndex++;
+            tips.push_back(tip);
         }
         return;
     }
@@ -79,10 +90,12 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     for (auto& tip : tips) {
         wrappedTips.push_back(tip);
     }
-    auto detectedTips = extractObjectsOfTypes(
-        detectionResult.detectedObjects, { DetectedObjectType::SMALL_TIP, DetectedObjectType::BIG_TIP });
+    vector<reference_wrapper<Rectangle>> wrappedDetectedTips;
+    for (auto& detectedTip : detectedTips) {
+        wrappedDetectedTips.push_back(detectedTip);
+    }
     auto matchResults =
-        matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(wrappedTips, detectedTips);
+        matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(wrappedTips, wrappedDetectedTips);
     
     map<string, DetectedObject> matchedObjectByTipId;
     for (auto& matchResult : matchResults) {
@@ -119,10 +132,10 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
                 avgWidth += shape.width;
                 avgHeight += shape.height;
             }
-            tip.x = round(avgX / tip.recentShapes.size());
-            tip.y = round(avgY / tip.recentShapes.size());
-            tip.width = round(avgWidth / tip.recentShapes.size());
-            tip.height = round(avgHeight / tip.recentShapes.size());
+            tip.x = avgX / tip.recentShapes.size();
+            tip.y = avgY / tip.recentShapes.size();
+            tip.width = avgWidth / tip.recentShapes.size();
+            tip.height = avgHeight / tip.recentShapes.size();
 
             // Update the tip status
             tip.recentTrackingStatuses.push_back(TrackingStatus::DETECTED);
@@ -134,7 +147,11 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
         if (hiddenTipIds.find(tip.id) != hiddenTipIds.end()) {
             // Copy the same position and size
             Rectangle lastShape = tip.recentShapes.back();
+            lastShape.x = lastShape.x + frameOffset.dx;
+            lastShape.y = lastShape.y + frameOffset.dy;
             tip.recentShapes.push_back(lastShape);
+            tip.x = lastShape.x;
+            tip.y = lastShape.y;
 
             // Update the tip status
             tip.recentTrackingStatuses.push_back(TrackingStatus::HIDDEN_BY_ARM);
@@ -153,7 +170,11 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
 
         // Copy the same position and size
         Rectangle lastShape = tip.recentShapes.back();
+        lastShape.x = lastShape.x + frameOffset.dx;
+        lastShape.y = lastShape.y + frameOffset.dy;
         tip.recentShapes.push_back(lastShape);
+        tip.x = lastShape.x;
+        tip.y = lastShape.y;
 
         // Update the tip status
         tip.recentTrackingStatuses.push_back(tipLost ? TrackingStatus::LOST : TrackingStatus::NOT_DETECTED);

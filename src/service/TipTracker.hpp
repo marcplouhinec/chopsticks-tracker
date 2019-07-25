@@ -18,7 +18,9 @@ namespace service {
 
             virtual void updateTipsWithNewDetectionResult(
                 std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult) = 0;
+                model::FrameDetectionResult& detectionResult,
+                model::FrameOffset frameOffset,
+                model::FrameOffset accumulatedFrameOffset) = 0;
     };
 
 }

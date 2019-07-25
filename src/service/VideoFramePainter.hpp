@@ -2,6 +2,7 @@
 #define SERVICE_VIDEO_FRAME_PAINTER
 
 #include <opencv2/opencv.hpp>
+#include "../model/tracking/FrameOffset.hpp"
 
 namespace service {
 
@@ -9,7 +10,8 @@ namespace service {
         public:
             virtual ~VideoFramePainter() {}
 
-            virtual void paintOnFrame(int frameIndex, cv::Mat& frame) = 0;
+            virtual void paintOnFrame(
+                int frameIndex, cv::Mat& frame, model::FrameOffset accumulatedFrameOffset) = 0;
     };
 
 }

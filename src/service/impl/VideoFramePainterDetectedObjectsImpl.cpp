@@ -1,18 +1,36 @@
 #include "VideoFramePainterDetectedObjectsImpl.hpp"
 
-#include <string>
+#include <math.h>
 #include <stdexcept>
+#include <string>
 
 using namespace model;
 using namespace service;
 using std::runtime_error;
 using std::to_string;
+using std::round;
 
-void VideoFramePainterDetectedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat& frame) {
+void VideoFramePainterDetectedObjectsImpl::paintOnFrame(
+    int frameIndex, cv::Mat& frame, FrameOffset accumulatedFrameOffset) {
+
     int frameMargin = configurationReader.getRenderingVideoFrameMarginsInPixels();
+    bool showTips = configurationReader.getRenderingDetectedObjectsPainterShowTips();
+    bool showChopsticks = configurationReader.getRenderingDetectedObjectsPainterShowChopsticks();
+    bool showArms = configurationReader.getRenderingDetectedObjectsPainterShowArms();
+
     FrameDetectionResult& frameDetectionResult = findFrameDetectionResultByFrameIndex(frameIndex);
 
     for (DetectedObject& detectedObject : frameDetectionResult.detectedObjects) {
+        if (!showTips && DetectedObjectTypeHelper::isTip(detectedObject.objectType)) {
+            continue;
+        }
+        if (!showChopsticks && detectedObject.objectType == DetectedObjectType::CHOPSTICK) {
+            continue;
+        }
+        if (!showArms && detectedObject.objectType == DetectedObjectType::ARM) {
+            continue;
+        }
+
         cv::Scalar color;
         switch (detectedObject.objectType) {
             case DetectedObjectType::ARM:
@@ -33,8 +51,8 @@ void VideoFramePainterDetectedObjectsImpl::paintOnFrame(int frameIndex, cv::Mat&
         cv::rectangle(
             frame,
             cv::Rect(
-                detectedObject.x + frameMargin,
-                detectedObject.y + frameMargin,
+                round(detectedObject.x + frameMargin - accumulatedFrameOffset.dx),
+                round(detectedObject.y + frameMargin - accumulatedFrameOffset.dy),
                 detectedObject.width,
                 detectedObject.height),
             color);

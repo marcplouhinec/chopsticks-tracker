@@ -36,7 +36,10 @@ namespace service {
             int trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
             boost::filesystem::path renderingOutputPath;
-            std::string renderingPainterImplementation;
+            std::vector<std::string> renderingPainterImplementations;
+            bool renderingDetectedObjectsPainterShowTips;
+            bool renderingDetectedObjectsPainterShowChopsticks;
+            bool renderingDetectedObjectsPainterShowArms;
             std::string renderingWriterImplementation;
             int renderingVideoFrameMarginsInPixels;
 
@@ -70,7 +73,10 @@ namespace service {
             virtual int getTrackingMaxFramesAfterWhichAChopstickIsConsideredLost();
 
             virtual boost::filesystem::path getRenderingOutputPath();
-            virtual std::string getRenderingPainterImplementation();
+            virtual std::vector<std::string> getRenderingPainterImplementations();
+            virtual bool getRenderingDetectedObjectsPainterShowTips();
+            virtual bool getRenderingDetectedObjectsPainterShowChopsticks();
+            virtual bool getRenderingDetectedObjectsPainterShowArms();
             virtual std::string getRenderingWriterImplementation();
             virtual int getRenderingVideoFrameMarginsInPixels();
         

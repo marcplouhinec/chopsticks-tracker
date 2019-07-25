@@ -25,7 +25,9 @@ namespace service {
 
             virtual void updateTipsWithNewDetectionResult(
                 std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult);
+                model::FrameDetectionResult& detectionResult,
+                model::FrameOffset frameOffset,
+                model::FrameOffset accumulatedFrameOffset);
 
         private:
             struct ObjectMatchResult {
