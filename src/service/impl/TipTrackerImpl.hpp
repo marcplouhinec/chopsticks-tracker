@@ -41,6 +41,11 @@ namespace service {
                 std::vector<model::DetectedObject>& detectedObjects,
                 const std::vector<model::DetectedObjectType>& objectTypes);
 
+            std::vector<model::DetectedObject> copyAndTranslateDetectedObjects(
+                const std::vector<std::reference_wrapper<model::Rectangle>>& detectedObjects,
+                const double dx,
+                const double dy);
+
             /**
              * For each tip from the current frame, try to match it with another tip from the previous
              * frame (by computing its "matching distance"). The result is sorted by matching distance
@@ -51,7 +56,9 @@ namespace service {
                 std::vector<std::reference_wrapper<model::Rectangle>>& currFrameDetectedTips);
 
             std::unordered_set<std::string> findTipIdsHiddenByAnArm(
-                std::list<model::Tip>& tips, model::FrameDetectionResult& detectionResult);
+                std::list<model::Tip>& tips,
+                model::FrameDetectionResult& detectionResult,
+                model::FrameOffset& accumulatedFrameOffset);
 
             bool isDetectedTipTooCloseToExistingTips(
                 const model::DetectedObject& detectedTip,
