@@ -1,58 +1,29 @@
-#include <iostream>
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
 #include "utils/logging.hpp"
+#include "utils/ProgramArgumentsParser.hpp"
 #include "ApplicationContext.hpp"
 
 using namespace model;
 using namespace service;
+using namespace utils;
 using std::list;
-using std::string;
 using std::vector;
 namespace lg = boost::log;
-namespace po = boost::program_options;
-namespace fs = boost::filesystem;
 
 int main(int argc, char* argv[]) {
     lg::add_common_attributes();
     lg::sources::severity_logger<lg::trivial::severity_level> logger;
 
     // Parse arguments
-    po::options_description programDesc("Allowed options");
-    programDesc.add_options()
-        ("help", "produce help message")
-        ("config-path", po::value<string>(), "path to the config.ini file")
-        ("video-path", po::value<string>(), "path to the video file");
-    
-    po::variables_map varsMap;
-    po::store(po::parse_command_line(argc, argv, programDesc), varsMap);
-    po::notify(varsMap);
-
-    if (varsMap.count("help")) {
-        std::cout << programDesc << "\n";
-        return 1;
-    }
-
-    fs::path configurationPath;
-    if (varsMap.count("config-path")) {
-        string relativeConfigurationPath = varsMap["config-path"].as<string>();
-        configurationPath = fs::canonical(fs::path(relativeConfigurationPath));
-    } else {
-        std::cerr << "--config-path not set. See --help for more info.\n";
-        return 1;
-    }
-
-    fs::path videoPath;
-    if (varsMap.count("video-path")) {
-        string relativeVideoPath = varsMap["video-path"].as<string>();
-        videoPath = fs::canonical(fs::path(relativeVideoPath));
-    } else {
-        std::cerr << "--video-path not set. See --help for more info.\n";
+    ProgramArguments programArguments;
+    try {
+        ProgramArgumentsParser programArgumentsParser;
+        programArguments = programArgumentsParser.parse(argc, argv);
+    } catch (std::runtime_error e) {
         return 1;
     }
 
     // Initialize the application context
-    ApplicationContext applicationContext(configurationPath, videoPath);
+    ApplicationContext applicationContext(programArguments.configurationPath, programArguments.videoPath);
     auto& videoProperties = applicationContext.getVideoProperties();
     auto& videoFrameReader = applicationContext.getVideoFrameReader();
     auto& objectDetector = applicationContext.getObjectDetector();
