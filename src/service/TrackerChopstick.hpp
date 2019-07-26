@@ -1,5 +1,5 @@
-#ifndef SERVICE_CHOPSTICK_TRACKER
-#define SERVICE_CHOPSTICK_TRACKER
+#ifndef SERVICE_TRACKER_CHOPSTICK
+#define SERVICE_TRACKER_CHOPSTICK
 
 #include <list>
 #include <vector>
@@ -9,9 +9,9 @@
 
 namespace service {
 
-    class ChopstickTracker {
+    class TrackerChopstick {
         public:
-            virtual ~ChopstickTracker() {}
+            virtual ~TrackerChopstick() {}
 
             virtual void updateChopsticksWithNewDetectionResult(
                 std::list<model::Chopstick>& chopsticks,
@@ -22,4 +22,4 @@ namespace service {
 
 }
 
-#endif // SERVICE_CHOPSTICK_TRACKER
+#endif // SERVICE_TRACKER_CHOPSTICK

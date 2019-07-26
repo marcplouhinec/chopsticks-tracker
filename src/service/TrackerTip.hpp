@@ -1,5 +1,5 @@
-#ifndef SERVICE_TIP_TRACKER
-#define SERVICE_TIP_TRACKER
+#ifndef SERVICE_TRACKER_TIP
+#define SERVICE_TRACKER_TIP
 
 #include <list>
 #include <vector>
@@ -9,9 +9,9 @@
 
 namespace service {
 
-    class TipTracker {
+    class TrackerTip {
         public:
-            virtual ~TipTracker() {}
+            virtual ~TrackerTip() {}
 
             virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
                 const std::vector<model::DetectedObject>& prevDetectedObjects,
@@ -27,4 +27,4 @@ namespace service {
 
 }
 
-#endif // SERVICE_TIP_TRACKER
+#endif // SERVICE_TRACKER_TIP

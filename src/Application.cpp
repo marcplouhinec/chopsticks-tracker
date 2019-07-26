@@ -7,8 +7,8 @@
 #include "service/impl/ObjectDetectorCacheImpl.hpp"
 #include "service/impl/ObjectDetectorDarknetImpl.hpp"
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
-#include "service/impl/TipTrackerImpl.hpp"
-#include "service/impl/ChopstickTrackerImpl.hpp"
+#include "service/impl/TrackerTipImpl.hpp"
+#include "service/impl/TrackerChopstickImpl.hpp"
 #include "service/impl/VideoFramePainterImageImpl.hpp"
 #include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
 #include "service/impl/VideoFramePainterTrackedObjectsImpl.hpp"
@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
     ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     ObjectDetectorCacheImpl objectDetector(configuration, innerObjectDetector, videoPath);
     
-    const TipTrackerImpl tipTracker(configuration);
-    const ChopstickTrackerImpl chopstickTracker(configuration);
+    const TrackerTipImpl TrackerTip(configuration);
+    const TrackerChopstickImpl TrackerChopstick(configuration);
 
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
     if (configuration.renderingWriterImplementation == "mjpeg") {
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
         // Find how much we need to compensate for camera motion
         FrameOffset frameOffset(0, 0);
         if (frameIndex >= 1) {
-            frameOffset = tipTracker.computeOffsetToCompensateForCameraMotion(
+            frameOffset = TrackerTip.computeOffsetToCompensateForCameraMotion(
                 prevFrameDetectedObjects, detectedObjects);
             accumulatedFrameOffset += frameOffset;
 
@@ -130,11 +130,11 @@ int main(int argc, char* argv[]) {
         }
 
         // Update the tracked tips anc chopsticks
-        tipTracker.updateTipsWithNewDetectionResult(
+        TrackerTip.updateTipsWithNewDetectionResult(
             tips, detectedObjects, frameIndex, frameOffset, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
 
-        chopstickTracker.updateChopsticksWithNewDetectionResult(
+        TrackerChopstick.updateChopsticksWithNewDetectionResult(
             chopsticks, tips, detectedObjects, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 

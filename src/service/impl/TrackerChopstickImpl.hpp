@@ -5,18 +5,18 @@
 #include <vector>
 #include "../../model/Configuration.hpp"
 #include "../../model/tracking/Tip.hpp"
-#include "../ChopstickTracker.hpp"
+#include "../TrackerChopstick.hpp"
 
 namespace service {
 
-    class ChopstickTrackerImpl : public ChopstickTracker {
+    class TrackerChopstickImpl : public TrackerChopstick {
         private:
             const model::Configuration& configuration;
 
         public:
-            ChopstickTrackerImpl(const model::Configuration& configuration) : configuration(configuration) {}
+            TrackerChopstickImpl(const model::Configuration& configuration) : configuration(configuration) {}
 
-            virtual ~ChopstickTrackerImpl() {}
+            virtual ~TrackerChopstickImpl() {}
 
             virtual void updateChopsticksWithNewDetectionResult(
                 std::list<model::Chopstick>& chopsticks,

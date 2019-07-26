@@ -1,6 +1,6 @@
 #include <set>
 #include <unordered_set>
-#include "ChopstickTrackerImpl.hpp"
+#include "TrackerChopstickImpl.hpp"
 
 using namespace model;
 using namespace service;
@@ -16,7 +16,7 @@ using std::unordered_set;
 using std::vector;
 using boost::circular_buffer;
 
-void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
+void TrackerChopstickImpl::updateChopsticksWithNewDetectionResult(
     list<Chopstick>& chopsticks,
     const list<Tip>& tips,
     const vector<DetectedObject>& detectedObjects,
@@ -55,8 +55,8 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
 
     // Update the existing chopsticks
     unordered_set<
-        ChopstickTrackerImpl::ChopstickMatchResult,
-        ChopstickTrackerImpl::ChopstickMatchResult::Hasher> processedMatchResults;
+        TrackerChopstickImpl::ChopstickMatchResult,
+        TrackerChopstickImpl::ChopstickMatchResult::Hasher> processedMatchResults;
     for (Chopstick& chopstick : chopsticks) {
         // Check if the chopstick is lost because one of its tips doesn't exist anymore
         if (tipById.find(chopstick.tip1Id) == tipById.end() || tipById.find(chopstick.tip2Id) == tipById.end()) {
@@ -141,7 +141,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
         }
     };
 
-    set<ChopstickTrackerImpl::ChopstickAndIou, IouDescComparator> chopsticksAndIous;
+    set<TrackerChopstickImpl::ChopstickAndIou, IouDescComparator> chopsticksAndIous;
     for (const Chopstick& chopstick : chopsticks) {
         double iouSum = 0;
         for (const double iou : chopstick.recentIous) {
@@ -186,7 +186,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     }
 }
 
-vector<reference_wrapper<const DetectedObject>> ChopstickTrackerImpl::extractChopstickObjects(
+vector<reference_wrapper<const DetectedObject>> TrackerChopstickImpl::extractChopstickObjects(
     const vector<DetectedObject>& detectedObjects) const {
 
     vector<reference_wrapper<const DetectedObject>> filteredObjects;
@@ -200,7 +200,7 @@ vector<reference_wrapper<const DetectedObject>> ChopstickTrackerImpl::extractCho
     return filteredObjects;
 }
 
-vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsWithDetectedChopsticks(
+vector<TrackerChopstickImpl::ChopstickMatchResult> TrackerChopstickImpl::matchTipsWithDetectedChopsticks(
     const list<Tip>& tips, const vector<DetectedObject>& detectedChopsticks) const {
 
     int minChopstickLength = configuration.trackingMinChopstickLengthInPixels;
@@ -224,7 +224,7 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTi
         }
     };
 
-    set<ChopstickTrackerImpl::ChopstickMatchResult, IouDescComparator> matchResults;
+    set<TrackerChopstickImpl::ChopstickMatchResult, IouDescComparator> matchResults;
     for (const Tip& tip1 : tips) {
         for (const Tip& tip2 : tips) {
             if (tip1 == tip2) {
@@ -251,7 +251,7 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTi
                 double iou = ((double) intersectionArea) / ((double) unionArea);
 
                 if (iou >= minIOUToConsiderTwoTipsAsAChopstick) {
-                    ChopstickTrackerImpl::ChopstickMatchResult matchResult = {
+                    TrackerChopstickImpl::ChopstickMatchResult matchResult = {
                         tip1, tip2, detectedChopstick, iou
                     };
                     matchResults.insert(matchResult);
@@ -260,18 +260,18 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTi
         }
     }
 
-    vector<ChopstickTrackerImpl::ChopstickMatchResult> matchResultsAsVector;
+    vector<TrackerChopstickImpl::ChopstickMatchResult> matchResultsAsVector;
     for (auto& matchResult : matchResults) {
         matchResultsAsVector.push_back(matchResult);
     }
     return matchResultsAsVector;
 }
 
-vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::filterMatchResultsByRemovingConflictingOnes(
-    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
+vector<TrackerChopstickImpl::ChopstickMatchResult> TrackerChopstickImpl::filterMatchResultsByRemovingConflictingOnes(
+    const vector<TrackerChopstickImpl::ChopstickMatchResult>& matchResults,
     const list<Chopstick>& existingChopsticks) const {
     
-    vector<ChopstickTrackerImpl::ChopstickMatchResult> filteredMatchResults;
+    vector<TrackerChopstickImpl::ChopstickMatchResult> filteredMatchResults;
     unordered_set<Rectangle, Rectangle::Hasher> alreadyMatchedTips;
     unordered_set<Rectangle, Rectangle::Hasher> alreadyMatchedChopsticks;
     for (auto& matchResult : matchResults) {
@@ -319,11 +319,11 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::filterM
     return filteredMatchResults;
 }
 
-vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::compareAndExtractConflictingResults(
-    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& referenceResults,
-    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& resultsToFilter) const {
+vector<TrackerChopstickImpl::ChopstickMatchResult> TrackerChopstickImpl::compareAndExtractConflictingResults(
+    const vector<TrackerChopstickImpl::ChopstickMatchResult>& referenceResults,
+    const vector<TrackerChopstickImpl::ChopstickMatchResult>& resultsToFilter) const {
     
-    vector<ChopstickTrackerImpl::ChopstickMatchResult> conflictingResults;
+    vector<TrackerChopstickImpl::ChopstickMatchResult> conflictingResults;
 
     for (auto& resultToFilter : resultsToFilter) {
         bool hasConflict = true;
@@ -349,8 +349,8 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::compare
     return conflictingResults;
 }
 
-optional<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::findMatchResultByTips(
-    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
+optional<TrackerChopstickImpl::ChopstickMatchResult> TrackerChopstickImpl::findMatchResultByTips(
+    const vector<TrackerChopstickImpl::ChopstickMatchResult>& matchResults,
     const std::string& tip1Id,
     const std::string& tip2Id) const {
     
@@ -359,15 +359,15 @@ optional<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::findM
         Tip& mrTip2 = (Tip&) matchResult.tip2;
 
         if ((mrTip1.id == tip1Id && mrTip2.id == tip2Id) || (mrTip1.id == tip2Id && mrTip2.id == tip1Id)) {
-            return std::optional<ChopstickTrackerImpl::ChopstickMatchResult>{ matchResult };
+            return std::optional<TrackerChopstickImpl::ChopstickMatchResult>{ matchResult };
         }
     }
 
     return nullopt;
 }
 
-Chopstick ChopstickTrackerImpl::makeChopstick(
-    const ChopstickTrackerImpl::ChopstickMatchResult& matchResult,
+Chopstick TrackerChopstickImpl::makeChopstick(
+    const TrackerChopstickImpl::ChopstickMatchResult& matchResult,
     const bool isRejectedBecauseOfConflict) const {
 
     int maxFramesAfterWhichAChopstickIsConsideredLost = 

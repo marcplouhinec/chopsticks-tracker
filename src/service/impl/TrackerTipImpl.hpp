@@ -5,18 +5,18 @@
 #include <unordered_set>
 #include <vector>
 #include "../../model/Configuration.hpp"
-#include "../TipTracker.hpp"
+#include "../TrackerTip.hpp"
 
 namespace service {
 
-    class TipTrackerImpl : public TipTracker {
+    class TrackerTipImpl : public TrackerTip {
         private:
             const model::Configuration& configuration;
 
         public:
-            TipTrackerImpl(const model::Configuration& configuration) : configuration(configuration) {}
+            TrackerTipImpl(const model::Configuration& configuration) : configuration(configuration) {}
 
-            virtual ~TipTrackerImpl() {}
+            virtual ~TrackerTipImpl() {}
 
             virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
                 const std::vector<model::DetectedObject>& prevDetectedObjects,
