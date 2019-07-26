@@ -103,7 +103,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     }
     
     // Find the tips that are hidden by an arm
-    unordered_set<string> hiddenTipIds = findTipIdsHiddenByAnArm(tips, detectedTips, accumulatedFrameOffset);
+    unordered_set<string> hiddenTipIds = findTipIdsHiddenByAnArm(tips, detectedObjects, accumulatedFrameOffset);
 
     // Update the tips
     for (Tip& tip : tips) {
