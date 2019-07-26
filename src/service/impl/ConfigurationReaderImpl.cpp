@@ -67,25 +67,18 @@ Configuration ConfigurationReaderImpl::read(fs::path configurationPath) {
 
     fs::path relativeRenderingOutputPath(propTree.get<string>("rendering.outputpath"));
     config.renderingOutputPath = fs::path(rootPath / relativeRenderingOutputPath);
-    string renderingPainterImplementationsAsString =
-        propTree.get<string>("rendering.painterImplementations");
-    boost::split(
-        config.renderingPainterImplementations,
-        renderingPainterImplementationsAsString,
-        boost::is_any_of(","),
-        boost::token_compress_on);
     config.renderingDetectedObjectsPainterShowTips =
-        propTree.get<bool>("rendering.detectedobjectsPainter_showTips");
+        propTree.get<bool>("rendering.detectedObjectsPainter_showTips");
     config.renderingDetectedObjectsPainterShowChopsticks =
-        propTree.get<bool>("rendering.detectedobjectsPainter_showChopsticks");
+        propTree.get<bool>("rendering.detectedObjectsPainter_showChopsticks");
     config.renderingDetectedObjectsPainterShowArms =
-        propTree.get<bool>("rendering.detectedobjectsPainter_showArms");
+        propTree.get<bool>("rendering.detectedObjectsPainter_showArms");
     config.renderingTrackedObjectsPainterShowTips =
-        propTree.get<bool>("rendering.trackedobjectsPainter_showTips");
+        propTree.get<bool>("rendering.trackedObjectsPainter_showTips");
     config.renderingTrackedObjectsPainterShowAcceptedChopsticks =
-        propTree.get<bool>("rendering.trackedobjectsPainter_showAcceptedChopsticks");
+        propTree.get<bool>("rendering.trackedObjectsPainter_showAcceptedChopsticks");
     config.renderingTrackedObjectsPainterShowRejectedChopsticks =
-        propTree.get<bool>("rendering.trackedobjectsPainter_showRejectedChopsticks");
+        propTree.get<bool>("rendering.trackedObjectsPainter_showRejectedChopsticks");
     config.renderingWriterImplementation = propTree.get<string>("rendering.writerImplementation");
     config.renderingVideoFrameMarginsInPixels = propTree.get<int>("rendering.videoFrameMarginsInPixels");
 

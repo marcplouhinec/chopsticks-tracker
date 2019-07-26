@@ -107,16 +107,8 @@ int main(int argc, char* argv[]) {
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
-    vector<unique_ptr<VideoFramePainter>> pVideoFramePainters;
-    for (string& renderingPainterImplementation : configuration.renderingPainterImplementations) {
-        if (renderingPainterImplementation == "detectedobjects") {
-            pVideoFramePainters.push_back(unique_ptr<VideoFramePainter>(
-                new VideoFramePainterDetectedObjectsImpl(configuration, frameDetectionResults)));
-        } else if (renderingPainterImplementation == "trackedobjects") {
-            pVideoFramePainters.push_back(unique_ptr<VideoFramePainter>(
-                new VideoFramePainterTrackedObjectsImpl(configuration, tips, chopsticks)));
-        }
-    }
+    VideoFramePainterDetectedObjectsImpl videoFramePainterDetectedObjects(configuration);
+    VideoFramePainterTrackedObjectsImpl videoFramePainterTrackedObjects(configuration);
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";
@@ -162,9 +154,9 @@ int main(int argc, char* argv[]) {
         int marginTop = round(frameMargin - accumulatedFrameOffset.dy);
         frame.copyTo(outputFrame(cv::Rect(marginLeft, marginTop, frame.cols, frame.rows)));
 
-        for (auto& pPainter : pVideoFramePainters) {
-            pPainter->paintOnFrame(frameIndex, outputFrame, accumulatedFrameOffset);
-        }
+        videoFramePainterDetectedObjects.paintOnFrame(
+            outputFrame, frameDetectionResult.detectedObjects, accumulatedFrameOffset);
+        videoFramePainterTrackedObjects.paintOnFrame(outputFrame, tips, chopsticks, accumulatedFrameOffset);
         LOG_INFO(logger) << "Frame painted.";
 
         videoFrameWriter.writeFrameAt(frameIndex, outputFrame);

@@ -1,15 +1,12 @@
 #ifndef SERVICE_VIDEO_FRAME_PAINTER_TRACKED_OBJECTS_IMPL
 #define SERVICE_VIDEO_FRAME_PAINTER_TRACKED_OBJECTS_IMPL
 
-#include <list>
 #include "../../model/Configuration.hpp"
-#include "../../model/tracking/Chopstick.hpp"
-#include "../../model/tracking/Tip.hpp"
-#include "../VideoFramePainter.hpp"
+#include "../VideoFramePainterTrackedObjects.hpp"
 
 namespace service {
 
-    class VideoFramePainterTrackedObjectsImpl : public VideoFramePainter {
+    class VideoFramePainterTrackedObjectsImpl : public VideoFramePainterTrackedObjects {
         private:
             const cv::Scalar cyanColor{255.0, 255.0, 0.0};
             const cv::Scalar greenColor{0.0, 255.0, 0.0};
@@ -19,22 +16,18 @@ namespace service {
 
         private:
             model::Configuration& configuration;
-            std::list<model::Tip>& tips;
-            std::list<model::Chopstick>& chopsticks;
 
         public:
-            VideoFramePainterTrackedObjectsImpl(
-                model::Configuration& configuration,
-                std::list<model::Tip>& tips,
-                std::list<model::Chopstick>& chopsticks) :
-                    configuration(configuration),
-                    tips(tips),
-                    chopsticks(chopsticks) {}
+            VideoFramePainterTrackedObjectsImpl(model::Configuration& configuration) :
+                configuration(configuration) {}
 
             virtual ~VideoFramePainterTrackedObjectsImpl() {};
 
             virtual void paintOnFrame(
-                int frameIndex, cv::Mat& frame, model::FrameOffset accumulatedFrameOffset);
+                const cv::Mat& frame,
+                const std::list<model::Tip>& tips,
+                const std::list<model::Chopstick>& chopsticks,
+                const model::FrameOffset accumulatedFrameOffset);
     };
 
 }

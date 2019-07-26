@@ -1,14 +1,12 @@
 #ifndef SERVICE_VIDEO_FRAME_PAINTER_DETECTED_OBJECTS_IMPL
 #define SERVICE_VIDEO_FRAME_PAINTER_DETECTED_OBJECTS_IMPL
 
-#include <boost/circular_buffer.hpp>
 #include "../../model/Configuration.hpp"
-#include "../../model/detection/FrameDetectionResult.hpp"
-#include "../VideoFramePainter.hpp"
+#include "../VideoFramePainterDetectedObjects.hpp"
 
 namespace service {
 
-    class VideoFramePainterDetectedObjectsImpl : public VideoFramePainter {
+    class VideoFramePainterDetectedObjectsImpl : public VideoFramePainterDetectedObjects {
         private:
             const cv::Scalar yellowColor{0.0, 255.0, 255.0};
             const cv::Scalar greenColor{0.0, 255.0, 0.0};
@@ -17,21 +15,17 @@ namespace service {
 
         private:
             model::Configuration& configuration;
-            boost::circular_buffer<model::FrameDetectionResult>& frameDetectionResults;
 
         public:
-            VideoFramePainterDetectedObjectsImpl(
-                model::Configuration& configuration,
-                boost::circular_buffer<model::FrameDetectionResult>& frameDetectionResults) :
-                    configuration(configuration),
-                    frameDetectionResults(frameDetectionResults) {}
+            VideoFramePainterDetectedObjectsImpl(model::Configuration& configuration) : 
+                configuration(configuration) {}
+            
             virtual ~VideoFramePainterDetectedObjectsImpl() {};
 
             virtual void paintOnFrame(
-                int frameIndex, cv::Mat& frame, model::FrameOffset accumulatedFrameOffset);
-
-        private:
-            model::FrameDetectionResult& findFrameDetectionResultByFrameIndex(int frameIndex);
+                const cv::Mat& frame,
+                const std::vector<model::DetectedObject>& detectedObjects,
+                const model::FrameOffset accumulatedFrameOffset);
     };
 
 }

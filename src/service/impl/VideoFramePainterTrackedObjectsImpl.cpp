@@ -8,7 +8,10 @@ using std::round;
 using std::string;
 
 void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
-    int frameIndex, cv::Mat& frame, FrameOffset accumulatedFrameOffset) {
+    const cv::Mat& frame,
+    const std::list<model::Tip>& tips,
+    const std::list<model::Chopstick>& chopsticks,
+    const model::FrameOffset accumulatedFrameOffset) {
 
     int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
 
@@ -20,7 +23,7 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
             tipById.emplace(tip.id, tip);
         }
 
-        for (Chopstick& chopstick : chopsticks) {
+        for (const Chopstick& chopstick : chopsticks) {
             if (!configuration.renderingTrackedObjectsPainterShowAcceptedChopsticks &&
                 !chopstick.isRejectedBecauseOfConflict) {
                 continue;
@@ -60,7 +63,7 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
     }
     
     if (configuration.renderingTrackedObjectsPainterShowTips) {
-        for (Tip& tip : tips) {
+        for (const Tip& tip : tips) {
             TrackingStatus status = tip.recentTrackingStatuses.back();
             cv::Scalar color;
             switch (status) {

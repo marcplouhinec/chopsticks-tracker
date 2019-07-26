@@ -1,26 +1,23 @@
 #include "VideoFramePainterDetectedObjectsImpl.hpp"
 
 #include <math.h>
-#include <stdexcept>
-#include <string>
 
 using namespace model;
 using namespace service;
-using std::runtime_error;
-using std::to_string;
 using std::round;
+using std::vector;
 
 void VideoFramePainterDetectedObjectsImpl::paintOnFrame(
-    int frameIndex, cv::Mat& frame, FrameOffset accumulatedFrameOffset) {
+    const cv::Mat& frame,
+    const vector<DetectedObject>& detectedObjects,
+    const FrameOffset accumulatedFrameOffset) {
 
     int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
     bool showTips = configuration.renderingDetectedObjectsPainterShowTips;
     bool showChopsticks = configuration.renderingDetectedObjectsPainterShowChopsticks;
     bool showArms = configuration.renderingDetectedObjectsPainterShowArms;
 
-    FrameDetectionResult& frameDetectionResult = findFrameDetectionResultByFrameIndex(frameIndex);
-
-    for (DetectedObject& detectedObject : frameDetectionResult.detectedObjects) {
+    for (const DetectedObject& detectedObject : detectedObjects) {
         if (!showTips && DetectedObjectTypeHelper::isTip(detectedObject.objectType)) {
             continue;
         }
@@ -57,17 +54,4 @@ void VideoFramePainterDetectedObjectsImpl::paintOnFrame(
                 detectedObject.height),
             color);
     }
-}
-
-FrameDetectionResult& VideoFramePainterDetectedObjectsImpl::findFrameDetectionResultByFrameIndex(
-    int frameIndex) {
-    for (auto it = frameDetectionResults.rbegin(); it != frameDetectionResults.rend(); it++) {
-        FrameDetectionResult& result = *it;
-        if (result.frameIndex == frameIndex) {
-            return result;
-        }
-    }
-
-    throw runtime_error(
-        "Unable to find the FrameDetectionResult with the frame index: " + to_string(frameIndex));
 }

@@ -33,7 +33,6 @@ namespace model {
             int trackingMaxFramesAfterWhichAChopstickIsConsideredLost;
 
             boost::filesystem::path renderingOutputPath;
-            std::vector<std::string> renderingPainterImplementations;
             bool renderingDetectedObjectsPainterShowTips;
             bool renderingDetectedObjectsPainterShowChopsticks;
             bool renderingDetectedObjectsPainterShowArms;
