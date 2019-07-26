@@ -35,7 +35,7 @@ namespace model {
                     nbDetectionsAsBigTip(nbDetectionsAsBigTip),
                     Rectangle(x, y, width, height) {}
             
-            bool isBigTip() {
+            bool isBigTip() const {
                 return nbDetectionsAsBigTip > nbDetectionsAsSmallTip;
             }
 

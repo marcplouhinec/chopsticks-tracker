@@ -8,7 +8,7 @@
 
 namespace model {
 
-    class Chopstick { // TODO orientation (tip1 to tip2 or reverse)
+    class Chopstick {
         public:
             const std::string id;
             const std::string tip1Id;

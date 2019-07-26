@@ -79,6 +79,8 @@ Configuration ConfigurationReaderImpl::read(fs::path configurationPath) const {
         propTree.get<bool>("rendering.trackedObjectsPainter_showAcceptedChopsticks");
     config.renderingTrackedObjectsPainterShowRejectedChopsticks =
         propTree.get<bool>("rendering.trackedObjectsPainter_showRejectedChopsticks");
+    config.renderingTrackedObjectsPainterShowChopstickArrows =
+        propTree.get<bool>("rendering.trackedObjectsPainter_showChopstickArrows");
     config.renderingWriterImplementation = propTree.get<string>("rendering.writerImplementation");
     config.renderingVideoFrameMarginsInPixels = propTree.get<int>("rendering.videoFrameMarginsInPixels");
 

@@ -41,6 +41,7 @@ namespace model {
             bool renderingTrackedObjectsPainterShowTips;
             bool renderingTrackedObjectsPainterShowAcceptedChopsticks;
             bool renderingTrackedObjectsPainterShowRejectedChopsticks;
+            bool renderingTrackedObjectsPainterShowChopstickArrows;
             std::string renderingWriterImplementation;
             int renderingVideoFrameMarginsInPixels;
         

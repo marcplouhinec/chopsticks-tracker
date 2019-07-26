@@ -58,7 +58,16 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
             
             cv::Point point1(round(tip1.centerX() + frameMargin), round(tip1.centerY() + frameMargin));
             cv::Point point2(round(tip2.centerX() + frameMargin), round(tip2.centerY() + frameMargin));
-            cv::line(frame, point1, point2, color, thickness);
+
+            if (!configuration.renderingTrackedObjectsPainterShowChopstickArrows) {
+                cv::line(frame, point1, point2, color, thickness);
+            } else if (tip1.isBigTip() && !tip2.isBigTip()) {
+                cv::arrowedLine(frame, point1, point2, color, thickness, 8, 0, /* tipLength = */0.03);
+            } else if (tip2.isBigTip() && !tip1.isBigTip()) {
+                cv::arrowedLine(frame, point2, point1, color, thickness, 8, 0, /* tipLength = */0.03);
+            } else {
+                cv::line(frame, point1, point2, color, thickness);
+            }
         }
     }
     
