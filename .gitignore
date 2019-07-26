@@ -1,7 +1,4 @@
 output
-target
 build
-.idea
-*.iml
 .vscode
 **/.DS_Store
