@@ -22,12 +22,14 @@ using std::vector;
 using boost::circular_buffer;
 
 FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
-    FrameDetectionResult& prevDetectionResult, FrameDetectionResult& currDetectionResult) {
+    const vector<DetectedObject>& prevDetectedObjects,
+    const vector<DetectedObject>& currDetectedObjects) {
 
     // Focus exclusively on the detected tips
-    auto tipTypes = { DetectedObjectType::SMALL_TIP, DetectedObjectType::BIG_TIP };
-    auto prevFrameTips = extractObjectsOfTypes(prevDetectionResult.detectedObjects, tipTypes);
-    auto currFrameTips = extractObjectsOfTypes(currDetectionResult.detectedObjects, tipTypes);
+    const vector<DetectedObjectType> tipTypes =
+        { DetectedObjectType::SMALL_TIP, DetectedObjectType::BIG_TIP };
+    auto prevFrameTips = extractObjectsOfTypes(prevDetectedObjects, tipTypes);
+    auto currFrameTips = extractObjectsOfTypes(currDetectedObjects, tipTypes);
 
     // For each tip of the current frame, try to match it with a tip from the previous frame
     vector<TipTrackerImpl::ObjectMatchResult> matchResults =
@@ -55,9 +57,10 @@ FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
 
 void TipTrackerImpl::updateTipsWithNewDetectionResult(
     list<Tip>& tips,
-    FrameDetectionResult& detectionResult,
-    FrameOffset frameOffset,
-    FrameOffset accumulatedFrameOffset) {
+    const vector<DetectedObject>& detectedObjects,
+    const int frameIndex,
+    const FrameOffset frameOffset,
+    const FrameOffset accumulatedFrameOffset) {
 
     // Load configuration
     int nbDetectionsToComputeAverageTipPositionAndSize =
@@ -65,7 +68,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     
     // Extract the tips and translate them according to the frame offset
     auto untranslatedDetectedTips = extractObjectsOfTypes(
-        detectionResult.detectedObjects, { DetectedObjectType::SMALL_TIP, DetectedObjectType::BIG_TIP });
+        detectedObjects, { DetectedObjectType::SMALL_TIP, DetectedObjectType::BIG_TIP });
     vector<DetectedObject> detectedTips = copyAndTranslateDetectedObjects(
         untranslatedDetectedTips, -accumulatedFrameOffset.dx, -accumulatedFrameOffset.dy);
 
@@ -73,7 +76,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     if (tips.size() == 0) {
         int tipIndex = 0;
         for (auto& detectedTip : detectedTips) {
-            Tip tip = makeTip(detectedTip, detectionResult.frameIndex, tipIndex);
+            Tip tip = makeTip(detectedTip, frameIndex, tipIndex);
             tipIndex++;
             tips.push_back(tip);
         }
@@ -81,11 +84,11 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     }
 
     // Match the detected tips in the new frame with the existing tips
-    vector<reference_wrapper<Rectangle>> wrappedTips;
+    vector<reference_wrapper<const Rectangle>> wrappedTips;
     for (auto& tip : tips) {
         wrappedTips.push_back(tip);
     }
-    vector<reference_wrapper<Rectangle>> wrappedDetectedTips;
+    vector<reference_wrapper<const Rectangle>> wrappedDetectedTips;
     for (auto& detectedTip : detectedTips) {
         wrappedDetectedTips.push_back(detectedTip);
     }
@@ -100,8 +103,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     }
     
     // Find the tips that are hidden by an arm
-    unordered_set<string> hiddenTipIds = findTipIdsHiddenByAnArm(
-        tips, detectionResult, accumulatedFrameOffset);
+    unordered_set<string> hiddenTipIds = findTipIdsHiddenByAnArm(tips, detectedTips, accumulatedFrameOffset);
 
     // Update the tips
     for (Tip& tip : tips) {
@@ -189,7 +191,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
         matchedDetectedTips.insert(detectedTip);
     }
     list<reference_wrapper<DetectedObject>> newDetectedTips;
-    for (Rectangle& detectedTipAsRectangle : detectedTips) {
+    for (const Rectangle& detectedTipAsRectangle : detectedTips) {
         DetectedObject& detectedTip = (DetectedObject&) detectedTipAsRectangle;
         if (matchedDetectedTips.find(detectedTip) == matchedDetectedTips.end()) {
             newDetectedTips.push_back(detectedTip);
@@ -205,17 +207,19 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     // Add new tips
     int tipIndex = 0;
     for (DetectedObject& newDetectedTip : newDetectedTips) {
-        Tip tip = makeTip(newDetectedTip, detectionResult.frameIndex, tipIndex);
+        Tip tip = makeTip(newDetectedTip, frameIndex, tipIndex);
         tips.push_back(tip);
         tipIndex++;
     }
 }
 
-vector<reference_wrapper<Rectangle>> TipTrackerImpl::extractObjectsOfTypes(
-    vector<DetectedObject>& detectedObjects, const vector<DetectedObjectType>& objectTypes) {
-    vector<reference_wrapper<Rectangle>> filteredObjects;
+vector<reference_wrapper<const Rectangle>> TipTrackerImpl::extractObjectsOfTypes(
+    const vector<DetectedObject>& detectedObjects,
+    const vector<DetectedObjectType>& objectTypes) {
 
-    for (DetectedObject& detectedObject : detectedObjects) {
+    vector<reference_wrapper<const Rectangle>> filteredObjects;
+
+    for (const DetectedObject& detectedObject : detectedObjects) {
         if (find(objectTypes.begin(), objectTypes.end(), detectedObject.objectType) != objectTypes.end()) {
             filteredObjects.push_back(detectedObject);
         }
@@ -225,12 +229,12 @@ vector<reference_wrapper<Rectangle>> TipTrackerImpl::extractObjectsOfTypes(
 }
 
 vector<DetectedObject> TipTrackerImpl::copyAndTranslateDetectedObjects(
-    const vector<reference_wrapper<Rectangle>>& detectedObjects, const double dx, const double dy) {
+    const vector<reference_wrapper<const Rectangle>>& detectedObjects, const double dx, const double dy) {
 
     vector<DetectedObject> translatedObjects;
 
     for (const Rectangle& detectedRectangle : detectedObjects) {
-        DetectedObject& detectedObject = (DetectedObject&) detectedRectangle;
+        const DetectedObject& detectedObject = (const DetectedObject&) detectedRectangle;
         translatedObjects.push_back(detectedObject.copyAndTranslate(dx, dy));
     }
 
@@ -238,8 +242,8 @@ vector<DetectedObject> TipTrackerImpl::copyAndTranslateDetectedObjects(
 }
 
 vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(
-    vector<reference_wrapper<Rectangle>>& prevFrameDetectedTips,
-    vector<reference_wrapper<Rectangle>>& currFrameDetectedTips) {
+    const vector<reference_wrapper<const Rectangle>>& prevFrameDetectedTips,
+    const vector<reference_wrapper<const Rectangle>>& currFrameDetectedTips) {
 
     int maxMatchingDistance = configuration.trackingMaxTipMatchingDistanceInPixels;
 
@@ -260,7 +264,7 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
     set<TipTrackerImpl::ObjectMatchResult, MatchingDistanceComparator> matchResults;
     for (auto& currFrameTip : currFrameDetectedTips) {
         for (auto& prevFrameTip : prevFrameDetectedTips) {
-            double matchingDistance = computeMatchingDistance(prevFrameTip, currFrameTip);
+            const double matchingDistance = computeMatchingDistance(prevFrameTip, currFrameTip);
 
             if (matchingDistance <= maxMatchingDistance) {
                 ObjectMatchResult matchResult = { prevFrameTip, currFrameTip, matchingDistance };
@@ -286,22 +290,23 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
 }
 
 unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
-    list<Tip>& tips, FrameDetectionResult& detectionResult, FrameOffset& accumulatedFrameOffset) {
+    const list<Tip>& tips,
+    const vector<DetectedObject>& detectedObjects,
+    const FrameOffset& accumulatedFrameOffset) {
 
     int minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm =
         configuration.trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
 
     unordered_set<string> hiddenTipIds;
 
-    auto untranslatedetectedArms = extractObjectsOfTypes(
-        detectionResult.detectedObjects, {DetectedObjectType::ARM});
+    auto untranslatedetectedArms = extractObjectsOfTypes(detectedObjects, {DetectedObjectType::ARM});
     if (untranslatedetectedArms.empty()) {
         return hiddenTipIds;
     }
     vector<DetectedObject> detectedArms = copyAndTranslateDetectedObjects(
         untranslatedetectedArms, -accumulatedFrameOffset.dx, -accumulatedFrameOffset.dy);
     
-    for (Tip& tip : tips) {
+    for (const Tip& tip : tips) {
         // Ignore tips that are lost of only detected once
         TrackingStatus status = tip.recentTrackingStatuses.back();
         if (status == TrackingStatus::LOST || status == TrackingStatus::DETECTED_ONCE) {
@@ -310,7 +315,7 @@ unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
 
         // Detect if the tip is overlapping with an arm
         bool isOverlappingWithArm = false;
-        for (Rectangle& arm : detectedArms) {
+        for (const Rectangle& arm : detectedArms) {
             if (arm.isOverlappingWith(tip)) {
                 isOverlappingWithArm = true;
                 break;
@@ -323,7 +328,7 @@ unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
         // Check that there is no detected object near the tip, so we can make sure that
         // the tip is indeed hidden
         bool hiddenByArm = true;
-        for (auto& object : detectionResult.detectedObjects) {
+        for (auto& object : detectedObjects) {
             double matchingDistance = computeMatchingDistance(tip, object);
             if (matchingDistance <= minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm) {
                 hiddenByArm = false;
@@ -354,7 +359,7 @@ bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(const DetectedObject& d
     return false;
 }
 
-Tip TipTrackerImpl::makeTip(DetectedObject& detectedObject, int frameIndex, int tipIndex) {
+Tip TipTrackerImpl::makeTip(const DetectedObject& detectedObject, const int frameIndex, const int tipIndex) {
     int nbDetectionsToComputeAverageTipPositionAndSize =
         configuration.trackingNbDetectionsToComputeAverageTipPositionAndSize;
     int maxFramesAfterWhichATipIsConsideredLost =

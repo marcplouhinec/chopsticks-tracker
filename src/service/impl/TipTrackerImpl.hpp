@@ -19,29 +19,30 @@ namespace service {
             virtual ~TipTrackerImpl() {}
 
             virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
-                model::FrameDetectionResult& prevDetectionResult,
-                model::FrameDetectionResult& currDetectionResult);
+                const std::vector<model::DetectedObject>& prevDetectedObjects,
+                const std::vector<model::DetectedObject>& currDetectedObjects);
 
             virtual void updateTipsWithNewDetectionResult(
                 std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult,
-                model::FrameOffset frameOffset,
-                model::FrameOffset accumulatedFrameOffset);
+                const std::vector<model::DetectedObject>& detectedObjects,
+                const int frameIndex,
+                const model::FrameOffset frameOffset,
+                const model::FrameOffset accumulatedFrameOffset);
 
         private:
             struct ObjectMatchResult {
-                model::Rectangle& prevFrameObject;
-                model::Rectangle& currFrameObject;
-                double matchingDistance;
+                const model::Rectangle& prevFrameObject;
+                const model::Rectangle& currFrameObject;
+                const double matchingDistance;
             };
 
         private:
-            std::vector<std::reference_wrapper<model::Rectangle>> extractObjectsOfTypes(
-                std::vector<model::DetectedObject>& detectedObjects,
+            std::vector<std::reference_wrapper<const model::Rectangle>> extractObjectsOfTypes(
+                const std::vector<model::DetectedObject>& detectedObjects,
                 const std::vector<model::DetectedObjectType>& objectTypes);
 
             std::vector<model::DetectedObject> copyAndTranslateDetectedObjects(
-                const std::vector<std::reference_wrapper<model::Rectangle>>& detectedObjects,
+                const std::vector<std::reference_wrapper<const model::Rectangle>>& detectedObjects,
                 const double dx,
                 const double dy);
 
@@ -51,19 +52,22 @@ namespace service {
              * (acending order).
              */
             std::vector<ObjectMatchResult> matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(
-                std::vector<std::reference_wrapper<model::Rectangle>>& prevFrameDetectedTips,
-                std::vector<std::reference_wrapper<model::Rectangle>>& currFrameDetectedTips);
+                const std::vector<std::reference_wrapper<const model::Rectangle>>& prevFrameDetectedTips,
+                const std::vector<std::reference_wrapper<const model::Rectangle>>& currFrameDetectedTips);
 
             std::unordered_set<std::string> findTipIdsHiddenByAnArm(
-                std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult,
-                model::FrameOffset& accumulatedFrameOffset);
+                const std::list<model::Tip>& tips,
+                const std::vector<model::DetectedObject>& detectedObjects,
+                const model::FrameOffset& accumulatedFrameOffset);
 
             bool isDetectedTipTooCloseToExistingTips(
                 const model::DetectedObject& detectedTip,
                 const std::list<model::Tip>& tips);
 
-            model::Tip makeTip(model::DetectedObject& detectedObject, int frameIndex, int tipIndex);
+            model::Tip makeTip(
+                const model::DetectedObject& detectedObject,
+                const int frameIndex,
+                const int tipIndex);
 
             double computeMatchingDistance(const model::Rectangle& object1, const model::Rectangle& object2);
     };

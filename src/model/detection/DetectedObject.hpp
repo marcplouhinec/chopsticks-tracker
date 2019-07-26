@@ -26,7 +26,7 @@ namespace model {
                     objectType(objectType),
                     confidence(confidence) {}
 
-            DetectedObject copyAndTranslate(double dx, double dy) {
+            const DetectedObject copyAndTranslate(double dx, double dy) const {
                 return DetectedObject(x + dx, y + dy, width, height, objectType, confidence);
             }
 

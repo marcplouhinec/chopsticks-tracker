@@ -61,13 +61,12 @@ vector<DetectedObject> ObjectDetectorCacheImpl::detectObjectsAt(int frameIndex) 
     }
 }
 
-
 std::string ObjectDetectorCacheImpl::convertToJson(std::vector<DetectedObject> detectedObjects) {
     rapidjson::Document jsonDoc;
     jsonDoc.SetArray();
     rapidjson::Document::AllocatorType& allocator = jsonDoc.GetAllocator();
     
-    for (DetectedObject detectedObject : detectedObjects) {
+    for (const DetectedObject& detectedObject : detectedObjects) {
         rapidjson::Value detectedObjectValue;
         detectedObjectValue.SetObject();
         detectedObjectValue.AddMember("x", detectedObject.x, allocator);
@@ -109,7 +108,7 @@ std::vector<DetectedObject> ObjectDetectorCacheImpl::convertFromJson(std::string
         string objectTypeString(detectedObjectValue["objectType"].GetString());
         DetectedObjectType objectType = DetectedObjectTypeHelper::stringToEnum(objectTypeString);
         
-        DetectedObject detectedObject(x, y, width, height, objectType, confidence);
+        const DetectedObject detectedObject(x, y, width, height, objectType, confidence);
         detectedObjects.push_back(detectedObject);
     }
     

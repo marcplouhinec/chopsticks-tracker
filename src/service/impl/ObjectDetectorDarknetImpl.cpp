@@ -97,7 +97,7 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
                 float x = centerX - (width / 2);
                 float y = centerY - (height / 2);
 
-                DetectedObject detectedObject(
+                const DetectedObject detectedObject(
                     x, y,
                     width, height,
                     objectType, 

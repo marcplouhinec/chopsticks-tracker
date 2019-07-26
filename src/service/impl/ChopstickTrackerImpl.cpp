@@ -19,15 +19,17 @@ using boost::circular_buffer;
 void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     list<Chopstick>& chopsticks,
     const list<Tip>& tips,
-    FrameDetectionResult& detectionResult,
-    FrameOffset accumulatedFrameOffset) {
+    const vector<DetectedObject>& detectedObjects,
+    const FrameOffset accumulatedFrameOffset) {
     
     // Extract the detected chopsticks and translate them according to the frame offset
-    auto untranslatedDetectedChopsticks = extractChopstickObjects(detectionResult.detectedObjects);
+    auto untranslatedDetectedChopsticks = extractChopstickObjects(detectedObjects);
 
     vector<DetectedObject> detectedChopsticks;
     for (const Rectangle& untranslatedDetectedChopstick : untranslatedDetectedChopsticks) {
-        DetectedObject& untranslatedDetectedObject = (DetectedObject&) untranslatedDetectedChopstick;
+        const DetectedObject& untranslatedDetectedObject =
+            (const DetectedObject&) untranslatedDetectedChopstick;
+
         detectedChopsticks.push_back(untranslatedDetectedObject.copyAndTranslate(
             -accumulatedFrameOffset.dx, -accumulatedFrameOffset.dy));
     }
@@ -184,11 +186,12 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     }
 }
 
-vector<reference_wrapper<DetectedObject>> ChopstickTrackerImpl::extractChopstickObjects(
-    vector<DetectedObject>& detectedObjects) {
-    vector<reference_wrapper<DetectedObject>> filteredObjects;
+vector<reference_wrapper<const DetectedObject>> ChopstickTrackerImpl::extractChopstickObjects(
+    const vector<DetectedObject>& detectedObjects) {
 
-    for (DetectedObject& detectedObject : detectedObjects) {
+    vector<reference_wrapper<const DetectedObject>> filteredObjects;
+
+    for (const DetectedObject& detectedObject : detectedObjects) {
         if (detectedObject.objectType == DetectedObjectType::CHOPSTICK) {
             filteredObjects.push_back(detectedObject);
         }

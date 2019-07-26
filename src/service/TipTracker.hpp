@@ -2,7 +2,8 @@
 #define SERVICE_TIP_TRACKER
 
 #include <list>
-#include "../model/detection/FrameDetectionResult.hpp"
+#include <vector>
+#include "../model/detection/DetectedObject.hpp"
 #include "../model/tracking/FrameOffset.hpp"
 #include "../model/tracking/Tip.hpp"
 
@@ -13,14 +14,15 @@ namespace service {
             virtual ~TipTracker() {}
 
             virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
-                model::FrameDetectionResult& prevDetectionResult,
-                model::FrameDetectionResult& currDetectionResult) = 0;
+                const std::vector<model::DetectedObject>& prevDetectedObjects,
+                const std::vector<model::DetectedObject>& currDetectedObjects) = 0;
 
             virtual void updateTipsWithNewDetectionResult(
                 std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult,
-                model::FrameOffset frameOffset,
-                model::FrameOffset accumulatedFrameOffset) = 0;
+                const std::vector<model::DetectedObject>& detectedObjects,
+                const int frameIndex,
+                const model::FrameOffset frameOffset,
+                const model::FrameOffset accumulatedFrameOffset) = 0;
     };
 
 }

@@ -2,7 +2,8 @@
 #define SERVICE_CHOPSTICK_TRACKER
 
 #include <list>
-#include "../model/detection/FrameDetectionResult.hpp"
+#include <vector>
+#include "../model/detection/DetectedObject.hpp"
 #include "../model/tracking/FrameOffset.hpp"
 #include "../model/tracking/Chopstick.hpp"
 
@@ -15,8 +16,8 @@ namespace service {
             virtual void updateChopsticksWithNewDetectionResult(
                 std::list<model::Chopstick>& chopsticks,
                 const std::list<model::Tip>& tips,
-                model::FrameDetectionResult& detectionResult,
-                model::FrameOffset accumulatedFrameOffset) = 0;
+                const std::vector<model::DetectedObject>& detectedObjects,
+                const model::FrameOffset accumulatedFrameOffset) = 0;
     };
 
 }

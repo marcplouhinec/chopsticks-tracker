@@ -107,7 +107,7 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
                     float x = centerX - (width / 2);
                     float y = centerY - (height / 2);
 
-                    DetectedObject detectedObject(
+                    const DetectedObject detectedObject(
                         x, y,
                         width, height,
                         objectTypesByClassId[classId], 

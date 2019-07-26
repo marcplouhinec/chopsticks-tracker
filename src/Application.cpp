@@ -1,6 +1,5 @@
 #include <iostream>
 #include <memory>
-#include <boost/circular_buffer.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include "utils/logging.hpp"
@@ -23,7 +22,6 @@ using std::list;
 using std::string;
 using std::unique_ptr;
 using std::vector;
-using boost::circular_buffer;
 namespace lg = boost::log;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -70,7 +68,6 @@ int main(int argc, char* argv[]) {
     ConfigurationReaderImpl configurationReader;
     Configuration configuration = configurationReader.read(configurationPath);
 
-    circular_buffer<FrameDetectionResult> frameDetectionResults(2);
     list<Tip> tips;
     list<Chopstick> chopsticks;
 
@@ -113,6 +110,8 @@ int main(int argc, char* argv[]) {
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";
     FrameOffset accumulatedFrameOffset(0, 0);
+    vector<DetectedObject> detectedObjects;
+    vector<DetectedObject> prevFrameDetectedObjects;
 
     for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
         LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
@@ -120,19 +119,15 @@ int main(int argc, char* argv[]) {
         auto frame = videoFrameReader.readFrameAt(frameIndex);
         LOG_INFO(logger) << "Frame resolution: " << frame.size();
 
-        auto detectedObjects = objectDetector.detectObjectsAt(frameIndex);
-        FrameDetectionResult frameDetectionResult(frameIndex, detectedObjects);
-        frameDetectionResults.push_back(frameDetectionResult);
+        prevFrameDetectedObjects = detectedObjects;
+        detectedObjects = objectDetector.detectObjectsAt(frameIndex);
         LOG_INFO(logger) << "Nb detected objects: " << detectedObjects.size();
 
         // Find how much we need to compensate for camera motion
-        auto nbDetectionResults = frameDetectionResults.size();
         FrameOffset frameOffset(0, 0);
-        if (nbDetectionResults >= 2) {
-            auto& prevDetectionResult = frameDetectionResults[nbDetectionResults - 2];
-
+        if (frameIndex >= 1) {
             frameOffset = tipTracker.computeOffsetToCompensateForCameraMotion(
-                prevDetectionResult, frameDetectionResult);
+                prevFrameDetectedObjects, detectedObjects);
             accumulatedFrameOffset += frameOffset;
 
             LOG_INFO(logger) << "Camera motion compensated: dx = " << frameOffset.dx
@@ -141,11 +136,11 @@ int main(int argc, char* argv[]) {
 
         // Update the tracked tips anc chopsticks
         tipTracker.updateTipsWithNewDetectionResult(
-            tips, frameDetectionResult, frameOffset, accumulatedFrameOffset);
+            tips, detectedObjects, frameIndex, frameOffset, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
 
         chopstickTracker.updateChopsticksWithNewDetectionResult(
-            chopsticks, tips, frameDetectionResult, accumulatedFrameOffset);
+            chopsticks, tips, detectedObjects, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 
         // Copy the video frame into a bigger one in order compensate for camera motion
@@ -154,8 +149,7 @@ int main(int argc, char* argv[]) {
         int marginTop = round(frameMargin - accumulatedFrameOffset.dy);
         frame.copyTo(outputFrame(cv::Rect(marginLeft, marginTop, frame.cols, frame.rows)));
 
-        videoFramePainterDetectedObjects.paintOnFrame(
-            outputFrame, frameDetectionResult.detectedObjects, accumulatedFrameOffset);
+        videoFramePainterDetectedObjects.paintOnFrame(outputFrame, detectedObjects, accumulatedFrameOffset);
         videoFramePainterTrackedObjects.paintOnFrame(outputFrame, tips, chopsticks, accumulatedFrameOffset);
         LOG_INFO(logger) << "Frame painted.";
 
