@@ -7,13 +7,10 @@
 namespace service {
 
     class ConfigurationReaderImpl : public ConfigurationReader {
-        private:
-            boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
-
         public:
             virtual ~ConfigurationReaderImpl() {}
 
-            virtual model::Configuration read(boost::filesystem::path configurationPath);
+            virtual model::Configuration read(boost::filesystem::path configurationPath) const;
     };
 
 }

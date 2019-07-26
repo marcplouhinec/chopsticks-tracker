@@ -15,10 +15,10 @@ namespace service {
             const cv::Scalar whiteColor{255.0, 255.0, 255.0};
 
         private:
-            model::Configuration& configuration;
+            const model::Configuration& configuration;
 
         public:
-            VideoFramePainterTrackedObjectsImpl(model::Configuration& configuration) :
+            VideoFramePainterTrackedObjectsImpl(const model::Configuration& configuration) :
                 configuration(configuration) {}
 
             virtual ~VideoFramePainterTrackedObjectsImpl() {};
@@ -27,7 +27,7 @@ namespace service {
                 const cv::Mat& frame,
                 const std::list<model::Tip>& tips,
                 const std::list<model::Chopstick>& chopsticks,
-                const model::FrameOffset accumulatedFrameOffset);
+                const model::FrameOffset accumulatedFrameOffset) const;
     };
 
 }

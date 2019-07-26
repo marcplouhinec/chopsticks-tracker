@@ -13,7 +13,7 @@ namespace service {
             virtual void paintOnFrame(
                 cv::Mat& frame,
                 const cv::Mat& image,
-                const model::FrameOffset accumulatedFrameOffset) = 0;
+                const model::FrameOffset accumulatedFrameOffset) const = 0;
     };
 
 }

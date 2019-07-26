@@ -23,7 +23,7 @@ using boost::circular_buffer;
 
 FrameOffset TipTrackerImpl::computeOffsetToCompensateForCameraMotion(
     const vector<DetectedObject>& prevDetectedObjects,
-    const vector<DetectedObject>& currDetectedObjects) {
+    const vector<DetectedObject>& currDetectedObjects) const {
 
     // Focus exclusively on the detected tips
     const vector<DetectedObjectType> tipTypes =
@@ -60,7 +60,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
     const vector<DetectedObject>& detectedObjects,
     const int frameIndex,
     const FrameOffset frameOffset,
-    const FrameOffset accumulatedFrameOffset) {
+    const FrameOffset accumulatedFrameOffset) const {
 
     // Load configuration
     int nbDetectionsToComputeAverageTipPositionAndSize =
@@ -215,7 +215,7 @@ void TipTrackerImpl::updateTipsWithNewDetectionResult(
 
 vector<reference_wrapper<const Rectangle>> TipTrackerImpl::extractObjectsOfTypes(
     const vector<DetectedObject>& detectedObjects,
-    const vector<DetectedObjectType>& objectTypes) {
+    const vector<DetectedObjectType>& objectTypes) const {
 
     vector<reference_wrapper<const Rectangle>> filteredObjects;
 
@@ -229,7 +229,9 @@ vector<reference_wrapper<const Rectangle>> TipTrackerImpl::extractObjectsOfTypes
 }
 
 vector<DetectedObject> TipTrackerImpl::copyAndTranslateDetectedObjects(
-    const vector<reference_wrapper<const Rectangle>>& detectedObjects, const double dx, const double dy) {
+    const vector<reference_wrapper<const Rectangle>>& detectedObjects,
+    const double dx,
+    const double dy) const {
 
     vector<DetectedObject> translatedObjects;
 
@@ -243,7 +245,7 @@ vector<DetectedObject> TipTrackerImpl::copyAndTranslateDetectedObjects(
 
 vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCurrentFrameWithOneFromThePreviousFrame(
     const vector<reference_wrapper<const Rectangle>>& prevFrameDetectedTips,
-    const vector<reference_wrapper<const Rectangle>>& currFrameDetectedTips) {
+    const vector<reference_wrapper<const Rectangle>>& currFrameDetectedTips) const {
 
     int maxMatchingDistance = configuration.trackingMaxTipMatchingDistanceInPixels;
 
@@ -292,7 +294,7 @@ vector<TipTrackerImpl::ObjectMatchResult> TipTrackerImpl::matchEachTipFromTheCur
 unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
     const list<Tip>& tips,
     const vector<DetectedObject>& detectedObjects,
-    const FrameOffset& accumulatedFrameOffset) {
+    const FrameOffset& accumulatedFrameOffset) const {
 
     int minMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm =
         configuration.trackingMinMatchingDistanceWithAnyObjectToConsiderTipNotHiddenByArm;
@@ -346,7 +348,10 @@ unordered_set<string> TipTrackerImpl::findTipIdsHiddenByAnArm(
     return hiddenTipIds;
 }
 
-bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(const DetectedObject& detectedTip, const list<Tip>& tips) {
+bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(
+    const DetectedObject& detectedTip,
+    const list<Tip>& tips) const {
+
     int minDistance = configuration.trackingMinDistanceToConsiderNewTipAsTheSameAsAnExistingOne;
 
     for (auto& tip : tips) {
@@ -359,7 +364,11 @@ bool TipTrackerImpl::isDetectedTipTooCloseToExistingTips(const DetectedObject& d
     return false;
 }
 
-Tip TipTrackerImpl::makeTip(const DetectedObject& detectedObject, const int frameIndex, const int tipIndex) {
+Tip TipTrackerImpl::makeTip(
+        const DetectedObject& detectedObject,
+        const int frameIndex,
+        const int tipIndex) const {
+
     int nbDetectionsToComputeAverageTipPositionAndSize =
         configuration.trackingNbDetectionsToComputeAverageTipPositionAndSize;
     int maxFramesAfterWhichATipIsConsideredLost =
@@ -385,7 +394,7 @@ Tip TipTrackerImpl::makeTip(const DetectedObject& detectedObject, const int fram
         detectedObject.height);
 }
 
-double TipTrackerImpl::computeMatchingDistance(const Rectangle& left, const Rectangle& right) {
+double TipTrackerImpl::computeMatchingDistance(const Rectangle& left, const Rectangle& right) const {
     double matchingDistance = Rectangle::distanceBetweenTopLeftPoints(right, left);
     matchingDistance += abs(right.width - left.width);
     matchingDistance += abs(right.height - left.height);

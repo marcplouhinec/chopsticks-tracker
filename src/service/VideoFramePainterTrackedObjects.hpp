@@ -17,7 +17,7 @@ namespace service {
                 const cv::Mat& frame,
                 const std::list<model::Tip>& tips,
                 const std::list<model::Chopstick>& chopsticks,
-                const model::FrameOffset accumulatedFrameOffset) = 0;
+                const model::FrameOffset accumulatedFrameOffset) const = 0;
     };
 
 }

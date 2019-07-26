@@ -11,7 +11,7 @@ void VideoFramePainterTrackedObjectsImpl::paintOnFrame(
     const cv::Mat& frame,
     const std::list<model::Tip>& tips,
     const std::list<model::Chopstick>& chopsticks,
-    const model::FrameOffset accumulatedFrameOffset) {
+    const model::FrameOffset accumulatedFrameOffset) const {
 
     int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
 

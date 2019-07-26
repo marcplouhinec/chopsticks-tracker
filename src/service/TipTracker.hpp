@@ -15,14 +15,14 @@ namespace service {
 
             virtual model::FrameOffset computeOffsetToCompensateForCameraMotion(
                 const std::vector<model::DetectedObject>& prevDetectedObjects,
-                const std::vector<model::DetectedObject>& currDetectedObjects) = 0;
+                const std::vector<model::DetectedObject>& currDetectedObjects) const = 0;
 
             virtual void updateTipsWithNewDetectionResult(
                 std::list<model::Tip>& tips,
                 const std::vector<model::DetectedObject>& detectedObjects,
                 const int frameIndex,
                 const model::FrameOffset frameOffset,
-                const model::FrameOffset accumulatedFrameOffset) = 0;
+                const model::FrameOffset accumulatedFrameOffset) const = 0;
     };
 
 }

@@ -66,8 +66,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize services
-    ConfigurationReaderImpl configurationReader;
-    Configuration configuration = configurationReader.read(configurationPath);
+    const ConfigurationReaderImpl configurationReader;
+    const Configuration configuration = configurationReader.read(configurationPath);
 
     list<Tip> tips;
     list<Chopstick> chopsticks;
@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
     ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     ObjectDetectorCacheImpl objectDetector(configuration, innerObjectDetector, videoPath);
     
-    TipTrackerImpl tipTracker(configuration);
-    ChopstickTrackerImpl chopstickTracker(configuration);
+    const TipTrackerImpl tipTracker(configuration);
+    const ChopstickTrackerImpl chopstickTracker(configuration);
 
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
     if (configuration.renderingWriterImplementation == "mjpeg") {
@@ -97,9 +97,9 @@ int main(int argc, char* argv[]) {
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
-    VideoFramePainterImageImpl videoFramePainterImage(configuration);
-    VideoFramePainterDetectedObjectsImpl videoFramePainterDetectedObjects(configuration);
-    VideoFramePainterTrackedObjectsImpl videoFramePainterTrackedObjects(configuration);
+    const VideoFramePainterImageImpl videoFramePainterImage(configuration);
+    const VideoFramePainterDetectedObjectsImpl videoFramePainterDetectedObjects(configuration);
+    const VideoFramePainterTrackedObjectsImpl videoFramePainterTrackedObjects(configuration);
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";

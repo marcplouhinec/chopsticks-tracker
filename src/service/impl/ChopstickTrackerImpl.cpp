@@ -20,7 +20,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
     list<Chopstick>& chopsticks,
     const list<Tip>& tips,
     const vector<DetectedObject>& detectedObjects,
-    const FrameOffset accumulatedFrameOffset) {
+    const FrameOffset accumulatedFrameOffset) const {
     
     // Extract the detected chopsticks and translate them according to the frame offset
     auto untranslatedDetectedChopsticks = extractChopstickObjects(detectedObjects);
@@ -187,7 +187,7 @@ void ChopstickTrackerImpl::updateChopsticksWithNewDetectionResult(
 }
 
 vector<reference_wrapper<const DetectedObject>> ChopstickTrackerImpl::extractChopstickObjects(
-    const vector<DetectedObject>& detectedObjects) {
+    const vector<DetectedObject>& detectedObjects) const {
 
     vector<reference_wrapper<const DetectedObject>> filteredObjects;
 
@@ -201,7 +201,7 @@ vector<reference_wrapper<const DetectedObject>> ChopstickTrackerImpl::extractCho
 }
 
 vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTipsWithDetectedChopsticks(
-    const list<Tip>& tips, const vector<DetectedObject>& detectedChopsticks) {
+    const list<Tip>& tips, const vector<DetectedObject>& detectedChopsticks) const {
 
     int minChopstickLength = configuration.trackingMinChopstickLengthInPixels;
     int maxChopstickLength = configuration.trackingMaxChopstickLengthInPixels;
@@ -269,7 +269,7 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::matchTi
 
 vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::filterMatchResultsByRemovingConflictingOnes(
     const vector<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
-    const list<Chopstick>& existingChopsticks) {
+    const list<Chopstick>& existingChopsticks) const {
     
     vector<ChopstickTrackerImpl::ChopstickMatchResult> filteredMatchResults;
     unordered_set<Rectangle, Rectangle::Hasher> alreadyMatchedTips;
@@ -321,7 +321,7 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::filterM
 
 vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::compareAndExtractConflictingResults(
     const vector<ChopstickTrackerImpl::ChopstickMatchResult>& referenceResults,
-    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& resultsToFilter) {
+    const vector<ChopstickTrackerImpl::ChopstickMatchResult>& resultsToFilter) const {
     
     vector<ChopstickTrackerImpl::ChopstickMatchResult> conflictingResults;
 
@@ -352,7 +352,7 @@ vector<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::compare
 optional<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::findMatchResultByTips(
     const vector<ChopstickTrackerImpl::ChopstickMatchResult>& matchResults,
     const std::string& tip1Id,
-    const std::string& tip2Id) {
+    const std::string& tip2Id) const {
     
     for (auto& matchResult : matchResults) {
         Tip& mrTip1 = (Tip&) matchResult.tip1;
@@ -368,7 +368,7 @@ optional<ChopstickTrackerImpl::ChopstickMatchResult> ChopstickTrackerImpl::findM
 
 Chopstick ChopstickTrackerImpl::makeChopstick(
     const ChopstickTrackerImpl::ChopstickMatchResult& matchResult,
-    const bool isRejectedBecauseOfConflict) {
+    const bool isRejectedBecauseOfConflict) const {
 
     int maxFramesAfterWhichAChopstickIsConsideredLost = 
         configuration.trackingMaxFramesAfterWhichAChopstickIsConsideredLost;

@@ -10,7 +10,7 @@ using std::vector;
 void VideoFramePainterDetectedObjectsImpl::paintOnFrame(
     const cv::Mat& frame,
     const vector<DetectedObject>& detectedObjects,
-    const FrameOffset accumulatedFrameOffset) {
+    const FrameOffset accumulatedFrameOffset) const {
 
     int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
     bool showTips = configuration.renderingDetectedObjectsPainterShowTips;

@@ -14,10 +14,10 @@ namespace service {
             const cv::Scalar magentaColor{255.0, 0.0, 255.0};
 
         private:
-            model::Configuration& configuration;
+            const model::Configuration& configuration;
 
         public:
-            VideoFramePainterDetectedObjectsImpl(model::Configuration& configuration) : 
+            VideoFramePainterDetectedObjectsImpl(const model::Configuration& configuration) : 
                 configuration(configuration) {}
             
             virtual ~VideoFramePainterDetectedObjectsImpl() {};
@@ -25,7 +25,7 @@ namespace service {
             virtual void paintOnFrame(
                 const cv::Mat& frame,
                 const std::vector<model::DetectedObject>& detectedObjects,
-                const model::FrameOffset accumulatedFrameOffset);
+                const model::FrameOffset accumulatedFrameOffset) const;
     };
 
 }

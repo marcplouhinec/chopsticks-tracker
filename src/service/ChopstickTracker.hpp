@@ -17,7 +17,7 @@ namespace service {
                 std::list<model::Chopstick>& chopsticks,
                 const std::list<model::Tip>& tips,
                 const std::vector<model::DetectedObject>& detectedObjects,
-                const model::FrameOffset accumulatedFrameOffset) = 0;
+                const model::FrameOffset accumulatedFrameOffset) const = 0;
     };
 
 }

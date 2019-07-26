@@ -14,9 +14,7 @@ namespace fs = boost::filesystem;
 namespace lg = boost::log;
 namespace pt = boost::property_tree;
 
-Configuration ConfigurationReaderImpl::read(fs::path configurationPath) {
-    LOG_INFO(logger) << "Loading the configuration file: " << configurationPath.string();
-
+Configuration ConfigurationReaderImpl::read(fs::path configurationPath) const {
     Configuration config;
 
     pt::ptree propTree;

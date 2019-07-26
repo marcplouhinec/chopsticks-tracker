@@ -11,10 +11,10 @@ namespace service {
 
     class ChopstickTrackerImpl : public ChopstickTracker {
         private:
-            model::Configuration& configuration;
+            const model::Configuration& configuration;
 
         public:
-            ChopstickTrackerImpl(model::Configuration& configuration) : configuration(configuration) {}
+            ChopstickTrackerImpl(const model::Configuration& configuration) : configuration(configuration) {}
 
             virtual ~ChopstickTrackerImpl() {}
 
@@ -22,7 +22,7 @@ namespace service {
                 std::list<model::Chopstick>& chopsticks,
                 const std::list<model::Tip>& tips,
                 const std::vector<model::DetectedObject>& detectedObjects,
-                const model::FrameOffset accumulatedFrameOffset);
+                const model::FrameOffset accumulatedFrameOffset) const;
         
         private:
             struct ChopstickMatchResult {
@@ -59,11 +59,11 @@ namespace service {
 
         private:
             std::vector<std::reference_wrapper<const model::DetectedObject>> extractChopstickObjects(
-                const std::vector<model::DetectedObject>& detectedObjects);
+                const std::vector<model::DetectedObject>& detectedObjects) const;
             
             std::vector<ChopstickMatchResult> matchTipsWithDetectedChopsticks(
                 const std::list<model::Tip>& tips,
-                const std::vector<model::DetectedObject>& detectedChopsticks);
+                const std::vector<model::DetectedObject>& detectedChopsticks) const;
 
             /**
              * The matchResults input parameter contains many potential good matches between tips
@@ -80,20 +80,20 @@ namespace service {
              */
             std::vector<ChopstickMatchResult> filterMatchResultsByRemovingConflictingOnes(
                 const std::vector<ChopstickMatchResult>& matchResults,
-                const std::list<model::Chopstick>& existingChopsticks);
+                const std::list<model::Chopstick>& existingChopsticks) const;
 
             std::vector<ChopstickMatchResult> compareAndExtractConflictingResults(
                 const std::vector<ChopstickMatchResult>& referenceResults,
-                const std::vector<ChopstickMatchResult>& resultsToFilter);
+                const std::vector<ChopstickMatchResult>& resultsToFilter) const;
             
             std::optional<ChopstickMatchResult> findMatchResultByTips(
                 const std::vector<ChopstickMatchResult>& matchResults,
                 const std::string& tip1Id,
-                const std::string& tip2Id);
+                const std::string& tip2Id) const;
 
             model::Chopstick makeChopstick(
                 const ChopstickMatchResult& matchResult,
-                const bool isRejectedBecauseOfConflict);
+                const bool isRejectedBecauseOfConflict) const;
     };
 
 }

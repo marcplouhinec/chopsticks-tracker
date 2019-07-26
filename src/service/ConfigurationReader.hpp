@@ -10,7 +10,7 @@ namespace service {
         public:
             virtual ~ConfigurationReader() {}
 
-            virtual model::Configuration read(boost::filesystem::path configurationPath) = 0;
+            virtual model::Configuration read(boost::filesystem::path configurationPath) const = 0;
     };
 
 }

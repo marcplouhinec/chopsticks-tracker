@@ -11,10 +11,10 @@ namespace service {
             const cv::Scalar blackColor{0, 0, 0};
 
         private:
-            model::Configuration& configuration;
+            const model::Configuration& configuration;
 
         public:
-            VideoFramePainterImageImpl(model::Configuration& configuration) : 
+            VideoFramePainterImageImpl(const model::Configuration& configuration) : 
                 configuration(configuration) {}
             
             virtual ~VideoFramePainterImageImpl() {};
@@ -22,7 +22,7 @@ namespace service {
             virtual void paintOnFrame(
                 cv::Mat& frame,
                 const cv::Mat& image,
-                const model::FrameOffset accumulatedFrameOffset);
+                const model::FrameOffset accumulatedFrameOffset) const;
     };
 
 }
