@@ -21,6 +21,8 @@ int main(int argc, char* argv[]) {
     } catch (std::runtime_error e) {
         return 1;
     }
+    LOG_INFO(logger) << "Initialization (configuration path = " << programArguments.configurationPath.string()
+        << ", video path = " << programArguments.videoPath.string() << ")...";
 
     // Initialize the application context
     ApplicationContext applicationContext(programArguments.configurationPath, programArguments.videoPath);
@@ -44,14 +46,15 @@ int main(int argc, char* argv[]) {
     cv::Mat outputFrame = videoFrameWriter.buildOutputFrame();
 
     for (int frameIndex = 0; frameIndex < videoProperties.nbFrames; frameIndex++) {
-        LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
+        LOG_INFO(logger) << "Processing the frame " << frameIndex
+            << "/" << (videoProperties.nbFrames - 1) << "...";
 
+        // Read the next frame
         auto frame = videoFrameReader.readFrameAt(frameIndex);
-        LOG_INFO(logger) << "Frame resolution: " << frame.size();
 
+        // Detect the objects in this frame
         prevFrameDetectedObjects = detectedObjects;
         detectedObjects = objectDetector.detectObjectsAt(frameIndex);
-        LOG_INFO(logger) << "Nb detected objects: " << detectedObjects.size();
 
         // Find how much we need to compensate for camera motion
         FrameOffset frameOffset(0, 0);
@@ -59,27 +62,21 @@ int main(int argc, char* argv[]) {
             frameOffset = trackerTip.computeOffsetToCompensateForCameraMotion(
                 prevFrameDetectedObjects, detectedObjects);
             accumulatedFrameOffset += frameOffset;
-
-            LOG_INFO(logger) << "Camera motion compensated: dx = " << frameOffset.dx
-                << ", dy = " << frameOffset.dy;
         }
 
-        // Update the tracked tips anc chopsticks
+        // Update the tracked tips and chopsticks
         trackerTip.updateTipsWithNewDetectionResult(
             tips, detectedObjects, frameIndex, frameOffset, accumulatedFrameOffset);
-        LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
 
         trackerChopstick.updateChopsticksWithNewDetectionResult(
             chopsticks, tips, detectedObjects, accumulatedFrameOffset);
-        LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 
+        // Render the detected and tracked objects in an output video frame
         videoFramePainterImage.paintOnFrame(outputFrame, frame, accumulatedFrameOffset);
         videoFramePainterDetectedObjects.paintOnFrame(outputFrame, detectedObjects, accumulatedFrameOffset);
         videoFramePainterTrackedObjects.paintOnFrame(outputFrame, tips, chopsticks, accumulatedFrameOffset);
-        LOG_INFO(logger) << "Frame painted.";
 
         videoFrameWriter.writeFrameAt(frameIndex, outputFrame);
-        LOG_INFO(logger) << "Frame written.";
     }
 
     LOG_INFO(logger) << "Application executed with success!";
