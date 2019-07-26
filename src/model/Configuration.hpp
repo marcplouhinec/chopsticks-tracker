@@ -37,6 +37,9 @@ namespace model {
             bool renderingDetectedObjectsPainterShowTips;
             bool renderingDetectedObjectsPainterShowChopsticks;
             bool renderingDetectedObjectsPainterShowArms;
+            bool renderingTrackedObjectsPainterShowTips;
+            bool renderingTrackedObjectsPainterShowAcceptedChopsticks;
+            bool renderingTrackedObjectsPainterShowRejectedChopsticks;
             std::string renderingWriterImplementation;
             int renderingVideoFrameMarginsInPixels;
         

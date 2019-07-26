@@ -80,6 +80,12 @@ Configuration ConfigurationReaderImpl::read(fs::path configurationPath) {
         propTree.get<bool>("rendering.detectedobjectsPainter_showChopsticks");
     config.renderingDetectedObjectsPainterShowArms =
         propTree.get<bool>("rendering.detectedobjectsPainter_showArms");
+    config.renderingTrackedObjectsPainterShowTips =
+        propTree.get<bool>("rendering.trackedobjectsPainter_showTips");
+    config.renderingTrackedObjectsPainterShowAcceptedChopsticks =
+        propTree.get<bool>("rendering.trackedobjectsPainter_showAcceptedChopsticks");
+    config.renderingTrackedObjectsPainterShowRejectedChopsticks =
+        propTree.get<bool>("rendering.trackedobjectsPainter_showRejectedChopsticks");
     config.renderingWriterImplementation = propTree.get<string>("rendering.writerImplementation");
     config.renderingVideoFrameMarginsInPixels = propTree.get<int>("rendering.videoFrameMarginsInPixels");
 
