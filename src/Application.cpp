@@ -1,27 +1,13 @@
 #include <iostream>
-#include <memory>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include "utils/logging.hpp"
-#include "service/impl/ConfigurationReaderImpl.hpp"
-#include "service/impl/ObjectDetectorCacheImpl.hpp"
-#include "service/impl/ObjectDetectorDarknetImpl.hpp"
-#include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
-#include "service/impl/TrackerTipImpl.hpp"
-#include "service/impl/TrackerChopstickImpl.hpp"
-#include "service/impl/VideoFramePainterImageImpl.hpp"
-#include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
-#include "service/impl/VideoFramePainterTrackedObjectsImpl.hpp"
-#include "service/impl/VideoFrameReaderImpl.hpp"
-#include "service/impl/VideoFrameWriterMjpgImpl.hpp"
-#include "service/impl/VideoFrameWriterMultiJpegImpl.hpp"
+#include "ApplicationContext.hpp"
 
 using namespace model;
 using namespace service;
-using std::abs;
 using std::list;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 namespace lg = boost::log;
 namespace po = boost::program_options;
@@ -65,47 +51,25 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Initialize services
-    const ConfigurationReaderImpl configurationReader;
-    const Configuration configuration = configurationReader.read(configurationPath);
-
-    list<Tip> tips;
-    list<Chopstick> chopsticks;
-
-    VideoFrameReaderImpl videoFrameReader(videoPath);
-    const VideoProperties videoProperties = videoFrameReader.getVideoProperties();
-
-    unique_ptr<ObjectDetector> pInnerObjectDetector{};
-    if (configuration.objectDetectionImplementation == "darknet") {
-        pInnerObjectDetector.reset(new ObjectDetectorDarknetImpl(
-            configuration, videoFrameReader, videoProperties));
-    } else if (configuration.objectDetectionImplementation == "opencvdnn") {
-        pInnerObjectDetector.reset(new ObjectDetectorOpenCvDnnImpl(
-            configuration, videoFrameReader, videoProperties));
-    }
-    ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
-    ObjectDetectorCacheImpl objectDetector(configuration, innerObjectDetector, videoPath);
-    
-    const TrackerTipImpl TrackerTip(configuration);
-    const TrackerChopstickImpl TrackerChopstick(configuration);
-
-    unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
-    if (configuration.renderingWriterImplementation == "mjpeg") {
-        pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(configuration, videoPath, videoProperties));
-    } else if (configuration.renderingWriterImplementation == "multijpeg") {
-        pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configuration, videoPath, videoProperties));
-    }
-    VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
-
-    const VideoFramePainterImageImpl videoFramePainterImage(configuration);
-    const VideoFramePainterDetectedObjectsImpl videoFramePainterDetectedObjects(configuration);
-    const VideoFramePainterTrackedObjectsImpl videoFramePainterTrackedObjects(configuration);
+    // Initialize the application context
+    ApplicationContext applicationContext(configurationPath, videoPath);
+    auto& videoProperties = applicationContext.getVideoProperties();
+    auto& videoFrameReader = applicationContext.getVideoFrameReader();
+    auto& objectDetector = applicationContext.getObjectDetector();
+    auto& trackerTip = applicationContext.getTrackerTip();
+    auto& trackerChopstick = applicationContext.getTrackerChopstick();
+    auto& videoFrameWriter = applicationContext.getVideoFrameWriter();
+    auto& videoFramePainterImage = applicationContext.getVideoFramePainterImage();
+    auto& videoFramePainterDetectedObjects = applicationContext.getVideoFramePainterDetectedObjects();
+    auto& videoFramePainterTrackedObjects = applicationContext.getVideoFramePainterTrackedObjects();
 
     // Detect and track objects in the video
     LOG_INFO(logger) << "Detect and track objects in the video...";
     FrameOffset accumulatedFrameOffset(0, 0);
     vector<DetectedObject> detectedObjects;
     vector<DetectedObject> prevFrameDetectedObjects;
+    list<Tip> tips;
+    list<Chopstick> chopsticks;
     cv::Mat outputFrame = videoFrameWriter.buildOutputFrame();
 
     for (int frameIndex = 0; frameIndex < videoProperties.nbFrames; frameIndex++) {
@@ -121,7 +85,7 @@ int main(int argc, char* argv[]) {
         // Find how much we need to compensate for camera motion
         FrameOffset frameOffset(0, 0);
         if (frameIndex >= 1) {
-            frameOffset = TrackerTip.computeOffsetToCompensateForCameraMotion(
+            frameOffset = trackerTip.computeOffsetToCompensateForCameraMotion(
                 prevFrameDetectedObjects, detectedObjects);
             accumulatedFrameOffset += frameOffset;
 
@@ -130,11 +94,11 @@ int main(int argc, char* argv[]) {
         }
 
         // Update the tracked tips anc chopsticks
-        TrackerTip.updateTipsWithNewDetectionResult(
+        trackerTip.updateTipsWithNewDetectionResult(
             tips, detectedObjects, frameIndex, frameOffset, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked tips: " << tips.size();
 
-        TrackerChopstick.updateChopsticksWithNewDetectionResult(
+        trackerChopstick.updateChopsticksWithNewDetectionResult(
             chopsticks, tips, detectedObjects, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 

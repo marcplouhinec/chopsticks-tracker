@@ -21,7 +21,7 @@ vector<DetectedObject> ObjectDetectorCacheImpl::detectObjectsAt(int frameIndex) 
 
     // Create the cache folder if it doesn't exist
     if (!cacheFolderInitialized) {
-        LOG_INFO(logger) << "Initialize the cache folder...";
+        LOG_INFO(logger) << "Initialize the cache folder: " << cacheFolderPath.string();
 
         if (!fs::is_directory(cacheFolderPath)) {
             if (fs::exists(cacheFolderPath)) {
@@ -41,6 +41,7 @@ vector<DetectedObject> ObjectDetectorCacheImpl::detectObjectsAt(int frameIndex) 
     // Check if the detected objects are cached already
     string fileName = to_string(frameIndex) + ".json";
     fs::path objectsPath(cacheFolderPath / fileName);
+    
     if (fs::exists(objectsPath)) {
         // Unserialize the objects
         ifstream objectsFile(objectsPath.string());
