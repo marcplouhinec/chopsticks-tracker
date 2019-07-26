@@ -14,6 +14,8 @@ namespace model {
             boost::filesystem::path yoloModelCfgPath;
             boost::filesystem::path yoloModelWeightsPath;
 
+            bool inputVideoCrop;
+
             float objectDetectionMinTipConfidence;
             float objectDetectionMinChopstickConfidence;
             float objectDetectionMinArmConfidence;

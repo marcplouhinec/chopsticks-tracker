@@ -101,11 +101,11 @@ std::vector<DetectedObject> ObjectDetectorCacheImpl::convertFromJson(std::string
     for (rapidjson::Value::ConstValueIterator itr = jsonDoc.Begin(); itr != jsonDoc.End(); ++itr) {
         const rapidjson::Value& detectedObjectValue = *itr;
 
-        float x = detectedObjectValue["x"].GetInt();
-        float y = detectedObjectValue["y"].GetInt();
-        float width = detectedObjectValue["width"].GetInt();
-        float height = detectedObjectValue["height"].GetInt();
-        float confidence = detectedObjectValue["confidence"].GetFloat();
+        float x = detectedObjectValue["x"].GetDouble();
+        float y = detectedObjectValue["y"].GetDouble();
+        float width = detectedObjectValue["width"].GetDouble();
+        float height = detectedObjectValue["height"].GetDouble();
+        float confidence = detectedObjectValue["confidence"].GetDouble();
         string objectTypeString(detectedObjectValue["objectType"].GetString());
         DetectedObjectType objectType = DetectedObjectTypeHelper::stringToEnum(objectTypeString);
         

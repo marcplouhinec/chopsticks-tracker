@@ -33,6 +33,8 @@ Configuration ConfigurationReaderImpl::read(fs::path configurationPath) const {
     config.yoloModelCfgPath = fs::canonical(fs::path(rootPath / relativeYoloCfgPath));
     config.yoloModelWeightsPath = fs::canonical(fs::path(rootPath / relativeYoloWeightsPath));
 
+    config.inputVideoCrop = propTree.get<bool>("inputVideo.crop");
+
     config.objectDetectionMinTipConfidence = propTree.get<float>("objectDetection.minTipConfidence");
     config.objectDetectionMinChopstickConfidence =
         propTree.get<float>("objectDetection.minChopstickConfidence");

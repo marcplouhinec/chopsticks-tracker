@@ -33,7 +33,6 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
     // Convert and resize the image for YOLO on Darknet
     image frameImage = matToImage(frame);
     image resizedImage = resize_image(frameImage, pNeuralNetwork->w, pNeuralNetwork->h);
-    // TODO crop before resize (can be done with a VideoFrameReaderCropImpl)
 
     // Detect objects
     network_predict_image(pNeuralNetwork.get(), resizedImage);

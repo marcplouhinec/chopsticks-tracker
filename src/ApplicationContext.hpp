@@ -39,7 +39,7 @@ class ApplicationContext {
             configuration = pConfigurationReaderImpl->read(configurationPath);
 
             // Video reader
-            pVideoFrameReaderImpl.reset(new service::VideoFrameReaderImpl(videoPath));
+            pVideoFrameReaderImpl.reset(new service::VideoFrameReaderImpl(configuration, videoPath));
             videoProperties = pVideoFrameReaderImpl->getVideoProperties();
 
             // Objects detection

@@ -8,6 +8,7 @@ using namespace model;
 using namespace service;
 using std::max;
 using std::make_unique;
+using std::min;
 using std::to_string;
 using std::out_of_range;
 using std::runtime_error;
@@ -46,18 +47,24 @@ const cv::Mat VideoFrameReaderImpl::readFrameAt(int frameIndex) {
         }
     }
 
+    // Crop the image if necessary
+    if (configuration.inputVideoCrop) {
+        cv::Rect cropROI(0, 0, videoProperties.frameWidth, videoProperties.frameHeight);
+        if (currentFrame.cols > currentFrame.rows) {
+            cropROI.x = (currentFrame.cols - videoProperties.frameWidth) / 2;
+        } else {
+            cropROI.y = (currentFrame.rows - videoProperties.frameHeight) / 2;
+        }
+        currentFrame = currentFrame(cropROI);
+    }
+    
     return currentFrame;
 }
 
 const VideoProperties VideoFrameReaderImpl::getVideoProperties() {
     initVideoCaptureIfNecessary();
 
-    return VideoProperties(
-        pVideoCapture->get(cv::CAP_PROP_FRAME_COUNT),
-        pVideoCapture->get(cv::CAP_PROP_FPS),
-        pVideoCapture->get(cv::CAP_PROP_FRAME_WIDTH),
-        pVideoCapture->get(cv::CAP_PROP_FRAME_HEIGHT)
-    );
+    return videoProperties;
 }
 
 void VideoFrameReaderImpl::initVideoCaptureIfNecessary() {
@@ -67,5 +74,21 @@ void VideoFrameReaderImpl::initVideoCaptureIfNecessary() {
         if (!pVideoCapture->isOpened()) {
             throw runtime_error("Unable to open the video: " + videoPath.string());
         }
+
+        int frameWidth = pVideoCapture->get(cv::CAP_PROP_FRAME_WIDTH);
+        int frameHeight = pVideoCapture->get(cv::CAP_PROP_FRAME_HEIGHT);
+
+        if (configuration.inputVideoCrop) {
+            int frameSize = min(frameWidth, frameHeight);
+            frameWidth = frameSize;
+            frameHeight = frameSize;
+        }
+
+        videoProperties = VideoProperties(
+            pVideoCapture->get(cv::CAP_PROP_FRAME_COUNT),
+            pVideoCapture->get(cv::CAP_PROP_FPS),
+            frameWidth,
+            frameHeight
+        );
     }
 }
