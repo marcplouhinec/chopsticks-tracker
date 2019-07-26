@@ -7,6 +7,10 @@ using std::string;
 using std::to_string;
 namespace fs = boost::filesystem;
 
+cv::Mat VideoFrameWriterMultiJpegImpl::buildOutputFrame() {
+    return cv::Mat(outputFrameHeight, outputFrameWidth, CV_8UC3);
+}
+
 void VideoFrameWriterMultiJpegImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
     if (!folderInitialized) {
         LOG_INFO(logger) << "Initialize the output folder...";

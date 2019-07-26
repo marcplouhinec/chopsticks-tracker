@@ -15,6 +15,10 @@ VideoFrameWriterMjpgImpl::~VideoFrameWriterMjpgImpl() {
     }
 }
 
+cv::Mat VideoFrameWriterMjpgImpl::buildOutputFrame() {
+    return cv::Mat(outputFrameHeight, outputFrameWidth, CV_8UC3);
+}
+
 void VideoFrameWriterMjpgImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
     int expectedFrameIndex = lastWrittenFrameIndex + 1;
     if (expectedFrameIndex != frameIndex) {
@@ -41,8 +45,8 @@ void VideoFrameWriterMjpgImpl::writeFrameAt(int frameIndex, cv::Mat& frame) {
         pVideoWriter = make_unique<cv::VideoWriter>(cv::VideoWriter(
             outputVideoPath.string(),
             cv::VideoWriter::fourcc('M','J','P','G'),
-            fps,
-            cv::Size(frameWidth, frameHeight),
+            outputFps,
+            cv::Size(outputFrameWidth, outputFrameHeight),
             /* isColor= */true));
     }
 

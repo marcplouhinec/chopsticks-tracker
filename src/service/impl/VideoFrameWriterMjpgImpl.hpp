@@ -4,6 +4,7 @@
 #include <memory>
 #include <boost/filesystem.hpp>
 #include "../../model/Configuration.hpp"
+#include "../../model/VideoProperties.hpp"
 #include "../../utils/logging.hpp"
 #include "../VideoFrameWriter.hpp"
 
@@ -13,29 +14,29 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            model::Configuration& configuration;
-            boost::filesystem::path inputVideoPath;
-            double fps;
-            int frameWidth;
-            int frameHeight;
+            const model::Configuration& configuration;
+            const boost::filesystem::path& inputVideoPath;
+            const int outputFps;
+            const int outputFrameWidth;
+            const int outputFrameHeight;
             int lastWrittenFrameIndex = -1;
 
             std::unique_ptr<cv::VideoWriter> pVideoWriter{};
 
         public:
             VideoFrameWriterMjpgImpl(
-                model::Configuration& configuration,
-                boost::filesystem::path inputVideoPath,
-                double fps,
-                int frameWidth,
-                int frameHeight) :
+                const model::Configuration& configuration,
+                const boost::filesystem::path& inputVideoPath,
+                const model::VideoProperties& videoProperties) :
                     configuration(configuration),
                     inputVideoPath(inputVideoPath),
-                    fps(fps),
-                    frameWidth(frameWidth),
-                    frameHeight(frameHeight) {}
+                    outputFps(videoProperties.fps),
+                    outputFrameWidth(videoProperties.frameWidth + 2 * configuration.renderingVideoFrameMarginsInPixels),
+                    outputFrameHeight(videoProperties.frameHeight + 2 * configuration.renderingVideoFrameMarginsInPixels) {}
 
             virtual ~VideoFrameWriterMjpgImpl();
+
+            virtual cv::Mat buildOutputFrame();
 
             virtual void writeFrameAt(int frameIndex, cv::Mat& frame);
     };

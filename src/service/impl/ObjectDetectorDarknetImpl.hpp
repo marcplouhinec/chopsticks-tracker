@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 #include <darknet.h>
 #include "../../model/Configuration.hpp"
+#include "../../model/VideoProperties.hpp"
 #include "../../utils/logging.hpp"
 #include "../ObjectDetector.hpp"
 #include "../VideoFrameReader.hpp"
@@ -21,8 +22,9 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            model::Configuration& configuration;
+            const model::Configuration& configuration;
             VideoFrameReader& videoFrameReader;
+            const model::VideoProperties& videoProperties;
             std::unique_ptr<network> pNeuralNetwork{};
             layer lastLayer;
             std::vector<model::DetectedObjectType> objectTypesByClassId;
@@ -34,10 +36,12 @@ namespace service {
 
         public:
             ObjectDetectorDarknetImpl(
-                model::Configuration& configuration,
-                VideoFrameReader& videoFrameReader) : 
+                const model::Configuration& configuration,
+                VideoFrameReader& videoFrameReader,
+                const model::VideoProperties& videoProperties) : 
                     configuration(configuration),
-                    videoFrameReader(videoFrameReader) {}
+                    videoFrameReader(videoFrameReader),
+                    videoProperties(videoProperties) {}
 
             virtual ~ObjectDetectorDarknetImpl() {};
 

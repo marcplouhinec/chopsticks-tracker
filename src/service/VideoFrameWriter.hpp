@@ -9,6 +9,8 @@ namespace service {
         public:
             virtual ~VideoFrameWriter() {}
 
+            virtual cv::Mat buildOutputFrame() = 0;
+
             virtual void writeFrameAt(int frameIndex, cv::Mat& frame) = 0;
     };
 

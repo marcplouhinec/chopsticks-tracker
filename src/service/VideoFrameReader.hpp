@@ -2,6 +2,7 @@
 #define SERVICE_VIDEO_FRAME_READER
 
 #include <opencv2/opencv.hpp>
+#include "../model/VideoProperties.hpp"
 
 namespace service {
 
@@ -9,11 +10,8 @@ namespace service {
         public:
             virtual ~VideoFrameReader() {}
 
-            virtual cv::Mat readFrameAt(int frameIndex) = 0;
-            virtual int getNbFrames() = 0;
-            virtual int getFps() = 0;
-            virtual int getFrameWidth() = 0;
-            virtual int getFrameHeight() = 0;
+            virtual const cv::Mat readFrameAt(int frameIndex) = 0;
+            virtual const model::VideoProperties getVideoProperties() = 0;
     };
 
 }

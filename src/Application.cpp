@@ -9,6 +9,7 @@
 #include "service/impl/ObjectDetectorOpenCvDnnImpl.hpp"
 #include "service/impl/TipTrackerImpl.hpp"
 #include "service/impl/ChopstickTrackerImpl.hpp"
+#include "service/impl/VideoFramePainterImageImpl.hpp"
 #include "service/impl/VideoFramePainterDetectedObjectsImpl.hpp"
 #include "service/impl/VideoFramePainterTrackedObjectsImpl.hpp"
 #include "service/impl/VideoFrameReaderImpl.hpp"
@@ -72,18 +73,15 @@ int main(int argc, char* argv[]) {
     list<Chopstick> chopsticks;
 
     VideoFrameReaderImpl videoFrameReader(videoPath);
-    int nbFrames = videoFrameReader.getNbFrames();
-    int frameWidth = videoFrameReader.getFrameWidth();
-    int frameHeight = videoFrameReader.getFrameHeight();
-    int frameMargin = configuration.renderingVideoFrameMarginsInPixels;
-    const cv::Scalar blackColor(0, 0, 0);
-    cv::Mat outputFrame(frameHeight + 2 * frameMargin, frameWidth + 2 * frameMargin, CV_8UC3, blackColor);
+    const VideoProperties videoProperties = videoFrameReader.getVideoProperties();
 
     unique_ptr<ObjectDetector> pInnerObjectDetector{};
     if (configuration.objectDetectionImplementation == "darknet") {
-        pInnerObjectDetector.reset(new ObjectDetectorDarknetImpl(configuration, videoFrameReader));
+        pInnerObjectDetector.reset(new ObjectDetectorDarknetImpl(
+            configuration, videoFrameReader, videoProperties));
     } else if (configuration.objectDetectionImplementation == "opencvdnn") {
-        pInnerObjectDetector.reset(new ObjectDetectorOpenCvDnnImpl(configuration, videoFrameReader));
+        pInnerObjectDetector.reset(new ObjectDetectorOpenCvDnnImpl(
+            configuration, videoFrameReader, videoProperties));
     }
     ObjectDetector& innerObjectDetector = *pInnerObjectDetector;
     ObjectDetectorCacheImpl objectDetector(configuration, innerObjectDetector, videoPath);
@@ -93,17 +91,13 @@ int main(int argc, char* argv[]) {
 
     unique_ptr<VideoFrameWriter> pVideoFrameWriter{};
     if (configuration.renderingWriterImplementation == "mjpeg") {
-        pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(
-            configuration,
-            videoPath,
-            videoFrameReader.getFps(),
-            outputFrame.cols,
-            outputFrame.rows));
+        pVideoFrameWriter.reset(new VideoFrameWriterMjpgImpl(configuration, videoPath, videoProperties));
     } else if (configuration.renderingWriterImplementation == "multijpeg") {
-        pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configuration, videoPath));
+        pVideoFrameWriter.reset(new VideoFrameWriterMultiJpegImpl(configuration, videoPath, videoProperties));
     }
     VideoFrameWriter& videoFrameWriter = *pVideoFrameWriter;
 
+    VideoFramePainterImageImpl videoFramePainterImage(configuration);
     VideoFramePainterDetectedObjectsImpl videoFramePainterDetectedObjects(configuration);
     VideoFramePainterTrackedObjectsImpl videoFramePainterTrackedObjects(configuration);
 
@@ -112,8 +106,9 @@ int main(int argc, char* argv[]) {
     FrameOffset accumulatedFrameOffset(0, 0);
     vector<DetectedObject> detectedObjects;
     vector<DetectedObject> prevFrameDetectedObjects;
+    cv::Mat outputFrame = videoFrameWriter.buildOutputFrame();
 
-    for (int frameIndex = 0; frameIndex < nbFrames; frameIndex++) {
+    for (int frameIndex = 0; frameIndex < videoProperties.nbFrames; frameIndex++) {
         LOG_INFO(logger) << "Processing the frame " << frameIndex << "...";
 
         auto frame = videoFrameReader.readFrameAt(frameIndex);
@@ -143,12 +138,7 @@ int main(int argc, char* argv[]) {
             chopsticks, tips, detectedObjects, accumulatedFrameOffset);
         LOG_INFO(logger) << "Nb tracked chopsticks: " << chopsticks.size();
 
-        // Copy the video frame into a bigger one in order compensate for camera motion
-        outputFrame.setTo(blackColor);
-        int marginLeft = round(frameMargin - accumulatedFrameOffset.dx);
-        int marginTop = round(frameMargin - accumulatedFrameOffset.dy);
-        frame.copyTo(outputFrame(cv::Rect(marginLeft, marginTop, frame.cols, frame.rows)));
-
+        videoFramePainterImage.paintOnFrame(outputFrame, frame, accumulatedFrameOffset);
         videoFramePainterDetectedObjects.paintOnFrame(outputFrame, detectedObjects, accumulatedFrameOffset);
         videoFramePainterTrackedObjects.paintOnFrame(outputFrame, tips, chopsticks, accumulatedFrameOffset);
         LOG_INFO(logger) << "Frame painted.";

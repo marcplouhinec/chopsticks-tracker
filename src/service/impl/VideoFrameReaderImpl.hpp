@@ -10,11 +10,6 @@ namespace service {
         private:
             boost::filesystem::path videoPath;
 
-            int nbFrames = -1;
-            int fps = -1;
-            int frameWidth = -1;
-            int frameHeight = -1;
-
             cv::Mat currentFrame;
             int currentFrameIndex = -1;
             std::unique_ptr<cv::VideoCapture> pVideoCapture{};
@@ -23,11 +18,8 @@ namespace service {
             VideoFrameReaderImpl(boost::filesystem::path videoPath) : videoPath(videoPath) {}
             virtual ~VideoFrameReaderImpl();
 
-            virtual cv::Mat readFrameAt(int frameIndex);
-            virtual int getNbFrames();
-            virtual int getFps();
-            virtual int getFrameWidth();
-            virtual int getFrameHeight();
+            virtual const cv::Mat readFrameAt(int frameIndex);
+            virtual const model::VideoProperties getVideoProperties();
         
         private:
             void initVideoCaptureIfNecessary();

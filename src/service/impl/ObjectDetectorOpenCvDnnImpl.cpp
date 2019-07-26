@@ -17,8 +17,6 @@ namespace pt = boost::property_tree;
 
 vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameIndex) {
     cv::Mat frame = videoFrameReader.readFrameAt(frameIndex);
-    int frameWidth = videoFrameReader.getFrameWidth();
-    int frameHeight = videoFrameReader.getFrameHeight();
 
     if (!neuralNetworkInitialized) {
         LOG_INFO(logger) << "Loading the YOLO neural network model...";
@@ -100,10 +98,10 @@ vector<DetectedObject> ObjectDetectorOpenCvDnnImpl::detectObjectsAt(int frameInd
                 }
 
                 if (confidence >= minConfidenceForType) {
-                    float centerX = layerOutput.at<float>(rowIndex, 0) * frameWidth;
-                    float centerY = layerOutput.at<float>(rowIndex, 1) * frameHeight;
-                    float width = layerOutput.at<float>(rowIndex, 2) * frameWidth;
-                    float height = layerOutput.at<float>(rowIndex, 3) * frameHeight;
+                    float centerX = layerOutput.at<float>(rowIndex, 0) * videoProperties.frameWidth;
+                    float centerY = layerOutput.at<float>(rowIndex, 1) * videoProperties.frameHeight;
+                    float width = layerOutput.at<float>(rowIndex, 2) * videoProperties.frameWidth;
+                    float height = layerOutput.at<float>(rowIndex, 3) * videoProperties.frameHeight;
                     float x = centerX - (width / 2);
                     float y = centerY - (height / 2);
 

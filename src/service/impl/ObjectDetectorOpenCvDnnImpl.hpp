@@ -5,6 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>
 #include "../../model/Configuration.hpp"
+#include "../../model/VideoProperties.hpp"
 #include "../../utils/logging.hpp"
 #include "../ObjectDetector.hpp"
 #include "../VideoFrameReader.hpp"
@@ -21,8 +22,9 @@ namespace service {
         private:
             boost::log::sources::severity_logger<boost::log::trivial::severity_level> logger;
 
-            model::Configuration& configuration;
+            const model::Configuration& configuration;
             VideoFrameReader& videoFrameReader;
+            const model::VideoProperties& videoProperties;
 
             bool neuralNetworkInitialized = false;
             cv::dnn::Net neuralNetwork;
@@ -38,10 +40,12 @@ namespace service {
 
         public:
             ObjectDetectorOpenCvDnnImpl(
-                model::Configuration& configuration,
-                VideoFrameReader& videoFrameReader) : 
+                const model::Configuration& configuration,
+                VideoFrameReader& videoFrameReader,
+                const model::VideoProperties& videoProperties) : 
                     configuration(configuration),
-                    videoFrameReader(videoFrameReader) {}
+                    videoFrameReader(videoFrameReader),
+                    videoProperties(videoProperties) {}
 
             virtual ~ObjectDetectorOpenCvDnnImpl() {}
 

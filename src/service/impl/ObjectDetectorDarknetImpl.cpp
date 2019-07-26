@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <math.h>
+#include "../../model/VideoProperties.hpp"
 #include "ObjectDetectorDarknetImpl.hpp"
 
 using namespace model;
@@ -11,8 +12,6 @@ using std::vector;
 
 vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex) {
     cv::Mat frame = videoFrameReader.readFrameAt(frameIndex);
-    int frameWidth = videoFrameReader.getFrameWidth();
-    int frameHeight = videoFrameReader.getFrameHeight();
 
     if (!pNeuralNetwork) {
         LOG_INFO(logger) << "Loading the YOLO neural network model...";
@@ -90,10 +89,10 @@ vector<DetectedObject> ObjectDetectorDarknetImpl::detectObjectsAt(int frameIndex
             }
 
             if (confidence >= minConfidenceForType) {
-                float centerX = detection.bbox.x * frameWidth;
-                float centerY = detection.bbox.y * frameHeight;
-                float width = detection.bbox.w * frameWidth;
-                float height = detection.bbox.h * frameHeight;
+                float centerX = detection.bbox.x * videoProperties.frameWidth;
+                float centerY = detection.bbox.y * videoProperties.frameHeight;
+                float width = detection.bbox.w * videoProperties.frameWidth;
+                float height = detection.bbox.h * videoProperties.frameHeight;
                 float x = centerX - (width / 2);
                 float y = centerY - (height / 2);
 

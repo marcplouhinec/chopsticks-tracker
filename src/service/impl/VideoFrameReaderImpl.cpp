@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include "VideoFrameReaderImpl.hpp"
 
+using namespace model;
 using namespace service;
 using std::max;
 using std::make_unique;
@@ -17,7 +18,7 @@ VideoFrameReaderImpl::~VideoFrameReaderImpl() {
     }
 }
 
-cv::Mat VideoFrameReaderImpl::readFrameAt(int frameIndex) {
+const cv::Mat VideoFrameReaderImpl::readFrameAt(int frameIndex) {
     if (frameIndex == currentFrameIndex) {
         return currentFrame;
     }
@@ -48,36 +49,15 @@ cv::Mat VideoFrameReaderImpl::readFrameAt(int frameIndex) {
     return currentFrame;
 }
 
-int VideoFrameReaderImpl::getNbFrames() {
-    if (nbFrames == -1) {
-        initVideoCaptureIfNecessary();
-        nbFrames = pVideoCapture->get(cv::CAP_PROP_FRAME_COUNT);
-    }
-    return nbFrames;
-}
+const VideoProperties VideoFrameReaderImpl::getVideoProperties() {
+    initVideoCaptureIfNecessary();
 
-int VideoFrameReaderImpl::getFps() {
-    if (fps == -1) {
-        initVideoCaptureIfNecessary();
-        fps = pVideoCapture->get(cv::CAP_PROP_FPS);
-    }
-    return fps;
-}
-
-int VideoFrameReaderImpl::getFrameWidth() {
-    if (frameWidth == -1) {
-        initVideoCaptureIfNecessary();
-        frameWidth = pVideoCapture->get(cv::CAP_PROP_FRAME_WIDTH);
-    }
-    return frameWidth;
-}
-
-int VideoFrameReaderImpl::getFrameHeight() {
-    if (frameHeight == -1) {
-        initVideoCaptureIfNecessary();
-        frameHeight = pVideoCapture->get(cv::CAP_PROP_FRAME_HEIGHT);
-    }
-    return frameHeight;
+    return VideoProperties(
+        pVideoCapture->get(cv::CAP_PROP_FRAME_COUNT),
+        pVideoCapture->get(cv::CAP_PROP_FPS),
+        pVideoCapture->get(cv::CAP_PROP_FRAME_WIDTH),
+        pVideoCapture->get(cv::CAP_PROP_FRAME_HEIGHT)
+    );
 }
 
 void VideoFrameReaderImpl::initVideoCaptureIfNecessary() {
