@@ -1,6 +1,28 @@
 # Chopstick Tracker
-The goal of this project is to track chopsticks in a video by using
-[YOLO v3](https://pjreddie.com/darknet/yolo/) to detect objects.
+
+## Summary
+1. [Introduction](#introduction)
+2. [Compilation](#compilation)
+3. [Usage](#usage)
+4. DNN model training
+5. Running this application in the cloud
+6. Thanks
+7. License
+
+## Introduction
+I have developed this project in order to learn how to use a
+[deep neural network](https://en.wikipedia.org/wiki/Deep_learning) to detect and track objects in
+a video. For that I have chosen the [YOLO v3](https://pjreddie.com/darknet/yolo/) model, because it has
+good results, can work in real-time and is easy to use.
+
+This application is able to detect and track [chopsticks](https://en.wikipedia.org/wiki/Chopsticks).
+The idea is to combine it later with a [robotic arm](https://en.wikipedia.org/wiki/Robotic_arm) that
+will automatically recognize where chopsticks are located, and then move them to a specific
+position according a user-defined pattern (for example like a grid). The robotic arm would also be able
+to detect when somebody "breaks" the pattern and fix it automatically.
+
+You can see the resulting video by clicking on the following image:
+[![Watch video](images/example.jpg)](https://youtu.be/d3EM2Zqqtio)
 
 ## Compilation
 ```bash
@@ -102,7 +124,7 @@ cmake -G "Unix Makefiles" ..
 make
 ```
 
-## Execution
+## Usage
 ```bash
 cd ~/projects/chopsticks-tracker/build
 ./ChopsticksTracker --config-path=../config.ini --video-path=../data/input-video/VID_20181231_133114.mp4
