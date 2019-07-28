@@ -205,7 +205,32 @@ The result is generated in the folder defined by the `outputpath` configuration 
 configuration, the generated file is located at `~/projects/chopsticks-tracker/output/result/VID_20181231_133114.avi`.
 
 ## DNN model training
-TODO
+The core part of this project is the YOLO v3 deep neural network model. You can find the model files
+in the [data/yolo-model](data/yolo-model) folder.
+
+In order to be able to recognize chopsticks, this model has been trained with many annotated photos
+available in the
+[data/supervidely-project/construction-with-chopsticks.tar](data/supervidely-project/construction-with-chopsticks.tar)
+file.
+
+As you can see if you unarchive this tar file, it not only contains images, but also annotations
+that indicates where the chopsticks, choptick tips and arms are located.
+
+The tool used to annotate the images and train the YOLO v3 model is [Supervisely](https://supervise.ly/),
+a web application that makes it very easy to choose and train neural networks models.
+
+You can create a free account on [https://supervise.ly/](https://supervise.ly/) and import the
+[construction-with-chopsticks.tar](data/supervidely-project/construction-with-chopsticks.tar) file. It
+would allow you to make customizations or create your own model.
+
+If you want to learn more about Supervisely, check their
+[Youtube channel](https://www.youtube.com/channel/UC4KD_AL4XR3dWpwrE8c0VXg).
+
+In addition, if you want to train neural networks in Supervisely, you need to register a machine
+with a CUDA-compatible GPU. I wrote some Terraform scripts with a step-by-step documentation
+about how to create a virtual machine from Alibaba Cloud and register it on Supervisely.
+Check [this GitHub repository](https://github.com/marcplouhinec/supervisely_agent_on_alibaba_cloud)
+if you are interested.
 
 ## Cloud deployment
 Deep neural networks are compute-intensive and require powerful machines to run smoothly. In addition,
