@@ -4,9 +4,9 @@
 1. [Introduction](#introduction)
 2. [Compilation](#compilation)
 3. [Usage](#usage)
-4. DNN model training
-5. Running this application in the cloud
-6. External links
+4. [DNN model training](#dnn_model_training)
+5. [Cloud deployment](#cloud_deployment)
+6. [External links](#external_links)
 
 ## Introduction
 The goal of this project is to help me to learn about how to use a
@@ -138,7 +138,9 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 make -j4 # Warning: "make -j${NB_PROCESSORS}" may take too much memory on your system
 sudo make install
 
+#
 # Darknet compilation and installation
+#
 cd ~/projects
 git clone https://github.com/AlexeyAB/darknet.git
 cd darknet
@@ -201,3 +203,117 @@ cd ~/projects/chopsticks-tracker/build
 
 The result is generated in the folder defined by the `outputpath` configuration parameter. With the default
 configuration, the generated file is located at `~/projects/chopsticks-tracker/output/result/VID_20181231_133114.avi`.
+
+## DNN model training
+TODO
+
+## Cloud deployment
+Deep neural networks are compute-intensive and require powerful machines to run smoothly. In addition,
+a CUDA-compatible GPU enables [Darknet](https://pjreddie.com/darknet/) to run at its full speed.
+Therefore, if you don't have such a machine at your disposal, a good solution is to rent a virtual machine
+from a cloud vendor.
+
+The [cloud-deployment](cloud-deployment) folder contains [Terraform](https://www.terraform.io/) and
+Bash scripts that allow you to automatically create and configure a machine in
+[Alibaba Cloud](https://www.alibabacloud.com/).
+
+Before staring, make sure you
+[have an Alibaba Cloud account](https://www.alibabacloud.com/help/doc-detail/50482.htm) and
+an [access key id and secret](https://www.alibabacloud.com/help/faq-detail/63482.htm).
+In addition, you should have Terraform
+[installed on your computer](https://www.terraform.io/intro/getting-started/install.html).
+
+You now need to choose the [region](https://www.alibabacloud.com/help/doc-detail/40654.htm) and
+the configuration of your virtual machine:
+* Log in to [Alibaba Cloud](https://www.alibabacloud.com/).
+* Go to the [ECS console](https://ecs.console.aliyun.com/) ("ECS" is the product name corresponding
+  to virtual machines).
+* Click on the "Create Instance" button.
+* The new page should be a wizard similar to this screenshot:
+
+    ![Instance creation wizard](images/instance-creation-wizard.png)
+
+    > Note: if the page you see is different, maybe you are in the "basic mode", please click on the
+    > "Advanced Purchase" tab.
+
+* Set the billing method to "Pay-As-You-Go".
+* Select the closest region to your location.
+* Set the instance type architecture to "Heterogeneous Computing".
+* Select the instance type that suits your needs (e.g. "ecs.gn5-c4g1.xlarge").
+
+Check the price at the bottom of the page, select another region and check how it changes: the price
+varies quite a lot between regions.
+
+Do not follow the wizard until the end, stop after you choose your region and instance type.
+
+In order to continue to the next step, you should have the following information:
+* A region ID - please pick the corresponding region ID from
+  [this document](https://www.alibabacloud.com/help/doc-detail/40654.htm) (for example, the region id for
+  "Hong Kong" is "cn-hongkong").
+* An instance type (e.g. "ecs.gn5-c4g1.xlarge").
+
+You can now use Terraform to automatically create and configure your virtual machine. Open a terminal
+on your computer and execute the following commands:
+```bash
+# Comfiguration for our Terraform scripts
+export ALICLOUD_ACCESS_KEY="your-access-key"
+export ALICLOUD_SECRET_KEY="your-access-secret"
+export ALICLOUD_REGION="cn-hongkong" # Your region ID
+export TF_VAR_instance_type="ecs.gn5-c4g1.xlarge" # Your instance type
+export TF_VAR_ecs_root_password="YourS3cretP@ssword" # Your root password for the virtual machine
+
+# Go to the cloud-deployment folder of this project
+cd path/to/this/project
+cd cloud-deployment
+
+# Initialize and run terraform
+terraform init
+terraform apply
+```
+
+Depending on the virtual machine configuration you chose, the last command should take approximatively
+1h to complete. The following text is printed by Terraform when it terminates:
+```
+Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+ctracker_ecs_public_ip = 47.244.48.57
+```
+> Note: the last IP address is the one of your virtual machine.
+
+You can now run this project on your virtual machine! Connect via SSH with the root user to your
+virtual machine (e.g. `ssh root@47.244.48.57`, the password is the one you have set for the
+`TF_VAR_ecs_root_password` variable).
+
+Once the connection is established, execute the following commands in your terminal:
+```bash
+# Allow the application to find its dependencies
+export LD_LIBRARY_PATH=/usr/local/lib
+
+# Change the configuration to use the "darknet" implementation, in order to benefit from the GPU
+cd ~/projects/chopsticks-tracker
+sed -i "s/implementation=opencvdnn/implementation=darknet/" config.ini
+
+# Run the application
+cd build
+./ChopsticksTracker \
+    --config-path=../config.ini \
+    --video-path=../data/input-video/VID_20181231_133114.mp4
+```
+The result is the file `/root/projects/chopsticks-tracker/output/result/VID_20181231_133114.avi`.
+You can download it via [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol) and watch it
+on your computer.
+
+When you are done with your virtual machine, destroy it with the the following commands:
+```bash
+# Go to the cloud-deployment folder of this project
+cd path/to/this/project
+cd cloud-deployment
+
+# Destroy all the cloud resources
+terraform destroy
+```
+
+## External links
+TODO
