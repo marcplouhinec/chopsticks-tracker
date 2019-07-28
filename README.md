@@ -4,9 +4,9 @@
 1. [Introduction](#introduction)
 2. [Compilation](#compilation)
 3. [Usage](#usage)
-4. [DNN model training](#dnn_model_training)
-5. [Cloud deployment](#cloud_deployment)
-6. [External links](#external_links)
+4. [DNN model training](#dnn-model-training)
+5. [Cloud deployment](#cloud-deployment)
+6. [External links](#external-links)
 
 ## Introduction
 The goal of this project is to help me to learn about how to use a
