@@ -316,4 +316,14 @@ terraform destroy
 ```
 
 ## External links
-TODO
+* [Deeplearning.ai Youtube channel](https://www.youtube.com/channel/UCcIXc5mJsHVYTZR1maL5l9w),
+  awesome courses about Deep Learning from Andrew Ng.
+* [YOLO v3](https://pjreddie.com/darknet/yolo/), a real-time object detection neural network model.
+* [Supervisely](https://supervise.ly/), a platform that helps to annotate images and train neural
+  networks.
+* [Boost](https://www.boost.org/), a collection of very useful C++ libraries.
+* [RapidJSON](http://rapidjson.org/), a JSON parser / generator for C++.
+* [FFmpeg](https://ffmpeg.org/), a great library / application to process videos.
+* [OpenCV](https://opencv.org/), a very complete computer vision library.
+* [Darknet](https://pjreddie.com/darknet/), a neural network library that can run YOLO v3 on
+  CUDA-compatible GPUs.
